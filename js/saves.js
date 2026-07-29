@@ -267,6 +267,15 @@ function normalizeSavedGame(rawGame) {
     }
 
 
+    const gameNumber =
+        Math.max(
+            1,
+            normalizeNonNegativeInteger(
+                rawGame.gameNumber
+            )
+        );
+
+
     return {
         version:
             normalizeNonNegativeInteger(
@@ -340,6 +349,16 @@ function normalizeSavedGame(rawGame) {
                 rawGame.lukyForgotUno
             ),
 
+        yellowEventEligible:
+            typeof rawGame.yellowEventEligible === "boolean"
+                ? rawGame.yellowEventEligible
+                : (
+                    GAME_CONFIG.yellowEvent.enabled &&
+                    gameNumber %
+                        GAME_CONFIG.yellowEvent.everyNthGame ===
+                        0
+                ),
+
         yellowEventAvailable:
             Boolean(
                 rawGame.yellowEventAvailable
@@ -355,13 +374,12 @@ function normalizeSavedGame(rawGame) {
                 rawGame.playerForcedDrawStreak
             ),
 
-        gameNumber:
-            Math.max(
-                1,
-                normalizeNonNegativeInteger(
-                    rawGame.gameNumber
-                )
+        turnCount:
+            normalizeNonNegativeInteger(
+                rawGame.turnCount
             ),
+
+        gameNumber,
 
         startedAt:
             normalizeOptionalString(
@@ -738,6 +756,11 @@ function serializeSavedGame(game) {
                 game.lukyForgotUno
             ),
 
+        yellowEventEligible:
+            Boolean(
+                game.yellowEventEligible
+            ),
+
         yellowEventAvailable:
             Boolean(
                 game.yellowEventAvailable
@@ -751,6 +774,11 @@ function serializeSavedGame(game) {
         playerForcedDrawStreak:
             normalizeNonNegativeInteger(
                 game.playerForcedDrawStreak
+            ),
+
+        turnCount:
+            normalizeNonNegativeInteger(
+                game.turnCount
             ),
 
         gameNumber:
@@ -823,8 +851,6 @@ function hasActiveGame(slot) {
 
 /* =========================================================
    VYTVOŘENÍ NOVÉHO SLOTU S POSTAVOU
-
-   Defaultně nastaví výchozí skin.
 ========================================================= */
 
 function createNewCharacterSlot(
@@ -922,9 +948,6 @@ function saveSlot(
 
 /* =========================================================
    ZALOŽENÍ POSTAVY V PRÁZDNÉM SLOTU
-
-   Výběr skinu je volitelný.
-   Pokud není uveden, použije se default.
 ========================================================= */
 
 function initializeSlot(
@@ -957,11 +980,6 @@ function initializeSlot(
 
 /* =========================================================
    ZMĚNA SKINU SLOTU
-
-   Ověří, že skin existuje.
-
-   Samotné ověření odemčení skinu dělá achievement vrstva
-   před zavoláním této funkce.
 ========================================================= */
 
 function setSlotSkin(
@@ -1071,15 +1089,6 @@ function getSlotCharacterImage(slot) {
 
 /* =========================================================
    RESET SLOTU
-
-   Maže:
-   - postavu
-   - skin
-   - W/L
-   - rozehranou partii
-   - historii openingů tohoto slotu
-
-   Achievementy se nemažou.
 ========================================================= */
 
 function resetSaveSlot(
@@ -1150,8 +1159,6 @@ function saveCurrentGame(
 
 /* =========================================================
    SMAZÁNÍ ROZEHRANÉ PARTIE
-
-   W/L, postava a skin zůstávají.
 ========================================================= */
 
 function clearCurrentGame(
@@ -1397,11 +1404,6 @@ function saveSlotQuoteHistory(
 
 /* =========================================================
    GLOBÁLNÍ STATISTIKY PRO HLAVNÍ MENU
-
-   Součet ze všech slotů.
-
-   Achievementy ale mají vlastní globální progres,
-   takže toto je pouze přehled aktuálních slotů.
 ========================================================= */
 
 function getCombinedSlotStats() {
@@ -1517,8 +1519,6 @@ function importSaveData(data) {
 
 /* =========================================================
    KOMPLETNÍ SMAZÁNÍ SLOTŮ PRO DEBUG
-
-   Achievementy nemaže.
 ========================================================= */
 
 function clearAllSaveSlots() {
