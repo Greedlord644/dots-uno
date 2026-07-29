@@ -7,22 +7,21 @@
 
    Řeší:
    - obrazovky
-   - menu
    - save sloty
    - výběr postavy
-   - výběr skinu
+   - skiny
    - achievementy
-   - vykreslení hry
-   - karty
-   - výběr více identických karet
-   - drag & drop směrem na stůl
+   - herní stůl
+   - výběr karet
+   - Kuř!
+   - drag & drop
    - výběr barvy
    - sedmičku
-   - UNO tlačítka
+   - Stůj
+   - UNO
    - hlášky
    - emoty
    - game over
-   - napojení na game.js eventy
 ========================================================= */
 
 
@@ -47,20 +46,14 @@ const UI_STATE = {
     existingSlotSkinId:
         null,
 
-
-    /*
-        Aktuálně označené karty hráče.
-    */
-
     selectedCardIds:
         new Set(),
 
-
-    /*
-        Drag.
-    */
+    pendingPlayCardIds:
+        null,
 
     drag: {
+
         active: false,
 
         pointerId: null,
@@ -80,38 +73,14 @@ const UI_STATE = {
         element: null
     },
 
-
-    /*
-        Pokud hráč pustí Wild kartu na stůl,
-        čekáme na výběr barvy.
-    */
-
-    pendingPlayCardIds:
-        null,
-
-
-    /*
-        Speech timery.
-    */
-
     lukySpeechTimer:
         null,
 
     playerSpeechTimer:
         null,
 
-
-    /*
-        Fronta opening sekvence.
-    */
-
     speechSequenceToken:
         0,
-
-
-    /*
-        Aktivní emoty.
-    */
 
     activeLukyEmote:
         false,
@@ -119,14 +88,8 @@ const UI_STATE = {
     activePlayerEmote:
         false,
 
-
-    /*
-        UI zabrání opakovanému kliku
-        při přechodu obrazovek.
-    */
-
-    busy:
-        false
+    toastTimer:
+        null
 };
 
 
@@ -142,11 +105,13 @@ document.addEventListener(
 
 function initializeUI() {
 
-    setupStaticButtons();
+    setupNavigation();
 
     setupCharacterSelection();
 
-    setupSkinButtons();
+    setupSkinSelection();
+
+    setupSlotActions();
 
     setupGameControls();
 
@@ -154,7 +119,7 @@ function initializeUI() {
 
     setupGameEvents();
 
-    setupImageFallbacks();
+    setupStaticImageFallbacks();
 
     renderMainMenuStats();
 
@@ -196,18 +161,18 @@ function showScreen(screenId) {
 
 
 /* =========================================================
-   STATICKÁ TLAČÍTKA
+   NAVIGACE
 ========================================================= */
 
-function setupStaticButtons() {
+function setupNavigation() {
 
-    const openSlotsButton =
+    const openSlots =
         document.getElementById(
             "open-slots-button"
         );
 
 
-    openSlotsButton?.addEventListener(
+    openSlots?.addEventListener(
         "click",
         () => {
 
@@ -220,13 +185,13 @@ function setupStaticButtons() {
     );
 
 
-    const achievementsButton =
+    const openAchievements =
         document.getElementById(
             "open-achievements-button"
         );
 
 
-    achievementsButton?.addEventListener(
+    openAchievements?.addEventListener(
         "click",
         () => {
 
@@ -238,10 +203,6 @@ function setupStaticButtons() {
         }
     );
 
-
-    /*
-        Obecné zpět buttony.
-    */
 
     document
         .querySelectorAll(
@@ -310,21 +271,25 @@ function setupStaticButtons() {
     );
 
 
-    const skinSelectBack =
+    const skinBack =
         document.getElementById(
             "skin-select-back"
         );
 
 
-    skinSelectBack?.addEventListener(
+    skinBack?.addEventListener(
         "click",
         () => {
 
-            if (
+            const slotIndex =
                 UI_STATE
-                    .selectedSlotIndex ===
-                null
+                    .selectedSlotIndex;
+
+
+            if (
+                slotIndex === null
             ) {
+
                 renderSaveSlots();
 
                 showScreen(
@@ -336,8 +301,7 @@ function setupStaticButtons() {
 
 
             openSlotActions(
-                UI_STATE
-                    .selectedSlotIndex
+                slotIndex
             );
         }
     );
@@ -345,7 +309,7 @@ function setupStaticButtons() {
 
 
 /* =========================================================
-   MAIN MENU STATISTIKY
+   HLAVNÍ MENU – STATISTIKY
 ========================================================= */
 
 function renderMainMenuStats() {
@@ -393,7 +357,8 @@ function renderSaveSlots() {
     }
 
 
-    container.innerHTML = "";
+    container.innerHTML =
+        "";
 
 
     const slots =
@@ -409,31 +374,27 @@ function renderSaveSlots() {
 
 
             const button =
-                fragment
-                    .querySelector(
-                        ".save-slot"
-                    );
+                fragment.querySelector(
+                    ".save-slot"
+                );
 
 
             const number =
-                fragment
-                    .querySelector(
-                        ".save-slot-number"
-                    );
+                fragment.querySelector(
+                    ".save-slot-number"
+                );
 
 
             const title =
-                fragment
-                    .querySelector(
-                        ".save-slot-title"
-                    );
+                fragment.querySelector(
+                    ".save-slot-title"
+                );
 
 
             const record =
-                fragment
-                    .querySelector(
-                        ".save-slot-record"
-                    );
+                fragment.querySelector(
+                    ".save-slot-record"
+                );
 
 
             number.textContent =
@@ -445,11 +406,14 @@ function renderSaveSlots() {
                     slot
                 )
             ) {
+
                 title.textContent =
                     "Nová hra";
 
+
                 record.hidden =
                     true;
+
             } else {
 
                 title.textContent =
@@ -512,6 +476,7 @@ function handleSlotClick(
             slot
         )
     ) {
+
         openCharacterSelection(
             slotIndex
         );
@@ -546,6 +511,7 @@ function openSlotActions(
             slot
         )
     ) {
+
         renderSaveSlots();
 
         showScreen(
@@ -640,19 +606,10 @@ function openSlotActions(
 
 
 /* =========================================================
-   TLAČÍTKA DETAILU SLOTU
+   AKCE SLOTU
 ========================================================= */
 
-function setupSlotActionButtons() {
-
-    /*
-        Tato funkce se zavolá ze setupGameControls.
-        Je oddělená jen pro přehlednost.
-    */
-}
-
-
-function bindSlotActionButtons() {
+function setupSlotActions() {
 
     const continueButton =
         document.getElementById(
@@ -748,13 +705,13 @@ function bindSlotActionButtons() {
     );
 
 
-    const resetButton =
+    const resetSlotButton =
         document.getElementById(
             "reset-slot-button"
         );
 
 
-    resetButton?.addEventListener(
+    resetSlotButton?.addEventListener(
         "click",
         () => {
 
@@ -783,13 +740,9 @@ function setupCharacterSelection() {
                     "click",
                     () => {
 
-                        const characterId =
-                            button.dataset
-                                .character;
-
-
                         selectCharacter(
-                            characterId
+                            button.dataset
+                                .character
                         );
                     }
                 );
@@ -797,20 +750,19 @@ function setupCharacterSelection() {
         );
 
 
-    const changeCharacterButton =
+    const changeButton =
         document.getElementById(
             "change-character-button"
         );
 
 
-    changeCharacterButton
-        ?.addEventListener(
-            "click",
-            () => {
+    changeButton?.addEventListener(
+        "click",
+        () => {
 
-                clearNewCharacterSelection();
-            }
-        );
+            clearNewCharacterSelection();
+        }
+    );
 
 
     const confirmButton =
@@ -819,20 +771,12 @@ function setupCharacterSelection() {
         );
 
 
-    confirmButton
-        ?.addEventListener(
-            "click",
-            () => {
-
-                confirmNewCharacter();
-            }
-        );
+    confirmButton?.addEventListener(
+        "click",
+        confirmNewCharacter
+    );
 }
 
-
-/* =========================================================
-   OTEVŘÍT VÝBĚR POSTAVY
-========================================================= */
 
 function openCharacterSelection(
     slotIndex
@@ -845,7 +789,7 @@ function openCharacterSelection(
     clearNewCharacterSelection();
 
 
-    updateRecommendedCharacterBadge();
+    updateRecommendedCharacter();
 
 
     showScreen(
@@ -855,10 +799,10 @@ function openCharacterSelection(
 
 
 /* =========================================================
-   DOPORUČENÁ 96
+   DOPORUČENÁ POSTAVA 96
 ========================================================= */
 
-function updateRecommendedCharacterBadge() {
+function updateRecommendedCharacter() {
 
     const card =
         document.querySelector(
@@ -880,22 +824,16 @@ function updateRecommendedCharacterBadge() {
     }
 
 
-    /*
-        Doporučení necháváme viditelné vždy.
-        Při úplně prvním výběru může být
-        zvýraznění výraznější.
-    */
+    badge.hidden =
+        !GAME_CONFIG
+            .characterSelection
+            .showRecommendation;
+
 
     card.classList.toggle(
         "is-first-recommendation",
         isFirstCharacterSelection()
     );
-
-
-    badge.hidden =
-        !GAME_CONFIG
-            .characterSelection
-            .showRecommendation;
 }
 
 
@@ -904,166 +842,6 @@ function updateRecommendedCharacterBadge() {
 ========================================================= */
 
 function selectCharacter(
-    characterId
-) {
-
-    const character =
-        getCharacterConfig(
-            characterId
-        );
-
-
-    if (!character) {
-        return;
-    }
-
-
-    UI_STATE.selectedCharacterId =
-        characterId;
-
-
-    UI_STATE.selectedSkinId =
-        character.defaultSkinId ||
-        "default";
-
-
-    document
-        .querySelectorAll(
-            ".character-card"
-        )
-        .forEach(
-            (card) => {
-
-                card.classList.toggle(
-                    "is-selected",
-                    card.dataset
-                        .character ===
-                    characterId
-                );
-            }
-        );
-
-
-    setText(
-        "skin-selection-title",
-        character.name
-    );
-
-
-    renderSkinGrid({
-        characterId,
-
-        containerId:
-            "skin-grid",
-
-        selectedSkinId:
-            UI_STATE
-                .selectedSkinId,
-
-        onSelect:
-            (skinId) => {
-
-                UI_STATE
-                    .selectedSkinId =
-                    skinId;
-
-
-                renderSkinGrid({
-                    characterId,
-
-                    containerId:
-                        "skin-grid",
-
-                    selectedSkinId:
-                        skinId,
-
-                    onSelect:
-                        arguments.callee
-                });
-            }
-    });
-
-
-    const section =
-        document.getElementById(
-            "skin-selection"
-        );
-
-
-    if (section) {
-        section.hidden = false;
-    }
-
-
-    const confirm =
-        document.getElementById(
-            "confirm-character-button"
-        );
-
-
-    if (confirm) {
-        confirm.disabled =
-            false;
-    }
-
-
-    section?.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest"
-    });
-}
-
-
-/* =========================================================
-   POZNÁMKA:
-   Kvůli strict mode nepoužíváme skutečně arguments.callee.
-
-   selectCharacter níže grid překreslí pomocí pomocné funkce.
-========================================================= */
-
-function renderNewCharacterSkinGrid() {
-
-    const characterId =
-        UI_STATE
-            .selectedCharacterId;
-
-
-    if (!characterId) {
-        return;
-    }
-
-
-    renderSkinGrid({
-        characterId,
-
-        containerId:
-            "skin-grid",
-
-        selectedSkinId:
-            UI_STATE
-                .selectedSkinId,
-
-        onSelect:
-            (skinId) => {
-
-                UI_STATE
-                    .selectedSkinId =
-                    skinId;
-
-
-                renderNewCharacterSkinGrid();
-            }
-    });
-}
-
-
-/* =========================================================
-   OPRAVA SELECT CHARACTER GRIDU
-
-   Přepíšeme funkci pouze využitím výše definovaného helperu.
-========================================================= */
-
-function selectCharacterSafe(
     characterId
 ) {
 
@@ -1120,20 +898,12 @@ function selectCharacterSafe(
 
 
     if (section) {
-        section.hidden = false;
-    }
-
-
-    const confirm =
-        document.getElementById(
-            "confirm-character-button"
-        );
-
-
-    if (confirm) {
-        confirm.disabled =
+        section.hidden =
             false;
     }
+
+
+    updateConfirmCharacterButton();
 
 
     section?.scrollIntoView({
@@ -1143,21 +913,77 @@ function selectCharacterSafe(
 }
 
 
-/*
-    Přesměrujeme původní handler na safe verzi.
-*/
+/* =========================================================
+   NOVÁ POSTAVA – SKINY
+========================================================= */
 
-function selectCharacter(
-    characterId
-) {
-    selectCharacterSafe(
-        characterId
-    );
+function renderNewCharacterSkinGrid() {
+
+    const characterId =
+        UI_STATE
+            .selectedCharacterId;
+
+
+    if (!characterId) {
+        return;
+    }
+
+
+    renderSkinGrid({
+        characterId,
+
+        containerId:
+            "skin-grid",
+
+        selectedSkinId:
+            UI_STATE
+                .selectedSkinId,
+
+        onSelect:
+            (skinId) => {
+
+                UI_STATE.selectedSkinId =
+                    skinId;
+
+
+                renderNewCharacterSkinGrid();
+
+
+                updateConfirmCharacterButton();
+            }
+    });
+}
+
+
+function updateConfirmCharacterButton() {
+
+    const button =
+        document.getElementById(
+            "confirm-character-button"
+        );
+
+
+    if (!button) {
+        return;
+    }
+
+
+    button.disabled =
+        !UI_STATE
+            .selectedCharacterId ||
+        !UI_STATE
+            .selectedSkinId ||
+        !isSkinUnlocked(
+            UI_STATE
+                .selectedCharacterId,
+            UI_STATE
+                .selectedSkinId
+        );
 }
 
 
 /* =========================================================
-   RESET VÝBĚRU POSTAVY
+   RESET NOVÉHO VÝBĚRU
 ========================================================= */
 
 function clearNewCharacterSelection() {
@@ -1191,7 +1017,8 @@ function clearNewCharacterSelection() {
 
 
     if (section) {
-        section.hidden = true;
+        section.hidden =
+            true;
     }
 
 
@@ -1202,20 +1029,12 @@ function clearNewCharacterSelection() {
 
 
     if (grid) {
-        grid.innerHTML = "";
+        grid.innerHTML =
+            "";
     }
 
 
-    const confirm =
-        document.getElementById(
-            "confirm-character-button"
-        );
-
-
-    if (confirm) {
-        confirm.disabled =
-            true;
-    }
+    updateConfirmCharacterButton();
 }
 
 
@@ -1277,10 +1096,10 @@ function confirmNewCharacter() {
 
 
 /* =========================================================
-   SKINY
+   SKINY EXISTUJÍCÍHO SLOTU
 ========================================================= */
 
-function setupSkinButtons() {
+function setupSkinSelection() {
 
     const saveSkinButton =
         document.getElementById(
@@ -1345,6 +1164,155 @@ function setupSkinButtons() {
 }
 
 
+function openExistingSkinSelection(
+    slotIndex
+) {
+
+    const slot =
+        getSaveSlot(
+            slotIndex
+        );
+
+
+    if (
+        !slot ||
+        isSaveSlotEmpty(
+            slot
+        )
+    ) {
+        return;
+    }
+
+
+    UI_STATE.selectedSlotIndex =
+        slotIndex;
+
+
+    UI_STATE.existingSlotSkinId =
+        slot.skinId ||
+        "default";
+
+
+    setText(
+        "existing-skin-title",
+        `Vyber skin – ${getCharacterName(slot.characterId)}`
+    );
+
+
+    renderExistingSkinGrid();
+
+
+    updateSaveSkinButton();
+
+
+    showScreen(
+        "screen-skin-select"
+    );
+}
+
+
+function renderExistingSkinGrid() {
+
+    const slotIndex =
+        UI_STATE
+            .selectedSlotIndex;
+
+
+    if (
+        slotIndex === null
+    ) {
+        return;
+    }
+
+
+    const slot =
+        getSaveSlot(
+            slotIndex
+        );
+
+
+    if (!slot) {
+        return;
+    }
+
+
+    renderSkinGrid({
+        characterId:
+            slot.characterId,
+
+        containerId:
+            "existing-skin-grid",
+
+        selectedSkinId:
+            UI_STATE
+                .existingSlotSkinId,
+
+        onSelect:
+            (skinId) => {
+
+                UI_STATE.existingSlotSkinId =
+                    skinId;
+
+
+                renderExistingSkinGrid();
+
+
+                updateSaveSkinButton();
+            }
+    });
+}
+
+
+function updateSaveSkinButton() {
+
+    const button =
+        document.getElementById(
+            "save-skin-button"
+        );
+
+
+    if (!button) {
+        return;
+    }
+
+
+    const slotIndex =
+        UI_STATE
+            .selectedSlotIndex;
+
+
+    const skinId =
+        UI_STATE
+            .existingSlotSkinId;
+
+
+    if (
+        slotIndex === null ||
+        !skinId
+    ) {
+
+        button.disabled =
+            true;
+
+        return;
+    }
+
+
+    const slot =
+        getSaveSlot(
+            slotIndex
+        );
+
+
+    button.disabled =
+        !slot ||
+        !isSkinUnlocked(
+            slot.characterId,
+            skinId
+        );
+}
+
+
 /* =========================================================
    GENERICKÝ SKIN GRID
 ========================================================= */
@@ -1376,7 +1344,8 @@ function renderSkinGrid({
     }
 
 
-    container.innerHTML = "";
+    container.innerHTML =
+        "";
 
 
     const skins =
@@ -1394,45 +1363,39 @@ function renderSkinGrid({
 
 
             const card =
-                fragment
-                    .querySelector(
-                        ".skin-card"
-                    );
+                fragment.querySelector(
+                    ".skin-card"
+                );
 
 
             const image =
-                fragment
-                    .querySelector(
-                        ".skin-preview-image"
-                    );
+                fragment.querySelector(
+                    ".skin-preview-image"
+                );
 
 
             const lock =
-                fragment
-                    .querySelector(
-                        ".skin-lock-overlay"
-                    );
+                fragment.querySelector(
+                    ".skin-lock-overlay"
+                );
 
 
             const requirement =
-                fragment
-                    .querySelector(
-                        ".skin-lock-requirement"
-                    );
+                fragment.querySelector(
+                    ".skin-lock-requirement"
+                );
 
 
             const name =
-                fragment
-                    .querySelector(
-                        ".skin-card-name"
-                    );
+                fragment.querySelector(
+                    ".skin-card-name"
+                );
 
 
             const status =
-                fragment
-                    .querySelector(
-                        ".skin-card-status"
-                    );
+                fragment.querySelector(
+                    ".skin-card-status"
+                );
 
 
             const unlockInfo =
@@ -1443,8 +1406,9 @@ function renderSkinGrid({
 
 
             const unlocked =
-                unlockInfo?.unlocked ??
-                false;
+                Boolean(
+                    unlockInfo?.unlocked
+                );
 
 
             image.src =
@@ -1530,117 +1494,6 @@ function renderSkinGrid({
 
 
 /* =========================================================
-   ZMĚNA SKINU EXISTUJÍCÍHO SLOTU
-========================================================= */
-
-function openExistingSkinSelection(
-    slotIndex
-) {
-
-    const slot =
-        getSaveSlot(
-            slotIndex
-        );
-
-
-    if (
-        !slot ||
-        isSaveSlotEmpty(
-            slot
-        )
-    ) {
-        return;
-    }
-
-
-    UI_STATE.selectedSlotIndex =
-        slotIndex;
-
-
-    UI_STATE
-        .existingSlotSkinId =
-        slot.skinId ||
-        "default";
-
-
-    setText(
-        "existing-skin-title",
-        `Vyber skin – ${getCharacterName(slot.characterId)}`
-    );
-
-
-    renderExistingSkinGrid();
-
-
-    const saveButton =
-        document.getElementById(
-            "save-skin-button"
-        );
-
-
-    if (saveButton) {
-        saveButton.disabled =
-            false;
-    }
-
-
-    showScreen(
-        "screen-skin-select"
-    );
-}
-
-
-function renderExistingSkinGrid() {
-
-    const slotIndex =
-        UI_STATE
-            .selectedSlotIndex;
-
-
-    if (
-        slotIndex === null
-    ) {
-        return;
-    }
-
-
-    const slot =
-        getSaveSlot(
-            slotIndex
-        );
-
-
-    if (!slot) {
-        return;
-    }
-
-
-    renderSkinGrid({
-        characterId:
-            slot.characterId,
-
-        containerId:
-            "existing-skin-grid",
-
-        selectedSkinId:
-            UI_STATE
-                .existingSlotSkinId,
-
-        onSelect:
-            (skinId) => {
-
-                UI_STATE
-                    .existingSlotSkinId =
-                    skinId;
-
-
-                renderExistingSkinGrid();
-            }
-    });
-}
-
-
-/* =========================================================
    ACHIEVEMENTY
 ========================================================= */
 
@@ -1666,7 +1519,8 @@ function renderAchievements() {
     }
 
 
-    container.innerHTML = "";
+    container.innerHTML =
+        "";
 
 
     const achievements =
@@ -1682,45 +1536,39 @@ function renderAchievements() {
 
 
             const card =
-                fragment
-                    .querySelector(
-                        ".achievement-card"
-                    );
+                fragment.querySelector(
+                    ".achievement-card"
+                );
 
 
             const title =
-                fragment
-                    .querySelector(
-                        ".achievement-title"
-                    );
+                fragment.querySelector(
+                    ".achievement-title"
+                );
 
 
             const description =
-                fragment
-                    .querySelector(
-                        ".achievement-description"
-                    );
+                fragment.querySelector(
+                    ".achievement-description"
+                );
 
 
             const progress =
-                fragment
-                    .querySelector(
-                        ".achievement-progress"
-                    );
+                fragment.querySelector(
+                    ".achievement-progress"
+                );
 
 
             const progressValue =
-                fragment
-                    .querySelector(
-                        ".achievement-progress-value"
-                    );
+                fragment.querySelector(
+                    ".achievement-progress-value"
+                );
 
 
             const progressText =
-                fragment
-                    .querySelector(
-                        ".achievement-progress-text"
-                    );
+                fragment.querySelector(
+                    ".achievement-progress-text"
+                );
 
 
             title.textContent =
@@ -1738,9 +1586,9 @@ function renderAchievements() {
 
 
             if (
-                achievement.target >
-                1
+                achievement.target > 1
             ) {
+
                 progress.hidden =
                     false;
 
@@ -1778,7 +1626,7 @@ function renderAchievements() {
 
 
 /* =========================================================
-   START GAME UI
+   SPUŠTĚNÍ HRY
 ========================================================= */
 
 function startGameUI(
@@ -1807,17 +1655,43 @@ function startGameUI(
     );
 
 
-    if (continueGame) {
+    try {
 
-        continueSavedGame(
-            slotIndex
+        if (continueGame) {
+
+            continueSavedGame(
+                slotIndex
+            );
+
+        } else {
+
+            startNewGame(
+                slotIndex
+            );
+        }
+
+    } catch (error) {
+
+        console.error(
+            error
         );
 
-    } else {
 
-        startNewGame(
-            slotIndex
+        showToast(
+            "Chyba",
+            "Hru se nepodařilo spustit."
         );
+
+
+        renderSaveSlots();
+
+
+        showScreen(
+            "screen-slots"
+        );
+
+
+        return;
     }
 
 
@@ -1831,9 +1705,6 @@ function startGameUI(
 
 function setupGameControls() {
 
-    bindSlotActionButtons();
-
-
     const drawPile =
         document.getElementById(
             "draw-pile"
@@ -1843,6 +1714,25 @@ function setupGameControls() {
     drawPile?.addEventListener(
         "click",
         () => {
+
+            const state =
+                getGameState();
+
+
+            if (
+                state?.skipChainCount > 0 &&
+                state.turn === "player"
+            ) {
+
+                showToast(
+                    "Stůj",
+                    "Musíš přehodit Stůj, nebo zvolit „Stojím“."
+                );
+
+
+                return;
+            }
+
 
             playerDraw();
         }
@@ -1857,10 +1747,7 @@ function setupGameControls() {
 
     unoButton?.addEventListener(
         "click",
-        () => {
-
-            playerCallUno();
-        }
+        playerCallUno
     );
 
 
@@ -1870,14 +1757,30 @@ function setupGameControls() {
         );
 
 
-    catchUnoButton
-        ?.addEventListener(
-            "click",
-            () => {
+    catchUnoButton?.addEventListener(
+        "click",
+        playerCatchLukyUno
+    );
 
-                playerCatchLukyUno();
-            }
+
+    const acceptSkipButton =
+        document.getElementById(
+            "accept-skip-button"
         );
+
+
+    acceptSkipButton?.addEventListener(
+        "click",
+        () => {
+
+            UI_STATE
+                .selectedCardIds
+                .clear();
+
+
+            playerAcceptSkip();
+        }
+    );
 
 
     const yellowButton =
@@ -1888,24 +1791,22 @@ function setupGameControls() {
 
     yellowButton?.addEventListener(
         "click",
-        () => {
-
-            askLukyAboutYellow();
-        }
+        askLukyAboutYellow
     );
 
 
-    const menuButton =
+    const gameMenuButton =
         document.getElementById(
             "game-menu-button"
         );
 
 
-    menuButton?.addEventListener(
+    gameMenuButton?.addEventListener(
         "click",
         () => {
 
             pauseGame();
+
 
             openModal(
                 "modal-game-menu"
@@ -1931,21 +1832,24 @@ function setupGameControls() {
     );
 
 
-    const saveMenuButton =
+    const saveAndMenu =
         document.getElementById(
             "save-and-menu-button"
         );
 
 
-    saveMenuButton?.addEventListener(
+    saveAndMenu?.addEventListener(
         "click",
         () => {
 
             saveAndLeaveGame();
 
+
             closeModal();
 
+
             renderMainMenuStats();
+
 
             showScreen(
                 "screen-menu"
@@ -1954,22 +1858,22 @@ function setupGameControls() {
     );
 
 
-    const playAgainButton =
+    const playAgain =
         document.getElementById(
             "play-again-button"
         );
 
 
-    playAgainButton?.addEventListener(
+    playAgain?.addEventListener(
         "click",
         () => {
-
-            closeModal();
-
 
             const slotIndex =
                 UI_STATE
                     .selectedSlotIndex;
+
+
+            closeModal();
 
 
             if (
@@ -1999,7 +1903,9 @@ function setupGameControls() {
 
             closeModal();
 
+
             renderMainMenuStats();
+
 
             showScreen(
                 "screen-menu"
@@ -2042,6 +1948,15 @@ function renderGame() {
     }
 
 
+    /*
+        Výběr může po změně ruky obsahovat už neexistující ID.
+    */
+
+    sanitizeSelectedCards(
+        state.playerHand
+    );
+
+
     renderGameProfiles(
         slot,
         state
@@ -2064,6 +1979,11 @@ function renderGame() {
 
 
     renderGameIndicators(
+        state
+    );
+
+
+    renderGameControls(
         state
     );
 
@@ -2139,8 +2059,10 @@ function renderGameProfiles(
 
 
     if (
-        !UI_STATE.activePlayerEmote
+        !UI_STATE
+            .activePlayerEmote
     ) {
+
         setImageWithFallback({
             imageId:
                 "player-avatar",
@@ -2161,8 +2083,10 @@ function renderGameProfiles(
 
 
     if (
-        !UI_STATE.activeLukyEmote
+        !UI_STATE
+            .activeLukyEmote
     ) {
+
         setImageWithFallback({
             imageId:
                 "luky-photo",
@@ -2180,6 +2104,61 @@ function renderGameProfiles(
                     .opponent
                     .fallback
         });
+    }
+}
+
+
+/* =========================================================
+   OVLÁDÁNÍ PODLE STAVU
+========================================================= */
+
+function renderGameControls(
+    state
+) {
+
+    const acceptSkip =
+        document.getElementById(
+            "accept-skip-button"
+        );
+
+
+    if (acceptSkip) {
+
+        acceptSkip.hidden =
+            !(
+                state.status ===
+                    "playing" &&
+                state.turn ===
+                    "player" &&
+                state.skipChainCount >
+                    0
+            );
+    }
+
+
+    const drawPile =
+        document.getElementById(
+            "draw-pile"
+        );
+
+
+    if (drawPile) {
+
+        drawPile.disabled =
+            state.status !==
+                "playing" ||
+            state.turn !==
+                "player" ||
+            state.skipChainCount >
+                0;
+
+
+        drawPile.setAttribute(
+            "aria-disabled",
+            String(
+                drawPile.disabled
+            )
+        );
     }
 }
 
@@ -2203,7 +2182,8 @@ function renderPlayerHand(
     }
 
 
-    container.innerHTML = "";
+    container.innerHTML =
+        "";
 
 
     const hand =
@@ -2235,17 +2215,30 @@ function renderPlayerHand(
             );
 
 
-            const highlight =
+            element.classList.toggle(
+                "is-match-highlight",
                 shouldHighlightIdenticalCard(
                     card,
                     hand
-                );
+                ) &&
+                !selected
+            );
+
+
+            const interactive =
+                state.status ===
+                    "playing" &&
+                state.turn ===
+                    "player";
+
+
+            element.disabled =
+                !interactive;
 
 
             element.classList.toggle(
-                "is-match-highlight",
-                highlight &&
-                !selected
+                "is-disabled",
+                !interactive
             );
 
 
@@ -2282,7 +2275,7 @@ function renderPlayerHand(
 
 
 /* =========================================================
-   LUKYHO RUKA
+   LUKYHO KARTY
 ========================================================= */
 
 function renderLukyHand(
@@ -2309,7 +2302,8 @@ function renderLukyHand(
     }
 
 
-    container.innerHTML = "";
+    container.innerHTML =
+        "";
 
 
     state.lukyHand.forEach(
@@ -2347,7 +2341,8 @@ function renderDiscardPile(
     }
 
 
-    container.innerHTML = "";
+    container.innerHTML =
+        "";
 
 
     const card =
@@ -2371,6 +2366,11 @@ function renderDiscardPile(
         true;
 
 
+    element.classList.add(
+        "is-disabled"
+    );
+
+
     container.appendChild(
         element
     );
@@ -2378,7 +2378,7 @@ function renderDiscardPile(
 
 
 /* =========================================================
-   KARTA
+   VYTVOŘENÍ KARTY
 ========================================================= */
 
 function createCardElement(card) {
@@ -2389,30 +2389,35 @@ function createCardElement(card) {
         );
 
 
+    if (!template) {
+
+        throw new Error(
+            "Chybí card-template."
+        );
+    }
+
+
     const fragment =
         template.content
             .cloneNode(true);
 
 
-    const cardElement =
-        fragment
-            .querySelector(
-                ".game-card"
-            );
+    const element =
+        fragment.querySelector(
+            ".game-card"
+        );
 
 
     const corners =
-        fragment
-            .querySelectorAll(
-                ".card-corner-value"
-            );
+        fragment.querySelectorAll(
+            ".card-corner-value"
+        );
 
 
     const center =
-        fragment
-            .querySelector(
-                ".card-center-value"
-            );
+        fragment.querySelector(
+            ".card-center-value"
+        );
 
 
     const display =
@@ -2421,19 +2426,19 @@ function createCardElement(card) {
         );
 
 
-    cardElement.dataset.cardId =
+    element.dataset.cardId =
         card.id;
 
 
-    cardElement.dataset.color =
+    element.dataset.color =
         card.color;
 
 
-    cardElement.dataset.type =
+    element.dataset.type =
         card.type;
 
 
-    cardElement.setAttribute(
+    element.setAttribute(
         "aria-label",
         getCardDescription(
             card
@@ -2442,9 +2447,9 @@ function createCardElement(card) {
 
 
     corners.forEach(
-        (element) => {
+        (corner) => {
 
-            element.textContent =
+            corner.textContent =
                 display;
         }
     );
@@ -2454,7 +2459,7 @@ function createCardElement(card) {
         display;
 
 
-    return cardElement;
+    return element;
 }
 
 
@@ -2464,16 +2469,13 @@ function createCardElement(card) {
 
 function handleCardClick(card) {
 
-    /*
-        Pokud pointer skutečně táhl,
-        click po pointerup ignorujeme.
-    */
-
     if (
         UI_STATE.drag.moved
     ) {
+
         UI_STATE.drag.moved =
             false;
+
 
         return;
     }
@@ -2485,7 +2487,10 @@ function handleCardClick(card) {
 
     if (
         !state ||
-        state.turn !== "player"
+        state.status !==
+            "playing" ||
+        state.turn !==
+            "player"
     ) {
         return;
     }
@@ -2501,6 +2506,7 @@ function handleCardClick(card) {
             card.id
         )
     ) {
+
         selected.delete(
             card.id
         );
@@ -2510,6 +2516,7 @@ function handleCardClick(card) {
             state
         );
 
+
         return;
     }
 
@@ -2517,6 +2524,7 @@ function handleCardClick(card) {
     if (
         selected.size === 0
     ) {
+
         selected.add(
             card.id
         );
@@ -2526,11 +2534,12 @@ function handleCardClick(card) {
             state
         );
 
+
         return;
     }
 
 
-    const firstSelectedId =
+    const firstId =
         [...selected][0];
 
 
@@ -2538,13 +2547,9 @@ function handleCardClick(card) {
         state.playerHand.find(
             (item) =>
                 item.id ===
-                firstSelectedId
+                firstId
         );
 
-
-    /*
-        Přidat lze jen identickou kartu.
-    */
 
     if (
         firstCard &&
@@ -2553,17 +2558,15 @@ function handleCardClick(card) {
             card
         )
     ) {
+
         selected.add(
             card.id
         );
 
     } else {
 
-        /*
-            Klik na jinou kartu přepne výběr.
-        */
-
         selected.clear();
+
 
         selected.add(
             card.id
@@ -2578,7 +2581,7 @@ function handleCardClick(card) {
 
 
 /* =========================================================
-   HIGHLIGHT IDENTICKÝCH KARET
+   HIGHLIGHT PRO KUŘ!
 ========================================================= */
 
 function shouldHighlightIdenticalCard(
@@ -2586,14 +2589,14 @@ function shouldHighlightIdenticalCard(
     hand
 ) {
 
-    const selectedIds =
+    const selected =
         UI_STATE
             .selectedCardIds;
 
 
     if (
-        selectedIds.size === 0 ||
-        selectedIds.has(
+        selected.size === 0 ||
+        selected.has(
             card.id
         )
     ) {
@@ -2602,10 +2605,10 @@ function shouldHighlightIdenticalCard(
 
 
     const firstId =
-        [...selectedIds][0];
+        [...selected][0];
 
 
-    const first =
+    const firstCard =
         hand.find(
             (item) =>
                 item.id ===
@@ -2614,9 +2617,9 @@ function shouldHighlightIdenticalCard(
 
 
     return Boolean(
-        first &&
+        firstCard &&
         areCardsIdentical(
-            first,
+            firstCard,
             card
         )
     );
@@ -2624,7 +2627,45 @@ function shouldHighlightIdenticalCard(
 
 
 /* =========================================================
-   DRAG KARTY
+   ČIŠTĚNÍ VÝBĚRU
+========================================================= */
+
+function sanitizeSelectedCards(hand) {
+
+    const validIds =
+        new Set(
+            hand.map(
+                (card) =>
+                    card.id
+            )
+        );
+
+
+    [
+        ...UI_STATE
+            .selectedCardIds
+    ].forEach(
+        (id) => {
+
+            if (
+                !validIds.has(
+                    id
+                )
+            ) {
+
+                UI_STATE
+                    .selectedCardIds
+                    .delete(
+                        id
+                    );
+            }
+        }
+    );
+}
+
+
+/* =========================================================
+   DRAG START
 ========================================================= */
 
 function beginCardDrag(
@@ -2634,7 +2675,8 @@ function beginCardDrag(
 ) {
 
     if (
-        event.button !== undefined &&
+        event.button !==
+            undefined &&
         event.button !== 0
     ) {
         return;
@@ -2647,11 +2689,19 @@ function beginCardDrag(
 
     if (
         !state ||
-        state.turn !== "player"
+        state.status !==
+            "playing" ||
+        state.turn !==
+            "player"
     ) {
         return;
     }
 
+
+    /*
+        Kartu, kterou táhneme, vždy zahrneme do výběru.
+        Pokud je vybraná jiná skupina, výběr se změní.
+    */
 
     if (
         !UI_STATE
@@ -2660,16 +2710,49 @@ function beginCardDrag(
                 card.id
             )
     ) {
-        UI_STATE
-            .selectedCardIds
-            .clear();
+
+        const firstId =
+            [
+                ...UI_STATE
+                    .selectedCardIds
+            ][0];
 
 
-        UI_STATE
-            .selectedCardIds
-            .add(
-                card.id
+        const firstCard =
+            state.playerHand.find(
+                (item) =>
+                    item.id ===
+                    firstId
             );
+
+
+        if (
+            firstCard &&
+            areCardsIdentical(
+                firstCard,
+                card
+            )
+        ) {
+
+            UI_STATE
+                .selectedCardIds
+                .add(
+                    card.id
+                );
+
+        } else {
+
+            UI_STATE
+                .selectedCardIds
+                .clear();
+
+
+            UI_STATE
+                .selectedCardIds
+                .add(
+                    card.id
+                );
+        }
 
 
         renderPlayerHand(
@@ -2756,9 +2839,7 @@ function beginCardDrag(
    DRAG MOVE
 ========================================================= */
 
-function handleCardDragMove(
-    event
-) {
+function handleCardDragMove(event) {
 
     const drag =
         UI_STATE.drag;
@@ -2767,7 +2848,7 @@ function handleCardDragMove(
     if (
         !drag.active ||
         event.pointerId !==
-        drag.pointerId
+            drag.pointerId
     ) {
         return;
     }
@@ -2782,12 +2863,12 @@ function handleCardDragMove(
 
 
     const deltaX =
-        drag.currentX -
+        event.clientX -
         drag.startX;
 
 
     const deltaY =
-        drag.currentY -
+        event.clientY -
         drag.startY;
 
 
@@ -2804,6 +2885,7 @@ function handleCardDragMove(
             .cardInteraction
             .clickMovementTolerancePx
     ) {
+
         drag.moved =
             true;
     }
@@ -2812,6 +2894,7 @@ function handleCardDragMove(
     if (
         drag.element
     ) {
+
         drag.element.style.transform =
             `translate(${deltaX}px, ${deltaY}px) scale(1.06)`;
     }
@@ -2837,8 +2920,9 @@ function endCardDrag(event) {
     if (
         !drag.active ||
         event.pointerId !==
-        drag.pointerId
+            drag.pointerId
     ) {
+
         cleanupCardDrag();
 
         return;
@@ -2850,7 +2934,7 @@ function endCardDrag(event) {
         drag.startY;
 
 
-    const droppedInZone =
+    const inDropZone =
         isPointInsideDropZone(
             event.clientX,
             event.clientY
@@ -2865,33 +2949,29 @@ function endCardDrag(event) {
 
 
     const shouldPlay =
-        droppedInZone ||
+        inDropZone ||
         movedEnoughUp;
 
 
     cleanupCardDrag();
 
 
-    if (
-        shouldPlay
-    ) {
+    if (shouldPlay) {
+
         attemptSelectedCardPlay();
     }
 }
 
 
 /* =========================================================
-   CANCEL DRAG
+   DRAG CANCEL / CLEANUP
 ========================================================= */
 
 function cancelCardDrag() {
+
     cleanupCardDrag();
 }
 
-
-/* =========================================================
-   CLEANUP DRAG
-========================================================= */
 
 function cleanupCardDrag() {
 
@@ -2902,6 +2982,7 @@ function cleanupCardDrag() {
     if (
         drag.element
     ) {
+
         drag.element.classList.remove(
             "is-dragging"
         );
@@ -2912,15 +2993,14 @@ function cleanupCardDrag() {
     }
 
 
-    const dropZone =
-        document.getElementById(
+    document
+        .getElementById(
             "discard-zone"
+        )
+        ?.classList
+        .remove(
+            "is-drop-target"
         );
-
-
-    dropZone?.classList.remove(
-        "is-drop-target"
-    );
 
 
     window.removeEventListener(
@@ -3002,7 +3082,7 @@ function updateDropZoneState(
 
 
 /* =========================================================
-   POKUS O ZAHRÁNÍ VYBRANÝCH KARET
+   ZAHRÁNÍ VYBRANÝCH KARET
 ========================================================= */
 
 async function attemptSelectedCardPlay() {
@@ -3030,10 +3110,12 @@ async function attemptSelectedCardPlay() {
     if (
         !validation.valid
     ) {
+
         showToast(
             "Nelze zahrát",
             validation.message
         );
+
 
         return;
     }
@@ -3043,8 +3125,8 @@ async function attemptSelectedCardPlay() {
         validation
             .needsColorChoice
     ) {
-        UI_STATE
-            .pendingPlayCardIds =
+
+        UI_STATE.pendingPlayCardIds =
             ids;
 
 
@@ -3072,7 +3154,7 @@ async function attemptSelectedCardPlay() {
 
 
 /* =========================================================
-   INDIKÁTORY HRY
+   INDIKÁTORY
 ========================================================= */
 
 function renderGameIndicators(
@@ -3088,7 +3170,8 @@ function renderGameIndicators(
     if (penalty) {
 
         penalty.hidden =
-            state.drawPenalty <= 0;
+            state.drawPenalty <=
+            0;
     }
 
 
@@ -3100,37 +3183,25 @@ function renderGameIndicators(
 
     setText(
         "current-color-label",
-        getCurrentColorLabel(
+        CARD_COLOR_LABELS[
             state.currentColor
-        )
+        ] ||
+        "—"
     );
 
 
-    const indicator =
+    const currentColor =
         document.getElementById(
             "current-color-indicator"
         );
 
 
-    if (indicator) {
+    if (currentColor) {
 
-        indicator.dataset.color =
+        currentColor.dataset.color =
             state.currentColor ||
             "";
     }
-}
-
-
-function getCurrentColorLabel(
-    color
-) {
-
-    return (
-        CARD_COLOR_LABELS[
-            color
-        ] ||
-        "—"
-    );
 }
 
 
@@ -3142,22 +3213,20 @@ function renderYellowEvent(
     state
 ) {
 
-    const event =
+    const container =
         document.getElementById(
             "yellow-event"
         );
 
 
-    if (!event) {
+    if (!container) {
         return;
     }
 
 
-    event.hidden =
-        !state
-            .yellowEventAvailable ||
-        state
-            .yellowEventUsed;
+    container.hidden =
+        !state.yellowEventAvailable ||
+        state.yellowEventUsed;
 }
 
 
@@ -3169,62 +3238,62 @@ function renderGameStatus(
     state
 ) {
 
-    let text = "";
+    let text;
 
 
     if (
         state.status ===
         "finished"
     ) {
+
         text =
             "Partie skončila.";
+
+    } else if (
+        GAME_RUNTIME
+            .pendingSevenChoice
+    ) {
+
+        text =
+            "Rozhodni se, zda chceš Lukyho karty.";
+
+    } else if (
+        state.pendingPlayerUno
+    ) {
+
+        text =
+            "Řekni UNO!";
 
     } else if (
         state.drawPenalty > 0
     ) {
 
-        if (
+        text =
             state.turn ===
-            "player"
-        ) {
-            text =
-                `Musíš přehodit penalizaci +${state.drawPenalty}, nebo si karty vzít.`;
-
-        } else {
-            text =
-                `Luky řeší penalizaci +${state.drawPenalty}.`;
-        }
+                "player"
+                ? `Přehraj penalizaci +${state.drawPenalty}, nebo si vezmi karty.`
+                : `Luky řeší penalizaci +${state.drawPenalty}.`;
 
     } else if (
         state.skipChainCount > 0
     ) {
 
-        if (
-            state.turn ===
-            "player"
-        ) {
-            text =
-                "Luky dal Stůj. Můžeš ho přehodit vlastním Stůj.";
-
-        } else {
-            text =
-                "Luky přemýšlí nad Stůj.";
-        }
-
-    } else if (
-        state.pendingPlayerUno
-    ) {
         text =
-            "Řekni UNO!";
+            state.turn ===
+                "player"
+                ? "Luky dal Stůj. Přehraj ho vlastním Stůj, nebo zvol „Stojím“."
+                : "Luky řeší Stůj.";
 
     } else if (
         state.turn ===
         "player"
     ) {
+
         text =
             "Jsi na tahu.";
 
     } else {
+
         text =
             "Luky přemýšlí...";
     }
@@ -3242,10 +3311,6 @@ function renderGameStatus(
 ========================================================= */
 
 function setupModalControls() {
-
-    /*
-        BARVA
-    */
 
     document
         .querySelectorAll(
@@ -3278,8 +3343,7 @@ function setupModalControls() {
                         }
 
 
-                        UI_STATE
-                            .pendingPlayCardIds =
+                        UI_STATE.pendingPlayCardIds =
                             null;
 
 
@@ -3304,102 +3368,85 @@ function setupModalControls() {
         );
 
 
-    /*
-        SEDMIČKA
-    */
-
-    const sevenYes =
-        document.getElementById(
+    document
+        .getElementById(
             "seven-swap-yes"
-        );
+        )
+        ?.addEventListener(
+            "click",
+            async () => {
+
+                closeModal();
 
 
-    sevenYes?.addEventListener(
-        "click",
-        () => {
-
-            closeModal();
-
-            resolvePlayerSevenChoice(
-                true
-            );
-        }
-    );
-
-
-    const sevenNo =
-        document.getElementById(
-            "seven-swap-no"
-        );
-
-
-    sevenNo?.addEventListener(
-        "click",
-        () => {
-
-            closeModal();
-
-            resolvePlayerSevenChoice(
-                false
-            );
-        }
-    );
-
-
-    /*
-        RESET SLOTU
-    */
-
-    const confirmReset =
-        document.getElementById(
-            "confirm-reset-slot"
-        );
-
-
-    confirmReset?.addEventListener(
-        "click",
-        () => {
-
-            const slotIndex =
-                UI_STATE
-                    .selectedSlotIndex;
-
-
-            if (
-                slotIndex === null
-            ) {
-                return;
+                await resolvePlayerSevenChoice(
+                    true
+                );
             }
-
-
-            resetSaveSlot(
-                slotIndex
-            );
-
-
-            closeModal();
-
-
-            openCharacterSelection(
-                slotIndex
-            );
-        }
-    );
-
-
-    const cancelReset =
-        document.getElementById(
-            "cancel-reset-slot"
         );
 
 
-    cancelReset?.addEventListener(
-        "click",
-        () => {
+    document
+        .getElementById(
+            "seven-swap-no"
+        )
+        ?.addEventListener(
+            "click",
+            async () => {
 
-            closeModal();
-        }
-    );
+                closeModal();
+
+
+                await resolvePlayerSevenChoice(
+                    false
+                );
+            }
+        );
+
+
+    document
+        .getElementById(
+            "confirm-reset-slot"
+        )
+        ?.addEventListener(
+            "click",
+            () => {
+
+                const slotIndex =
+                    UI_STATE
+                        .selectedSlotIndex;
+
+
+                if (
+                    slotIndex === null
+                ) {
+                    return;
+                }
+
+
+                resetSaveSlot(
+                    slotIndex
+                );
+
+
+                closeModal();
+
+
+                openCharacterSelection(
+                    slotIndex
+                );
+            }
+        );
+
+
+    document
+        .getElementById(
+            "cancel-reset-slot"
+        )
+        ?.addEventListener(
+            "click",
+            closeModal
+        );
 }
 
 
@@ -3407,9 +3454,7 @@ function setupModalControls() {
    OPEN / CLOSE MODAL
 ========================================================= */
 
-function openModal(
-    modalId
-) {
+function openModal(modalId) {
 
     const overlay =
         document.getElementById(
@@ -3478,47 +3523,29 @@ function closeModal() {
 
 function setupGameEvents() {
 
-    window.addEventListener(
-        "dotsuno:state-changed",
-        () => {
-
-            renderGame();
-        }
-    );
-
-
-    window.addEventListener(
-        "dotsuno:game-started",
-        () => {
-
-            renderGame();
-        }
-    );
+    const rerenderEvents = [
+        "state-changed",
+        "game-started",
+        "game-loaded",
+        "cards-played",
+        "cards-drawn",
+        "hands-swapped",
+        "draw-stack-changed",
+        "skip-chain-changed",
+        "yellow-event-available"
+    ];
 
 
-    window.addEventListener(
-        "dotsuno:game-loaded",
-        () => {
+    rerenderEvents.forEach(
+        (name) => {
 
-            renderGame();
-        }
-    );
+            window.addEventListener(
+                `dotsuno:${name}`,
+                () => {
 
-
-    window.addEventListener(
-        "dotsuno:cards-played",
-        () => {
-
-            renderGame();
-        }
-    );
-
-
-    window.addEventListener(
-        "dotsuno:cards-drawn",
-        () => {
-
-            renderGame();
+                    renderGame();
+                }
+            );
         }
     );
 
@@ -3530,9 +3557,6 @@ function setupGameEvents() {
             UI_STATE
                 .selectedCardIds
                 .clear();
-
-
-            renderGame();
         }
     );
 
@@ -3606,11 +3630,6 @@ function setupGameEvents() {
         "dotsuno:luky-thinking-end",
         () => {
 
-            /*
-                Pokud bublina zobrazuje pouze "...",
-                můžeme ji schovat.
-            */
-
             const text =
                 document.getElementById(
                     "luky-speech-text"
@@ -3621,17 +3640,9 @@ function setupGameEvents() {
                 text?.textContent ===
                 "..."
             ) {
+
                 hideLukySpeech();
             }
-        }
-    );
-
-
-    window.addEventListener(
-        "dotsuno:yellow-event-available",
-        () => {
-
-            renderGame();
         }
     );
 
@@ -3675,11 +3686,24 @@ function setupGameEvents() {
 
             showToast(
                 "Achievement odemčen",
-                achievement.title
+                achievement.title,
+                3600
             );
 
 
             renderMainMenuStats();
+        }
+    );
+
+
+    window.addEventListener(
+        "dotsuno:player-missed-uno",
+        (event) => {
+
+            showToast(
+                "UNO!",
+                `Bereš ${event.detail?.penalty ?? 2} karty.`
+            );
         }
     );
 
@@ -3724,12 +3748,14 @@ async function playOpeningQuote(
         normalized.type ===
         "single"
     ) {
+
         showLukySpeech(
             normalized.text,
             GAME_CONFIG
                 .speech
                 .defaultDurationMs
         );
+
 
         return;
     }
@@ -3770,7 +3796,7 @@ async function playOpeningQuote(
 
 
 /* =========================================================
-   HLÁŠKY
+   HLÁŠKY LUKYHO
 ========================================================= */
 
 function showLukySpeech(
@@ -3810,6 +3836,7 @@ function showLukySpeech(
         UI_STATE
             .lukySpeechTimer
     ) {
+
         clearTimeout(
             UI_STATE
                 .lukySpeechTimer
@@ -3826,11 +3853,10 @@ function showLukySpeech(
 
 
     if (
-        duration &&
         duration > 0
     ) {
-        UI_STATE
-            .lukySpeechTimer =
+
+        UI_STATE.lukySpeechTimer =
             setTimeout(
                 hideLukySpeech,
                 duration
@@ -3848,16 +3874,20 @@ function hideLukySpeech() {
 
 
     if (bubble) {
+
         bubble.hidden =
             true;
     }
 
 
-    UI_STATE
-        .lukySpeechTimer =
+    UI_STATE.lukySpeechTimer =
         null;
 }
 
+
+/* =========================================================
+   HLÁŠKY HRÁČE
+========================================================= */
 
 function showPlayerSpeech(
     text,
@@ -3896,6 +3926,7 @@ function showPlayerSpeech(
         UI_STATE
             .playerSpeechTimer
     ) {
+
         clearTimeout(
             UI_STATE
                 .playerSpeechTimer
@@ -3912,11 +3943,10 @@ function showPlayerSpeech(
 
 
     if (
-        duration &&
         duration > 0
     ) {
-        UI_STATE
-            .playerSpeechTimer =
+
+        UI_STATE.playerSpeechTimer =
             setTimeout(
                 hidePlayerSpeech,
                 duration
@@ -3934,27 +3964,33 @@ function hidePlayerSpeech() {
 
 
     if (bubble) {
+
         bubble.hidden =
             true;
     }
 
 
-    UI_STATE
-        .playerSpeechTimer =
+    UI_STATE.playerSpeechTimer =
         null;
 }
 
 
+/* =========================================================
+   RESET SPEECH
+========================================================= */
+
 function resetSpeechUI() {
 
     UI_STATE
-        .speechSequenceToken += 1;
+        .speechSequenceToken +=
+        1;
 
 
     if (
         UI_STATE
             .lukySpeechTimer
     ) {
+
         clearTimeout(
             UI_STATE
                 .lukySpeechTimer
@@ -3966,6 +4002,7 @@ function resetSpeechUI() {
         UI_STATE
             .playerSpeechTimer
     ) {
+
         clearTimeout(
             UI_STATE
                 .playerSpeechTimer
@@ -3986,9 +4023,8 @@ function resetSpeechUI() {
 function startUIEmote(detail) {
 
     if (
-        !detail ||
-        !detail.actor ||
-        !detail.image
+        !detail?.actor ||
+        !detail?.image
     ) {
         return;
     }
@@ -3998,8 +4034,8 @@ function startUIEmote(detail) {
         detail.actor ===
         "luky"
     ) {
-        UI_STATE
-            .activeLukyEmote =
+
+        UI_STATE.activeLukyEmote =
             true;
 
 
@@ -4010,13 +4046,18 @@ function startUIEmote(detail) {
 
 
         if (image) {
+
+            image.hidden =
+                false;
+
+
             image.src =
                 detail.image;
         }
 
 
-        image
-            ?.closest(
+        document
+            .querySelector(
                 ".opponent-photo-wrap"
             )
             ?.classList
@@ -4033,8 +4074,8 @@ function startUIEmote(detail) {
         detail.actor ===
         "player"
     ) {
-        UI_STATE
-            .activePlayerEmote =
+
+        UI_STATE.activePlayerEmote =
             true;
 
 
@@ -4045,13 +4086,18 @@ function startUIEmote(detail) {
 
 
         if (image) {
+
+            image.hidden =
+                false;
+
+
             image.src =
                 detail.image;
         }
 
 
-        image
-            ?.closest(
+        document
+            .querySelector(
                 ".player-avatar-wrap"
             )
             ?.classList
@@ -4067,8 +4113,8 @@ function endUIEmote(actor) {
     if (
         actor === "luky"
     ) {
-        UI_STATE
-            .activeLukyEmote =
+
+        UI_STATE.activeLukyEmote =
             false;
 
 
@@ -4084,6 +4130,7 @@ function endUIEmote(actor) {
 
         restoreLukyImage();
 
+
         return;
     }
 
@@ -4091,8 +4138,8 @@ function endUIEmote(actor) {
     if (
         actor === "player"
     ) {
-        UI_STATE
-            .activePlayerEmote =
+
+        UI_STATE.activePlayerEmote =
             false;
 
 
@@ -4257,6 +4304,7 @@ function showGameOver(detail) {
         playerImage &&
         detail.playerImage
     ) {
+
         playerImage.src =
             detail.playerImage;
     }
@@ -4266,12 +4314,15 @@ function showGameOver(detail) {
         lukyImage &&
         detail.lukyImage
     ) {
+
         lukyImage.src =
             detail.lukyImage;
     }
 
 
-    if (detail.slot) {
+    if (
+        detail.slot
+    ) {
 
         setText(
             "game-over-score",
@@ -4295,9 +4346,6 @@ function showGameOver(detail) {
    TOAST
 ========================================================= */
 
-let toastTimer = null;
-
-
 function showToast(
     title,
     text,
@@ -4315,9 +4363,12 @@ function showToast(
     }
 
 
-    if (toastTimer) {
+    if (
+        UI_STATE.toastTimer
+    ) {
+
         clearTimeout(
-            toastTimer
+            UI_STATE.toastTimer
         );
     }
 
@@ -4338,7 +4389,7 @@ function showToast(
         false;
 
 
-    toastTimer =
+    UI_STATE.toastTimer =
         setTimeout(
             () => {
 
@@ -4346,7 +4397,7 @@ function showToast(
                     true;
 
 
-                toastTimer =
+                UI_STATE.toastTimer =
                     null;
             },
             duration
@@ -4358,11 +4409,11 @@ function showToast(
    IMAGE FALLBACKS
 ========================================================= */
 
-function setupImageFallbacks() {
+function setupStaticImageFallbacks() {
 
     document
         .querySelectorAll(
-            "img"
+            "[data-character-image]"
         )
         .forEach(
             (image) => {
@@ -4371,9 +4422,26 @@ function setupImageFallbacks() {
                     "error",
                     () => {
 
-                        handleGenericImageError(
-                            image
-                        );
+                        const characterId =
+                            image.dataset
+                                .characterImage;
+
+
+                        const fallback =
+                            document.querySelector(
+                                `[data-character-fallback="${CSS.escape(characterId)}"]`
+                            );
+
+
+                        image.hidden =
+                            true;
+
+
+                        if (fallback) {
+
+                            fallback.hidden =
+                                false;
+                        }
                     }
                 );
             }
@@ -4381,89 +4449,8 @@ function setupImageFallbacks() {
 }
 
 
-function handleGenericImageError(
-    image
-) {
-
-    if (
-        image.id ===
-        "luky-photo"
-    ) {
-        const fallback =
-            document.getElementById(
-                "luky-photo-fallback"
-            );
-
-
-        image.hidden =
-            true;
-
-
-        if (fallback) {
-            fallback.hidden =
-                false;
-        }
-
-
-        return;
-    }
-
-
-    if (
-        image.id ===
-        "player-avatar"
-    ) {
-        const fallback =
-            document.getElementById(
-                "player-avatar-fallback"
-            );
-
-
-        image.hidden =
-            true;
-
-
-        if (fallback) {
-            fallback.hidden =
-                false;
-        }
-
-
-        return;
-    }
-
-
-    /*
-        Výběr postav.
-    */
-
-    const characterId =
-        image.dataset
-            .characterImage;
-
-
-    if (characterId) {
-
-        const fallback =
-            document.querySelector(
-                `[data-character-fallback="${CSS.escape(characterId)}"]`
-            );
-
-
-        image.hidden =
-            true;
-
-
-        if (fallback) {
-            fallback.hidden =
-                false;
-        }
-    }
-}
-
-
 /* =========================================================
-   SET IMAGE + FALLBACK
+   SET IMAGE
 ========================================================= */
 
 function setImageWithFallback({
@@ -4536,12 +4523,10 @@ function setImageWithFallback({
 
 
 /* =========================================================
-   FORMÁT POČTU KARET
+   POČET KARET
 ========================================================= */
 
-function formatCardCount(
-    count
-) {
+function formatCardCount(count) {
 
     if (
         count === 1
@@ -4591,7 +4576,7 @@ function setText(
 
 
 /* =========================================================
-   UI SLEEP
+   SLEEP
 ========================================================= */
 
 function uiSleep(milliseconds) {
