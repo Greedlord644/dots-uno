@@ -81,10 +81,45 @@
                 </div>
 
 
+                <!-- ==================================
+                     HUDBA
+                =================================== -->
+
+                <div class="menu-settings">
+
+                    <label
+                        class="settings-checkbox"
+                        for="music-enabled-checkbox"
+                    >
+
+                        <input
+                            type="checkbox"
+                            id="music-enabled-checkbox"
+                            checked
+                        >
+
+                        <span
+                            class="settings-checkbox-mark"
+                            aria-hidden="true"
+                        ></span>
+
+                        <span class="settings-checkbox-label">
+                            Zapnutá hudba
+                        </span>
+
+                    </label>
+
+                </div>
+
+
+                <!-- ==================================
+                     GLOBÁLNÍ SKÓRE
+                =================================== -->
+
                 <div class="global-score">
 
                     <span class="global-score-label">
-                        Celkem
+                        Celkem vítězství / porážek
                     </span>
 
                     <div class="global-score-values">
@@ -312,9 +347,9 @@
                 </div>
 
 
-                <!-- ==========================================
+                <!-- ==================================
                      VÝBĚR SKINU
-                =========================================== -->
+                =================================== -->
 
                 <section
                     id="skin-selection"
@@ -467,7 +502,7 @@
                         class="menu-button menu-button-primary"
                         id="continue-game-button"
                     >
-                        Pokračovat
+                        Pokračovat v partii
                     </button>
 
 
@@ -476,7 +511,7 @@
                         class="menu-button"
                         id="start-next-game-button"
                     >
-                        Hrát další partii
+                        Hrát novou partii
                     </button>
 
 
@@ -505,7 +540,7 @@
 
 
         <!-- ==========================================
-             ZMĚNA SKINU EXISTUJÍCÍHO SLOTU
+             ZMĚNA SKINU
         =========================================== -->
 
         <section
@@ -628,23 +663,27 @@
 
             <div class="game-table">
 
+
                 <!-- ==================================
-                     HORNÍ LIŠTA
+                     HORNÍ OVLÁDÁNÍ
                 =================================== -->
 
                 <header class="game-topbar">
 
                     <button
                         type="button"
-                        class="icon-button"
+                        class="icon-button game-menu-button"
                         id="game-menu-button"
-                        aria-label="Menu"
+                        aria-label="Menu hry"
                     >
                         ☰
                     </button>
 
 
-                    <div class="game-slot-info">
+                    <div
+                        class="game-slot-info"
+                        id="game-slot-info"
+                    >
 
                         <span id="game-character-name">
                             Dany
@@ -657,12 +696,40 @@
                     </div>
 
 
-                    <div class="game-opponent-score">
+                    <div class="game-topbar-actions">
 
-                        Luky:
-                        <strong id="game-luky-score">
-                            0
-                        </strong>
+                        <!-- HISTORIE -->
+
+                        <button
+                            type="button"
+                            class="icon-button game-history-button"
+                            id="history-button"
+                            aria-label="Historie tahů"
+                            aria-expanded="false"
+                            aria-controls="history-panel"
+                        >
+                            ↺
+                        </button>
+
+
+                        <!-- HUDBA -->
+
+                        <button
+                            type="button"
+                            class="icon-button music-toggle-button"
+                            id="music-toggle-button"
+                            aria-label="Vypnout hudbu"
+                            aria-pressed="true"
+                        >
+
+                            <span
+                                id="music-toggle-icon"
+                                aria-hidden="true"
+                            >
+                                🔊
+                            </span>
+
+                        </button>
 
                     </div>
 
@@ -714,7 +781,7 @@
 
                     <div
                         id="luky-speech"
-                        class="speech-bubble"
+                        class="speech-bubble opponent-speech"
                         hidden
                     >
                         <span id="luky-speech-text"></span>
@@ -738,20 +805,8 @@
 
                 <section class="table-center">
 
-                    <div
-                        id="draw-penalty-indicator"
-                        class="draw-penalty-indicator"
-                        hidden
-                    >
 
-                        Bere se
-
-                        <strong id="draw-penalty-value">
-                            +2
-                        </strong>
-
-                    </div>
-
+                    <!-- DOBÍRACÍ BALÍČEK -->
 
                     <button
                         type="button"
@@ -761,15 +816,25 @@
                     >
 
                         <div class="card-back">
-                            <span>DOTS</span>
+
+                            <img
+                                src="assets/images/logo.png"
+                                alt=""
+                                class="card-back-logo"
+                            >
+
                         </div>
 
                     </button>
 
 
-                    <div
+                    <!-- ODHOD -->
+
+                    <button
+                        type="button"
                         class="discard-zone"
                         id="discard-zone"
+                        aria-label="Zahrát vybrané karty nebo otevřít historii odhozu"
                     >
 
                         <div
@@ -780,11 +845,13 @@
                         </div>
 
                         <span class="discard-zone-label">
-                            Odhodit
+                            Odhod
                         </span>
 
-                    </div>
+                    </button>
 
+
+                    <!-- AKTUÁLNÍ BARVA -->
 
                     <div
                         id="current-color-indicator"
@@ -797,6 +864,29 @@
 
                         <strong id="current-color-label">
                             —
+                        </strong>
+
+                    </div>
+
+
+                    <!-- PENALIZACE
+
+                         Je to pouze informační stav,
+                         NE tlačítko.
+                    -->
+
+                    <div
+                        id="draw-penalty-indicator"
+                        class="draw-penalty-indicator"
+                        hidden
+                    >
+
+                        <span>
+                            Penalizace
+                        </span>
+
+                        <strong id="draw-penalty-value">
+                            +2
                         </strong>
 
                     </div>
@@ -823,50 +913,6 @@
                     </button>
 
                 </div>
-
-
-                <!-- ==================================
-                     OVLÁDÁNÍ HRY
-                =================================== -->
-
-                <section class="game-controls">
-
-                    <button
-                        type="button"
-                        class="uno-button"
-                        id="uno-button"
-                    >
-                        UNO!
-                    </button>
-
-
-                    <button
-                        type="button"
-                        class="catch-uno-button"
-                        id="catch-uno-button"
-                    >
-                        Neřekl jsi UNO!
-                    </button>
-
-
-                    <!--
-                        Zobrazuje se pouze tehdy, když
-                        hráč čelí kartě Stůj.
-
-                        Pokud nemá / nechce přehodit vlastní Stůj,
-                        klikne sem a jeho tah je přeskočen.
-                    -->
-
-                    <button
-                        type="button"
-                        class="skip-accept-button"
-                        id="accept-skip-button"
-                        hidden
-                    >
-                        Stojím
-                    </button>
-
-                </section>
 
 
                 <!-- ==================================
@@ -933,18 +979,127 @@
 
 
                 <!-- ==================================
-                     STAV HRY
+                     STAV HRY + POSLEDNÍ AKCE
                 =================================== -->
 
-                <div
-                    id="game-status"
-                    class="game-status"
-                    aria-live="polite"
-                >
-                    Připravuji hru...
-                </div>
+                <section class="game-status-panel">
+
+                    <strong
+                        id="game-status"
+                        class="game-status"
+                        aria-live="polite"
+                    >
+                        Připravuji hru...
+                    </strong>
+
+
+                    <span
+                        id="last-action-text"
+                        class="last-action-text"
+                    ></span>
+
+                </section>
+
+
+                <!-- ==================================
+                     OVLÁDÁNÍ AŽ POD KARTAMI
+                =================================== -->
+
+                <section class="game-controls">
+
+                    <button
+                        type="button"
+                        class="uno-button"
+                        id="uno-button"
+                    >
+                        UNO!
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="catch-uno-button"
+                        id="catch-uno-button"
+                    >
+                        Neřekl jsi UNO!
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="skip-accept-button"
+                        id="accept-skip-button"
+                        hidden
+                    >
+                        Stojím
+                    </button>
+
+                </section>
 
             </div>
+
+
+            <!-- ======================================
+                 VYSOUVACÍ HISTORIE
+            ======================================= -->
+
+            <aside
+                id="history-panel"
+                class="history-panel"
+                aria-label="Historie tahů"
+                aria-hidden="true"
+            >
+
+                <header class="history-panel-header">
+
+                    <div>
+
+                        <span class="panel-kicker">
+                            Partie
+                        </span>
+
+                        <h2>
+                            Historie
+                        </h2>
+
+                    </div>
+
+
+                    <button
+                        type="button"
+                        class="icon-button"
+                        id="history-close-button"
+                        aria-label="Zavřít historii"
+                    >
+                        ×
+                    </button>
+
+                </header>
+
+
+                <div
+                    id="history-list"
+                    class="history-list"
+                >
+
+                    <div class="history-empty">
+                        Zatím se nic nestalo.
+                    </div>
+
+                </div>
+
+            </aside>
+
+
+            <!-- OVERLAY HISTORIE -->
+
+            <button
+                type="button"
+                id="history-backdrop"
+                class="history-backdrop"
+                aria-label="Zavřít historii"
+                hidden
+            ></button>
 
         </section>
 
@@ -959,58 +1114,89 @@
             hidden
         >
 
-            <!-- VÝBĚR BARVY -->
+
+            <!-- ======================================
+                 VÝBĚR BARVY
+            ======================================= -->
 
             <section
                 id="modal-color"
-                class="modal"
+                class="modal color-modal"
                 hidden
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="color-modal-title"
             >
 
-                <h2 id="color-modal-title">
-                    Vyber barvu
-                </h2>
+                <div
+                    id="color-choice-content"
+                    class="color-choice-content"
+                >
+
+                    <h2 id="color-modal-title">
+                        Vyber barvu
+                    </h2>
 
 
-                <div class="color-choice-grid">
+                    <p class="modal-note">
+                        Pokračovat můžeš až po výběru barvy.
+                    </p>
 
-                    <button
-                        type="button"
-                        class="color-choice color-red"
-                        data-color-choice="red"
-                        aria-label="Červená"
-                    ></button>
 
-                    <button
-                        type="button"
-                        class="color-choice color-yellow"
-                        data-color-choice="yellow"
-                        aria-label="Žlutá"
-                    ></button>
+                    <div class="color-choice-grid">
 
-                    <button
-                        type="button"
-                        class="color-choice color-green"
-                        data-color-choice="green"
-                        aria-label="Zelená"
-                    ></button>
+                        <button
+                            type="button"
+                            class="color-choice color-red"
+                            data-color-choice="red"
+                            aria-label="Červená"
+                        ></button>
 
-                    <button
-                        type="button"
-                        class="color-choice color-blue"
-                        data-color-choice="blue"
-                        aria-label="Modrá"
-                    ></button>
+                        <button
+                            type="button"
+                            class="color-choice color-yellow"
+                            data-color-choice="yellow"
+                            aria-label="Žlutá"
+                        ></button>
+
+                        <button
+                            type="button"
+                            class="color-choice color-green"
+                            data-color-choice="green"
+                            aria-label="Zelená"
+                        ></button>
+
+                        <button
+                            type="button"
+                            class="color-choice color-blue"
+                            data-color-choice="blue"
+                            aria-label="Modrá"
+                        ></button>
+
+                    </div>
 
                 </div>
+
+
+                <!--
+                    Modal se vizuálně schová, ale rozhodnutí
+                    zůstává aktivní. Hra nepokračuje.
+                -->
+
+                <button
+                    type="button"
+                    class="secondary-action-button color-modal-toggle"
+                    id="hide-color-choice-button"
+                >
+                    Podívat se na karty
+                </button>
 
             </section>
 
 
-            <!-- SEDMIČKA -->
+            <!-- ======================================
+                 SEDMIČKA
+            ======================================= -->
 
             <section
                 id="modal-seven"
@@ -1049,7 +1235,9 @@
             </section>
 
 
-            <!-- RESET SLOTU -->
+            <!-- ======================================
+                 RESET SLOTU
+            ======================================= -->
 
             <section
                 id="modal-reset-slot"
@@ -1096,7 +1284,9 @@
             </section>
 
 
-            <!-- KONEC PARTIE -->
+            <!-- ======================================
+                 KONEC PARTIE
+            ======================================= -->
 
             <section
                 id="modal-game-over"
@@ -1178,7 +1368,7 @@
                         class="modal-button modal-button-primary"
                         id="play-again-button"
                     >
-                        Další partie
+                        Hrát novou partii
                     </button>
 
                     <button
@@ -1194,7 +1384,9 @@
             </section>
 
 
-            <!-- MENU BĚHEM HRY -->
+            <!-- ======================================
+                 MENU BĚHEM HRY
+            ======================================= -->
 
             <section
                 id="modal-game-menu"
@@ -1236,6 +1428,23 @@
 
 
         <!-- ==========================================
+             MINIMALIZOVANÝ VÝBĚR BARVY
+
+             Zobrazí se poté, co hráč v color modalu
+             zvolí "Podívat se na karty".
+        =========================================== -->
+
+        <button
+            type="button"
+            id="restore-color-choice-button"
+            class="restore-color-choice-button"
+            hidden
+        >
+            Vybrat barvu
+        </button>
+
+
+        <!-- ==========================================
              TOAST
         =========================================== -->
 
@@ -1256,6 +1465,22 @@
                 class="toast-text"
             ></span>
 
+        </div>
+
+
+        <!-- ==========================================
+             SKRYTÝ YOUTUBE PLAYER
+
+             YouTube API do tohoto elementu vytvoří iframe.
+             Není vizuální součástí hry.
+        =========================================== -->
+
+        <div
+            id="youtube-music-container"
+            class="youtube-music-container"
+            aria-hidden="true"
+        >
+            <div id="youtube-music-player"></div>
         </div>
 
     </div>
@@ -1292,7 +1517,7 @@
 
 
     <!-- ==========================================
-         TEMPLATE ZADNÍ STRANY KARTY
+         RUB KARTY
     =========================================== -->
 
     <template id="card-back-template">
@@ -1300,7 +1525,13 @@
         <div class="game-card game-card-back">
 
             <div class="card-back-inner">
-                DOTS
+
+                <img
+                    src="assets/images/logo.png"
+                    alt=""
+                    class="card-back-logo"
+                >
+
             </div>
 
         </div>
@@ -1309,7 +1540,7 @@
 
 
     <!-- ==========================================
-         TEMPLATE SLOTU
+         SAVE SLOT
     =========================================== -->
 
     <template id="save-slot-template">
@@ -1346,7 +1577,7 @@
 
 
     <!-- ==========================================
-         TEMPLATE SKINU
+         SKIN
     =========================================== -->
 
     <template id="skin-card-template">
@@ -1404,15 +1635,38 @@
 
 
     <!-- ==========================================
-         TEMPLATE ACHIEVEMENTU
+         ACHIEVEMENT
     =========================================== -->
 
     <template id="achievement-template">
 
         <article class="achievement-card">
 
-            <div class="achievement-icon">
-                ★
+            <!--
+                Pokud achievement obsahuje obrázek nebo kartu,
+                ui.js použije tuto oblast místo malé hvězdy.
+            -->
+
+            <div class="achievement-visual">
+
+                <div class="achievement-icon">
+                    ★
+                </div>
+
+
+                <img
+                    class="achievement-image"
+                    src=""
+                    alt=""
+                    hidden
+                >
+
+
+                <div
+                    class="achievement-card-preview"
+                    hidden
+                ></div>
+
             </div>
 
 
@@ -1421,6 +1675,7 @@
                 <h3 class="achievement-title"></h3>
 
                 <p class="achievement-description"></p>
+
 
                 <div
                     class="achievement-progress"
@@ -1445,16 +1700,75 @@
 
 
     <!-- ==========================================
+         HISTORIE TAHU
+    =========================================== -->
+
+    <template id="history-entry-template">
+
+        <article class="history-entry">
+
+            <div class="history-entry-avatar-wrap">
+
+                <img
+                    class="history-entry-avatar"
+                    src=""
+                    alt=""
+                >
+
+                <div
+                    class="history-entry-avatar-fallback"
+                    hidden
+                ></div>
+
+            </div>
+
+
+            <div class="history-entry-content">
+
+                <div class="history-entry-heading">
+
+                    <strong class="history-entry-name"></strong>
+
+                    <span class="history-entry-time"></span>
+
+                </div>
+
+
+                <p class="history-entry-text"></p>
+
+
+                <div
+                    class="history-entry-cards"
+                    hidden
+                >
+                    <!-- JavaScript -->
+                </div>
+
+            </div>
+
+        </article>
+
+    </template>
+
+
+    <!-- ==========================================
          JAVASCRIPT
+
+         settings.js musí být hned za config.js.
     =========================================== -->
 
     <script src="js/config.js"></script>
+    <script src="js/settings.js"></script>
     <script src="js/cards.js"></script>
     <script src="js/quotes.js"></script>
     <script src="js/saves.js"></script>
     <script src="js/achievements.js"></script>
     <script src="js/ai.js"></script>
     <script src="js/game.js"></script>
+
+    <!-- YouTube IFrame API -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+
     <script src="js/ui.js"></script>
 
 </body>
