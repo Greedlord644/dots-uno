@@ -4,45 +4,73 @@
 /* =========================================================
    DOTS UNO
    HLAVNÍ HERNÍ ENGINE
+
+   Řeší:
+   - novou / uloženou partii
+   - tahy hráče a Lukyho
+   - +2 / +4 řetězce
+   - Stůj řetězce
+   - 0 / 7
+   - Kuř!
+   - UNO
+   - historii partie
+   - poslední akci
+   - emoty
+   - achievementy
+   - žlutý event
+   - konec partie
 ========================================================= */
 
 
 const GAME_RUNTIME = {
 
-    slotIndex: null,
+    slotIndex:
+        null,
 
-    state: null,
+    state:
+        null,
 
-    pendingSevenChoice: false,
+    pendingSevenChoice:
+        false,
 
-    playerUnoTimer: null,
+    playerUnoTimer:
+        null,
 
-    playerUnoResolver: null,
+    playerUnoResolver:
+        null,
 
-    lukyUnoTimer: null,
+    lukyUnoTimer:
+        null,
 
-    lukyUnoCatchOpen: false,
+    lukyUnoCatchOpen:
+        false,
 
-    lukyPhraseTimer: null,
+    lukyPhraseTimer:
+        null,
 
-    emoteCooldownUntil: 0,
+    emoteCooldownUntil:
+        0,
 
-    emoteTimer: null,
+    emoteTimer:
+        null,
 
-    lukyTurnRunning: false,
+    lukyTurnRunning:
+        false,
 
-    paused: false
+    paused:
+        false
 };
 
 
 /* =========================================================
-   EVENTY PRO UI
+   EVENTY
 ========================================================= */
 
 function emitGameEvent(
     name,
     detail = {}
 ) {
+
     window.dispatchEvent(
         new CustomEvent(
             `dotsuno:${name}`,
@@ -59,11 +87,13 @@ function emitGameEvent(
 ========================================================= */
 
 function getGameState() {
+
     return GAME_RUNTIME.state;
 }
 
 
 function getActiveSlotIndex() {
+
     return GAME_RUNTIME.slotIndex;
 }
 
@@ -72,19 +102,26 @@ function getActiveSlotIndex() {
    NOVÁ PARTIE
 ========================================================= */
 
-function startNewGame(slotIndex) {
+function startNewGame(
+    slotIndex
+) {
 
     clearRuntimeTimers();
 
 
     const slot =
-        getSaveSlot(slotIndex);
+        getSaveSlot(
+            slotIndex
+        );
 
 
     if (
         !slot ||
-        isSaveSlotEmpty(slot)
+        isSaveSlotEmpty(
+            slot
+        )
     ) {
+
         throw new Error(
             "Nelze spustit hru v prázdném slotu."
         );
@@ -94,8 +131,10 @@ function startNewGame(slotIndex) {
     GAME_RUNTIME.slotIndex =
         slotIndex;
 
+
     GAME_RUNTIME.pendingSevenChoice =
         false;
+
 
     GAME_RUNTIME.paused =
         false;
@@ -113,9 +152,12 @@ function startNewGame(slotIndex) {
         );
 
 
-    const playerHand = [];
+    const playerHand =
+        [];
 
-    const lukyHand = [];
+
+    const lukyHand =
+        [];
 
 
     for (
@@ -173,21 +215,41 @@ function startNewGame(slotIndex) {
                 firstDiscard
             ),
 
-        drawPenalty: 0,
+        drawPenalty:
+            0,
 
-        topPenaltyType: null,
+        topPenaltyType:
+            null,
 
-        skipChainCount: 0,
+        skipChainCount:
+            0,
 
-        pendingPlayerUno: false,
+        pendingPlayerUno:
+            false,
 
-        pendingLukyUno: false,
+        pendingLukyUno:
+            false,
 
-        lukyForgotUno: false,
+        lukyForgotUno:
+            false,
 
-        playerForcedDrawStreak: 0,
+        lukyUnoSaid:
+            false,
 
-        turnCount: 0,
+        playerUnoDeferred:
+            false,
+
+        playerForcedDrawStreak:
+            0,
+
+        turnCount:
+            0,
+
+        history:
+            [],
+
+        lastAction:
+            null,
 
         yellowEventEligible:
             GAME_CONFIG
@@ -200,9 +262,11 @@ function startNewGame(slotIndex) {
                     .everyNthGame
             ) === 0,
 
-        yellowEventAvailable: false,
+        yellowEventAvailable:
+            false,
 
-        yellowEventUsed: false,
+        yellowEventUsed:
+            false,
 
         gameNumber,
 
@@ -218,6 +282,18 @@ function startNewGame(slotIndex) {
         state;
 
 
+    addHistory({
+        actor:
+            "system",
+
+        type:
+            "game-start",
+
+        text:
+            "Partie začala."
+    });
+
+
     saveGame();
 
 
@@ -225,6 +301,7 @@ function startNewGame(slotIndex) {
         "game-started",
         {
             state,
+
             slot
         }
     );
@@ -241,7 +318,7 @@ function startNewGame(slotIndex) {
 
 
 /* =========================================================
-   POKRAČOVÁNÍ PARTIE
+   POKRAČOVÁNÍ
 ========================================================= */
 
 function continueSavedGame(
@@ -259,8 +336,11 @@ function continueSavedGame(
 
     if (
         !slot ||
-        isSaveSlotEmpty(slot)
+        isSaveSlotEmpty(
+            slot
+        )
     ) {
+
         throw new Error(
             "Slot neexistuje."
         );
@@ -289,6 +369,27 @@ function continueSavedGame(
 
         ...saved,
 
+        history:
+            Array.isArray(
+                saved.history
+            )
+                ? saved.history
+                : [],
+
+        lastAction:
+            saved.lastAction ||
+            null,
+
+        lukyUnoSaid:
+            Boolean(
+                saved.lukyUnoSaid
+            ),
+
+        playerUnoDeferred:
+            Boolean(
+                saved.playerUnoDeferred
+            ),
+
         playerForcedDrawStreak:
             normalizeNonNegativeInteger(
                 saved.playerForcedDrawStreak
@@ -297,18 +398,7 @@ function continueSavedGame(
         turnCount:
             normalizeNonNegativeInteger(
                 saved.turnCount
-            ),
-
-        yellowEventEligible:
-            typeof saved.yellowEventEligible ===
-                "boolean"
-                ? saved.yellowEventEligible
-                : (
-                    saved.gameNumber %
-                    GAME_CONFIG
-                        .yellowEvent
-                        .everyNthGame
-                ) === 0
+            )
     };
 
 
@@ -356,12 +446,17 @@ function continueSavedGame(
    PRVNÍ BARVA
 ========================================================= */
 
-function getInitialColor(card) {
+function getInitialColor(
+    card
+) {
 
     if (
         !card ||
-        isWildCard(card)
+        isWildCard(
+            card
+        )
     ) {
+
         return CARD_COLORS.RED;
     }
 
@@ -378,6 +473,239 @@ function getCurrentTopCard() {
 
     return getTopDiscardCard(
         GAME_RUNTIME.state
+    );
+}
+
+
+/* =========================================================
+   HISTORIE
+========================================================= */
+
+function addHistory({
+    actor = "system",
+    type = "info",
+    text = "",
+    cards = [],
+    amount = null,
+    color = null,
+    unoSaid = null
+} = {}) {
+
+    const state =
+        GAME_RUNTIME.state;
+
+
+    if (
+        !state ||
+        !GAME_CONFIG
+            .history
+            .enabled
+    ) {
+
+        return null;
+    }
+
+
+    const entry =
+        createHistoryEntry({
+            actor,
+            type,
+            text,
+            cards,
+            amount,
+            color,
+            unoSaid
+        });
+
+
+    const result =
+        appendGameHistoryEntry(
+            state,
+            entry
+        );
+
+
+    if (result) {
+
+        emitGameEvent(
+            "history-changed",
+            {
+                entry:
+                    result,
+
+                history:
+                    state.history
+            }
+        );
+    }
+
+
+    return result;
+}
+
+
+/* =========================================================
+   JMÉNO HRÁČE
+========================================================= */
+
+function getCurrentPlayerName() {
+
+    const slot =
+        GAME_RUNTIME.slotIndex ===
+            null
+            ? null
+            : getSaveSlot(
+                GAME_RUNTIME.slotIndex
+            );
+
+
+    return (
+        getCharacterName(
+            slot?.characterId
+        ) ||
+        "Hráč"
+    );
+}
+
+
+/* =========================================================
+   POPIS KARTY PRO HISTORII
+========================================================= */
+
+function getHistoryCardText(
+    card
+) {
+
+    if (!card) {
+
+        return "kartu";
+    }
+
+
+    const color =
+        getHistoryColorName(
+            card.color
+        );
+
+
+    if (
+        card.type ===
+        CARD_TYPES.NUMBER
+    ) {
+
+        return `${color} ${card.value}`;
+    }
+
+
+    if (
+        card.type ===
+        CARD_TYPES.SKIP
+    ) {
+
+        return `${color} Stůj`;
+    }
+
+
+    if (
+        card.type ===
+        CARD_TYPES.REVERSE
+    ) {
+
+        return `${color} Změnu směru`;
+    }
+
+
+    if (
+        card.type ===
+        CARD_TYPES.DRAW_TWO
+    ) {
+
+        return `${color} +2`;
+    }
+
+
+    if (
+        card.type ===
+        CARD_TYPES.WILD_DRAW_FOUR
+    ) {
+
+        return "divokou +4";
+    }
+
+
+    if (
+        card.type ===
+        CARD_TYPES.WILD
+    ) {
+
+        return "divokou kartu";
+    }
+
+
+    return "kartu";
+}
+
+
+function getHistoryColorName(
+    color
+) {
+
+    switch (
+        color
+    ) {
+
+        case CARD_COLORS.RED:
+            return "červenou";
+
+        case CARD_COLORS.YELLOW:
+            return "žlutou";
+
+        case CARD_COLORS.GREEN:
+            return "zelenou";
+
+        case CARD_COLORS.BLUE:
+            return "modrou";
+
+        default:
+            return "";
+    }
+}
+
+
+/* =========================================================
+   POPIS ZAHRANÝCH KARET
+========================================================= */
+
+function getPlayedCardsHistoryText(
+    actorName,
+    cards
+) {
+
+    if (
+        !Array.isArray(
+            cards
+        ) ||
+        cards.length === 0
+    ) {
+
+        return `${actorName} zahrál kartu.`;
+    }
+
+
+    if (
+        cards.length === 1
+    ) {
+
+        return (
+            `${actorName} zahrál ` +
+            `${getHistoryCardText(cards[0])}.`
+        );
+    }
+
+
+    return (
+        `${actorName} zahrál ${cards.length}× ` +
+        `${getHistoryCardText(cards[0])} – Kuř!`
     );
 }
 
@@ -477,11 +805,12 @@ function validatePlayerPlay(
 
 
     /* =====================================================
-       +2 / +4 ŘETĚZEC
+       DOBÍRACÍ ŘETĚZEC
     ===================================================== */
 
     if (
-        state.drawPenalty > 0
+        state.drawPenalty >
+        0
     ) {
 
         if (
@@ -504,11 +833,12 @@ function validatePlayerPlay(
 
 
     /* =====================================================
-       STŮJ ŘETĚZEC
+       STŮJ
     ===================================================== */
 
     if (
-        state.skipChainCount > 0
+        state.skipChainCount >
+        0
     ) {
 
         if (
@@ -557,10 +887,14 @@ function validatePlayerPlay(
 }
 
 
-function validPlayResult(cards) {
+function validPlayResult(
+    cards
+) {
 
     return {
-        valid: true,
+
+        valid:
+            true,
 
         cards,
 
@@ -572,22 +906,28 @@ function validPlayResult(cards) {
 }
 
 
-function invalidPlay(message) {
+function invalidPlay(
+    message
+) {
 
     return {
-        valid: false,
+
+        valid:
+            false,
 
         message,
 
-        cards: [],
+        cards:
+            [],
 
-        needsColorChoice: false
+        needsColorChoice:
+            false
     };
 }
 
 
 /* =========================================================
-   ZAHRÁNÍ KARET HRÁČEM
+   HRÁČ ZAHRÁL KARTY
 ========================================================= */
 
 async function playerPlayCards(
@@ -601,7 +941,9 @@ async function playerPlayCards(
         );
 
 
-    if (!validation.valid) {
+    if (
+        !validation.valid
+    ) {
 
         emitGameEvent(
             "invalid-action",
@@ -617,15 +959,16 @@ async function playerPlayCards(
 
 
     if (
-        validation
-            .needsColorChoice &&
+        validation.needsColorChoice &&
         !isPlayableColor(
             chosenColor
         )
     ) {
 
         return {
-            valid: false,
+
+            valid:
+                false,
 
             needsColorChoice:
                 true,
@@ -646,6 +989,10 @@ async function playerPlayCards(
 
     const previousSkipChain =
         state.skipChainCount;
+
+
+    state.playerUnoDeferred =
+        false;
 
 
     cancelPlayerUnoTimer();
@@ -681,9 +1028,25 @@ async function playerPlayCards(
         );
 
 
-    /* =====================================================
-       KUŘ!
-    ===================================================== */
+    addHistory({
+        actor:
+            "player",
+
+        type:
+            "play",
+
+        text:
+            getPlayedCardsHistoryText(
+                getCurrentPlayerName(),
+                cards
+            ),
+
+        cards,
+
+        color:
+            state.currentColor
+    });
+
 
     if (
         effect.isKur
@@ -722,6 +1085,10 @@ async function playerPlayCards(
 
     /* =====================================================
        VÝHRA
+
+       Proběhne PŘED 0 / 7 efektem.
+
+       Tedy poslední karta 0 = výhra a žádná výměna.
     ===================================================== */
 
     if (
@@ -735,9 +1102,12 @@ async function playerPlayCards(
 
 
         return {
-            valid: true,
 
-            finished: true
+            valid:
+                true,
+
+            finished:
+                true
         };
     }
 
@@ -774,6 +1144,7 @@ async function playerPlayCards(
 
         saveGame();
 
+
         emitStateChanged();
 
 
@@ -786,7 +1157,8 @@ async function playerPlayCards(
 
 
         return {
-            valid: true
+            valid:
+                true
         };
     }
 
@@ -800,13 +1172,9 @@ async function playerPlayCards(
         CARD_TYPES.SKIP
     ) {
 
-        /*
-            Pokud už Stůj řetězec běžel,
-            právě hráč Lukyho Stůj přehodil.
-        */
-
         if (
-            previousSkipChain > 0
+            previousSkipChain >
+            0
         ) {
 
             emitSkipCounterQuote(
@@ -826,6 +1194,7 @@ async function playerPlayCards(
 
         saveGame();
 
+
         emitStateChanged();
 
 
@@ -838,7 +1207,8 @@ async function playerPlayCards(
 
 
         return {
-            valid: true
+            valid:
+                true
         };
     }
 
@@ -854,6 +1224,18 @@ async function playerPlayCards(
     ) {
 
         swapHands();
+
+
+        addHistory({
+            actor:
+                "system",
+
+            type:
+                "hand-swap",
+
+            text:
+                "Hráči si vyměnili karty kvůli nule."
+        });
 
 
         emitGameEvent(
@@ -872,10 +1254,10 @@ async function playerPlayCards(
     /* =====================================================
        SEDMIČKA
 
-       DŮLEŽITÉ:
-       UNO vyhodnotíme až PO rozhodnutí o výměně,
-       protože až tehdy víme, s kolika kartami hráč
-       skutečně zůstal.
+       Pokud hráč skončil na jedné kartě,
+       UNO timer zatím NEBĚŽÍ.
+
+       Nejdřív se musí rozhodnout o výměně.
     ===================================================== */
 
     if (
@@ -889,7 +1271,13 @@ async function playerPlayCards(
             true;
 
 
+        state.playerUnoDeferred =
+            state.playerHand.length ===
+            1;
+
+
         saveGame();
+
 
         emitStateChanged();
 
@@ -901,7 +1289,9 @@ async function playerPlayCards(
 
 
         return {
-            valid: true,
+
+            valid:
+                true,
 
             pendingSevenChoice:
                 true
@@ -911,8 +1301,6 @@ async function playerPlayCards(
 
     /* =====================================================
        BĚŽNÁ KARTA / REVERSE
-
-       Reverse v 1v1 nic speciálního nedělá.
     ===================================================== */
 
     state.turn =
@@ -927,6 +1315,7 @@ async function playerPlayCards(
 
     saveGame();
 
+
     emitStateChanged();
 
 
@@ -939,13 +1328,14 @@ async function playerPlayCards(
 
 
     return {
-        valid: true
+        valid:
+            true
     };
 }
 
 
 /* =========================================================
-   ROZHODNUTÍ O SEDMIČCE
+   SEDMIČKA – HRÁČOVO ROZHODNUTÍ
 ========================================================= */
 
 async function resolvePlayerSevenChoice(
@@ -976,6 +1366,18 @@ async function resolvePlayerSevenChoice(
         swapHands();
 
 
+        addHistory({
+            actor:
+                "player",
+
+            type:
+                "seven-swap",
+
+            text:
+                `${getCurrentPlayerName()} si vyměnil karty s Lukym.`
+        });
+
+
         emitGameEvent(
             "player-speech",
             {
@@ -1000,7 +1402,24 @@ async function resolvePlayerSevenChoice(
                     "player"
             }
         );
+
+    } else {
+
+        addHistory({
+            actor:
+                "player",
+
+            type:
+                "seven-keep",
+
+            text:
+                `${getCurrentPlayerName()} si ponechal svoje karty.`
+        });
     }
+
+
+    state.playerUnoDeferred =
+        false;
 
 
     state.turn =
@@ -1011,13 +1430,14 @@ async function resolvePlayerSevenChoice(
 
 
     /*
-        UNO řešíme až po případné výměně rukou.
+        UNO se vyhodnotí až TEĎ.
     */
 
     await handlePlayerUnoAfterPlay();
 
 
     saveGame();
+
 
     emitStateChanged();
 
@@ -1057,7 +1477,8 @@ function playerDraw() {
     ===================================================== */
 
     if (
-        state.drawPenalty > 0
+        state.drawPenalty >
+        0
     ) {
 
         const amount =
@@ -1068,6 +1489,20 @@ function playerDraw() {
             "player",
             amount
         );
+
+
+        addHistory({
+            actor:
+                "player",
+
+            type:
+                "draw",
+
+            text:
+                `${getCurrentPlayerName()} si lízl ${formatHistoryCardAmount(amount)}.`,
+
+            amount
+        });
 
 
         emitGameEvent(
@@ -1091,11 +1526,6 @@ function playerDraw() {
             0;
 
 
-        /*
-            Hráč vzal penalizaci a stojí.
-            Hraje znovu Luky.
-        */
-
         state.turn =
             "luky";
 
@@ -1104,6 +1534,7 @@ function playerDraw() {
 
 
         saveGame();
+
 
         emitStateChanged();
 
@@ -1118,14 +1549,13 @@ function playerDraw() {
     }
 
 
-    /*
-        Při Stůj se nelíže.
-        Hráč musí buď dát vlastní Stůj,
-        nebo použít playerAcceptSkip().
-    */
+    /* =====================================================
+       STŮJ
+    ===================================================== */
 
     if (
-        state.skipChainCount > 0
+        state.skipChainCount >
+        0
     ) {
 
         return false;
@@ -1134,8 +1564,6 @@ function playerDraw() {
 
     /* =====================================================
        BĚŽNÉ LÍZNUTÍ
-
-       Po líznutí tah okamžitě končí.
     ===================================================== */
 
     drawCards(
@@ -1146,6 +1574,21 @@ function playerDraw() {
 
     state.playerForcedDrawStreak +=
         1;
+
+
+    addHistory({
+        actor:
+            "player",
+
+        type:
+            "draw",
+
+        text:
+            `${getCurrentPlayerName()} si lízl kartu.`,
+
+        amount:
+            1
+    });
 
 
     emitGameEvent(
@@ -1175,6 +1618,7 @@ function playerDraw() {
 
     saveGame();
 
+
     emitStateChanged();
 
 
@@ -1182,6 +1626,36 @@ function playerDraw() {
 
 
     return true;
+}
+
+
+/* =========================================================
+   ČESKÝ POČET KARET DO HISTORIE
+========================================================= */
+
+function formatHistoryCardAmount(
+    amount
+) {
+
+    if (
+        amount ===
+        1
+    ) {
+
+        return "kartu";
+    }
+
+
+    if (
+        amount >= 2 &&
+        amount <= 4
+    ) {
+
+        return `${amount} karty`;
+    }
+
+
+    return `${amount} karet`;
 }
 
 
@@ -1197,9 +1671,12 @@ function playerAcceptSkip() {
 
     if (
         !state ||
-        state.status !== "playing" ||
-        state.turn !== "player" ||
-        state.skipChainCount <= 0 ||
+        state.status !==
+            "playing" ||
+        state.turn !==
+            "player" ||
+        state.skipChainCount <=
+            0 ||
         GAME_RUNTIME.paused
     ) {
 
@@ -1207,13 +1684,20 @@ function playerAcceptSkip() {
     }
 
 
+    addHistory({
+        actor:
+            "player",
+
+        type:
+            "skip",
+
+        text:
+            `${getCurrentPlayerName()} stojí.`
+    });
+
+
     clearSkipChain();
 
-
-    /*
-        Poslední Stůj zahrál Luky.
-        Hráč stojí a Luky hraje znovu.
-    */
 
     state.turn =
         "luky";
@@ -1223,6 +1707,7 @@ function playerAcceptSkip() {
 
 
     saveGame();
+
 
     emitStateChanged();
 
@@ -1285,7 +1770,8 @@ function handleDrawCardPlay(
 
 
     state.turn =
-        actor === "player"
+        actor ===
+            "player"
             ? "luky"
             : "player";
 
@@ -1329,7 +1815,9 @@ function clearDrawPenalty() {
    STŮJ
 ========================================================= */
 
-function handleSkipPlay(actor) {
+function handleSkipPlay(
+    actor
+) {
 
     const state =
         GAME_RUNTIME.state;
@@ -1348,7 +1836,8 @@ function handleSkipPlay(actor) {
 
 
     state.turn =
-        actor === "player"
+        actor ===
+            "player"
             ? "luky"
             : "player";
 
@@ -1387,7 +1876,8 @@ function emitSkipCounterQuote(
 ) {
 
     const text =
-        actor === "luky"
+        actor ===
+            "luky"
             ? getSkipCounterQuote(
                 counterNumber
             )
@@ -1397,7 +1887,8 @@ function emitSkipCounterQuote(
 
 
     emitGameEvent(
-        actor === "luky"
+        actor ===
+            "luky"
             ? "luky-speech"
             : "player-speech",
         {
@@ -1422,7 +1913,7 @@ function swapHands() {
         GAME_RUNTIME.state;
 
 
-    const player =
+    const oldPlayerHand =
         state.playerHand;
 
 
@@ -1434,8 +1925,17 @@ function swapHands() {
 
     state.lukyHand =
         sortHand(
-            player
+            oldPlayerHand
         );
+
+
+    /*
+        Po výměně se původní UNO stav Lukyho ruší.
+
+        AI si nepamatuje bývalou ruku.
+    */
+
+    resetLukyUnoState();
 }
 
 
@@ -1453,7 +1953,8 @@ function drawCards(
 
 
     const target =
-        actor === "luky"
+        actor ===
+            "luky"
             ? state.lukyHand
             : state.playerHand;
 
@@ -1469,6 +1970,7 @@ function drawCards(
 
 
         if (!card) {
+
             break;
         }
 
@@ -1480,13 +1982,28 @@ function drawCards(
 
 
     if (
-        actor === "luky"
+        actor ===
+        "luky"
     ) {
 
         state.lukyHand =
             sortHand(
                 state.lukyHand
             );
+
+
+        /*
+            Jakmile Luky dobírá a nemá už jednu kartu,
+            jeho předchozí UNO stav není relevantní.
+        */
+
+        if (
+            state.lukyHand.length !==
+            1
+        ) {
+
+            resetLukyUnoState();
+        }
 
     } else {
 
@@ -1522,6 +2039,9 @@ function drawOneCard() {
 
 /* =========================================================
    OBNOVENÍ BALÍČKU
+
+   Horní odhozená karta zůstává na stole.
+   Všechny ostatní se zamíchají do nového balíčku.
 ========================================================= */
 
 function recycleDiscardPile() {
@@ -1539,7 +2059,7 @@ function recycleDiscardPile() {
     }
 
 
-    const top =
+    const topCard =
         state.discardPile.pop();
 
 
@@ -1550,7 +2070,21 @@ function recycleDiscardPile() {
 
 
     state.discardPile =
-        [top];
+        [
+            topCard
+        ];
+
+
+    addHistory({
+        actor:
+            "system",
+
+        type:
+            "deck-recycled",
+
+        text:
+            "Odhazovací balíček byl zamíchán do nového dobíracího balíčku."
+    });
 
 
     emitGameEvent(
@@ -1564,7 +2098,9 @@ function recycleDiscardPile() {
    ODHOD
 ========================================================= */
 
-function pushCardsToDiscard(cards) {
+function pushCardsToDiscard(
+    cards
+) {
 
     const state =
         GAME_RUNTIME.state;
@@ -1596,7 +2132,8 @@ function updateCurrentColorAfterPlay(
 
     const lastCard =
         cards[
-            cards.length - 1
+            cards.length -
+            1
         ];
 
 
@@ -1619,7 +2156,9 @@ function updateCurrentColorAfterPlay(
 }
 
 
-function isPlayableColor(color) {
+function isPlayableColor(
+    color
+) {
 
     return [
         CARD_COLORS.RED,
@@ -1644,11 +2183,15 @@ function scheduleLukyTurn() {
 
     if (
         !state ||
-        state.status !== "playing" ||
-        state.turn !== "luky" ||
+        state.status !==
+            "playing" ||
+        state.turn !==
+            "luky" ||
         GAME_RUNTIME.paused ||
-        GAME_RUNTIME.lukyTurnRunning ||
-        state.pendingPlayerUno
+        GAME_RUNTIME
+            .lukyTurnRunning ||
+        state.pendingPlayerUno ||
+        state.playerUnoDeferred
     ) {
 
         return;
@@ -1667,52 +2210,59 @@ async function runLukyTurn() {
 
     if (
         !state ||
-        state.turn !== "luky" ||
-        state.status !== "playing"
+        state.turn !==
+            "luky" ||
+        state.status !==
+            "playing"
     ) {
 
         return;
     }
 
 
-    GAME_RUNTIME.lukyTurnRunning =
+    GAME_RUNTIME
+        .lukyTurnRunning =
         true;
 
 
     try {
 
-        await waitForLukyThinking(
-            {
-                onThinkingStart:
-                    (text) => {
+        await waitForLukyThinking({
 
-                        emitGameEvent(
-                            "luky-speech",
-                            {
-                                text,
+            gameState:
+                state,
 
-                                thinking:
-                                    true
-                            }
-                        );
-                    },
+            onThinkingStart:
+                (text) => {
 
-                onThinkingEnd:
-                    () => {
+                    emitGameEvent(
+                        "luky-speech",
+                        {
+                            text,
 
-                        emitGameEvent(
-                            "luky-thinking-end",
-                            {}
-                        );
-                    }
-            }
-        );
+                            thinking:
+                                true
+                        }
+                    );
+                },
+
+            onThinkingEnd:
+                () => {
+
+                    emitGameEvent(
+                        "luky-thinking-end",
+                        {}
+                    );
+                }
+        });
 
 
         if (
             GAME_RUNTIME.paused ||
-            state.status !== "playing" ||
-            state.turn !== "luky"
+            state.status !==
+                "playing" ||
+            state.turn !==
+                "luky"
         ) {
 
             return;
@@ -1731,14 +2281,15 @@ async function runLukyTurn() {
 
     } finally {
 
-        GAME_RUNTIME.lukyTurnRunning =
+        GAME_RUNTIME
+            .lukyTurnRunning =
             false;
     }
 }
 
 
 /* =========================================================
-   PROVEDENÍ AI TAHU
+   LUKYHO ROZHODNUTÍ
 ========================================================= */
 
 async function executeLukyDecision(
@@ -1759,13 +2310,14 @@ async function executeLukyDecision(
 
 
     /* =====================================================
-       DOBÍRACÍ PENALIZACE
+       VEZME +X
     ===================================================== */
 
     if (
         decision.action ===
             "draw" &&
-        state.drawPenalty > 0
+        state.drawPenalty >
+            0
     ) {
 
         const amount =
@@ -1776,6 +2328,20 @@ async function executeLukyDecision(
             "luky",
             amount
         );
+
+
+        addHistory({
+            actor:
+                "luky",
+
+            type:
+                "draw",
+
+            text:
+                `Luky si lízl ${formatHistoryCardAmount(amount)}.`,
+
+            amount
+        });
 
 
         emitGameEvent(
@@ -1804,13 +2370,8 @@ async function executeLukyDecision(
 
         saveGame();
 
+
         emitStateChanged();
-
-
-        /*
-            Tady se Lukymu nedařilo,
-            takže nedáváme jeho pozitivní emote.
-        */
 
 
         return;
@@ -1826,13 +2387,20 @@ async function executeLukyDecision(
         "skip"
     ) {
 
+        addHistory({
+            actor:
+                "luky",
+
+            type:
+                "skip",
+
+            text:
+                "Luky stojí."
+        });
+
+
         clearSkipChain();
 
-
-        /*
-            Poslední Stůj zahrál hráč.
-            Luky stojí a hráč hraje znovu.
-        */
 
         state.turn =
             "player";
@@ -1843,6 +2411,7 @@ async function executeLukyDecision(
 
         saveGame();
 
+
         emitStateChanged();
 
 
@@ -1851,7 +2420,7 @@ async function executeLukyDecision(
 
 
     /* =====================================================
-       BĚŽNÉ LÍZNUTÍ
+       BĚŽNĚ LÍZNE
     ===================================================== */
 
     if (
@@ -1863,6 +2432,21 @@ async function executeLukyDecision(
             "luky",
             1
         );
+
+
+        addHistory({
+            actor:
+                "luky",
+
+            type:
+                "draw",
+
+            text:
+                "Luky si lízl kartu.",
+
+            amount:
+                1
+        });
 
 
         emitGameEvent(
@@ -1888,6 +2472,7 @@ async function executeLukyDecision(
 
 
         saveGame();
+
 
         emitStateChanged();
 
@@ -1924,6 +2509,7 @@ async function executeLukyDecision(
 
         saveGame();
 
+
         emitStateChanged();
 
 
@@ -1933,6 +2519,9 @@ async function executeLukyDecision(
 
     const previousSkipChain =
         state.skipChainCount;
+
+
+    resetLukyUnoState();
 
 
     state.lukyHand =
@@ -1965,6 +2554,26 @@ async function executeLukyDecision(
         );
 
 
+    addHistory({
+        actor:
+            "luky",
+
+        type:
+            "play",
+
+        text:
+            getPlayedCardsHistoryText(
+                "Luky",
+                cards
+            ),
+
+        cards,
+
+        color:
+            state.currentColor
+    });
+
+
     emitGameEvent(
         "cards-played",
         {
@@ -1982,7 +2591,9 @@ async function executeLukyDecision(
 
 
     /* =====================================================
-       VÝHRA LUKYHO
+       LUKY VYHRÁL
+
+       Opět před efektem 0 / 7.
     ===================================================== */
 
     if (
@@ -2025,6 +2636,7 @@ async function executeLukyDecision(
 
         saveGame();
 
+
         emitStateChanged();
 
 
@@ -2042,7 +2654,8 @@ async function executeLukyDecision(
     ) {
 
         if (
-            previousSkipChain > 0
+            previousSkipChain >
+            0
         ) {
 
             emitSkipCounterQuote(
@@ -2065,6 +2678,7 @@ async function executeLukyDecision(
 
         saveGame();
 
+
         emitStateChanged();
 
 
@@ -2073,7 +2687,7 @@ async function executeLukyDecision(
 
 
     /* =====================================================
-       NULA
+       0
     ===================================================== */
 
     if (
@@ -2083,6 +2697,18 @@ async function executeLukyDecision(
     ) {
 
         swapHands();
+
+
+        addHistory({
+            actor:
+                "system",
+
+            type:
+                "hand-swap",
+
+            text:
+                "Hráči si vyměnili karty kvůli nule."
+        });
 
 
         emitGameEvent(
@@ -2099,7 +2725,7 @@ async function executeLukyDecision(
 
 
     /* =====================================================
-       SEDMIČKA
+       7
     ===================================================== */
 
     if (
@@ -2117,6 +2743,18 @@ async function executeLukyDecision(
             swapHands();
 
 
+            addHistory({
+                actor:
+                    "luky",
+
+                type:
+                    "seven-swap",
+
+                text:
+                    "Luky si vyměnil karty s hráčem."
+            });
+
+
             emitGameEvent(
                 "hands-swapped",
                 {
@@ -2127,6 +2765,19 @@ async function executeLukyDecision(
                         "luky"
                 }
             );
+
+        } else {
+
+            addHistory({
+                actor:
+                    "luky",
+
+                type:
+                    "seven-keep",
+
+                text:
+                    "Luky si ponechal svoje karty."
+            });
         }
     }
 
@@ -2141,15 +2792,11 @@ async function executeLukyDecision(
     handleLukyUnoAfterPlay();
 
 
-    /*
-        Pokud má Luky výrazně méně karet,
-        může občas reagovat posměšným emotem.
-    */
-
     maybeTriggerLukyCardLeadEmote();
 
 
     saveGame();
+
 
     emitStateChanged();
 }
@@ -2163,6 +2810,14 @@ async function handlePlayerUnoAfterPlay() {
 
     const state =
         GAME_RUNTIME.state;
+
+
+    if (
+        state.playerUnoDeferred
+    ) {
+
+        return;
+    }
 
 
     if (
@@ -2180,6 +2835,18 @@ async function handlePlayerUnoAfterPlay() {
 
     state.pendingPlayerUno =
         true;
+
+
+    addHistory({
+        actor:
+            "system",
+
+        type:
+            "uno-window",
+
+        text:
+            `${getCurrentPlayerName()} má jednu kartu a musí říct UNO.`
+    });
 
 
     emitGameEvent(
@@ -2222,12 +2889,33 @@ async function handlePlayerUnoAfterPlay() {
 
                             resolve();
 
+
                             return;
                         }
 
 
                         state.pendingPlayerUno =
                             false;
+
+
+                        addHistory({
+                            actor:
+                                "player",
+
+                            type:
+                                "uno-missed",
+
+                            text:
+                                `${getCurrentPlayerName()} neřekl UNO a bere si 2 karty.`,
+
+                            amount:
+                                GAME_CONFIG
+                                    .playerUno
+                                    .missedPenaltyCards,
+
+                            unoSaid:
+                                false
+                        });
 
 
                         drawCards(
@@ -2265,6 +2953,7 @@ async function handlePlayerUnoAfterPlay() {
 
                         saveGame();
 
+
                         emitStateChanged();
 
 
@@ -2299,6 +2988,7 @@ function playerCallUno() {
 
 
     if (!state) {
+
         return false;
     }
 
@@ -2311,6 +3001,21 @@ function playerCallUno() {
 
         state.pendingPlayerUno =
             false;
+
+
+        addHistory({
+            actor:
+                "player",
+
+            type:
+                "uno",
+
+            text:
+                `${getCurrentPlayerName()} řekl UNO!`,
+
+            unoSaid:
+                true
+        });
 
 
         emitGameEvent(
@@ -2333,6 +3038,7 @@ function playerCallUno() {
 
 
         saveGame();
+
 
         emitStateChanged();
 
@@ -2381,7 +3087,8 @@ function cancelPlayerUnoTimer(
 ) {
 
     if (
-        GAME_RUNTIME.playerUnoTimer
+        GAME_RUNTIME
+            .playerUnoTimer
     ) {
 
         clearTimeout(
@@ -2390,14 +3097,16 @@ function cancelPlayerUnoTimer(
         );
 
 
-        GAME_RUNTIME.playerUnoTimer =
+        GAME_RUNTIME
+            .playerUnoTimer =
             null;
     }
 
 
     if (
         resolvePromise &&
-        GAME_RUNTIME.playerUnoResolver
+        GAME_RUNTIME
+            .playerUnoResolver
     ) {
 
         const resolver =
@@ -2405,12 +3114,64 @@ function cancelPlayerUnoTimer(
                 .playerUnoResolver;
 
 
-        GAME_RUNTIME.playerUnoResolver =
+        GAME_RUNTIME
+            .playerUnoResolver =
             null;
 
 
         resolver();
     }
+}
+
+
+/* =========================================================
+   RESET LUKY UNO
+========================================================= */
+
+function resetLukyUnoState() {
+
+    const state =
+        GAME_RUNTIME.state;
+
+
+    if (!state) {
+
+        return;
+    }
+
+
+    if (
+        GAME_RUNTIME
+            .lukyUnoTimer
+    ) {
+
+        clearTimeout(
+            GAME_RUNTIME
+                .lukyUnoTimer
+        );
+
+
+        GAME_RUNTIME
+            .lukyUnoTimer =
+            null;
+    }
+
+
+    state.pendingLukyUno =
+        false;
+
+
+    state.lukyForgotUno =
+        false;
+
+
+    state.lukyUnoSaid =
+        false;
+
+
+    GAME_RUNTIME
+        .lukyUnoCatchOpen =
+        false;
 }
 
 
@@ -2429,17 +3190,7 @@ function handleLukyUnoAfterPlay() {
         1
     ) {
 
-        state.pendingLukyUno =
-            false;
-
-
-        state.lukyForgotUno =
-            false;
-
-
-        GAME_RUNTIME
-            .lukyUnoCatchOpen =
-            false;
+        resetLukyUnoState();
 
 
         return;
@@ -2450,21 +3201,27 @@ function handleLukyUnoAfterPlay() {
         shouldLukyForgetUno();
 
 
-    state.pendingLukyUno =
-        forgot;
-
-
-    state.lukyForgotUno =
-        forgot;
+    state.lukyUnoSaid =
+        false;
 
 
     if (forgot) {
 
-        /*
-            Nejdřív:
-            "Je po všem."
+        state.pendingLukyUno =
+            true;
 
-            UNO až později.
+
+        state.lukyForgotUno =
+            true;
+
+
+        GAME_RUNTIME
+            .lukyUnoCatchOpen =
+            true;
+
+
+        /*
+            Je po všem zazní i když na UNO zapomněl.
         */
 
         emitGameEvent(
@@ -2481,9 +3238,16 @@ function handleLukyUnoAfterPlay() {
         );
 
 
-        GAME_RUNTIME
-            .lukyUnoCatchOpen =
-            true;
+        addHistory({
+            actor:
+                "system",
+
+            type:
+                "luky-one-card",
+
+            text:
+                "Lukymu zbývá jedna karta."
+        });
 
 
         const delay =
@@ -2512,7 +3276,7 @@ function handleLukyUnoAfterPlay() {
 
 
     /*
-        Normální UNO.
+        ŘEKL UNO SPRÁVNĚ HNED.
     */
 
     state.pendingLukyUno =
@@ -2523,9 +3287,28 @@ function handleLukyUnoAfterPlay() {
         false;
 
 
+    state.lukyUnoSaid =
+        true;
+
+
     GAME_RUNTIME
         .lukyUnoCatchOpen =
         false;
+
+
+    addHistory({
+        actor:
+            "luky",
+
+        type:
+            "uno",
+
+        text:
+            "Luky řekl UNO!",
+
+        unoSaid:
+            true
+    });
 
 
     emitGameEvent(
@@ -2541,6 +3324,10 @@ function handleLukyUnoAfterPlay() {
         }
     );
 
+
+    /*
+        Po chvíli může následovat "Je po všem."
+    */
 
     const delay =
         getRandomLukyAfterUnoDelay();
@@ -2579,7 +3366,7 @@ function handleLukyUnoAfterPlay() {
 
 
 /* =========================================================
-   LUKY SI VZPOMENE
+   LUKY SI VZPOMENE NA UNO
 ========================================================= */
 
 function resolveForgottenLukyUno() {
@@ -2617,9 +3404,28 @@ function resolveForgottenLukyUno() {
         false;
 
 
+    state.lukyUnoSaid =
+        true;
+
+
     GAME_RUNTIME
         .lukyUnoCatchOpen =
         false;
+
+
+    addHistory({
+        actor:
+            "luky",
+
+        type:
+            "uno",
+
+        text:
+            "Luky řekl UNO!",
+
+        unoSaid:
+            true
+    });
 
 
     emitGameEvent(
@@ -2638,6 +3444,7 @@ function resolveForgottenLukyUno() {
 
     saveGame();
 
+
     emitStateChanged();
 }
 
@@ -2653,16 +3460,23 @@ function playerCatchLukyUno() {
 
 
     if (!state) {
+
         return false;
     }
 
+
+    /* =====================================================
+       SPRÁVNĚ NACHYTÁN
+    ===================================================== */
 
     if (
         GAME_RUNTIME
             .lukyUnoCatchOpen &&
         state.pendingLukyUno &&
+        state.lukyForgotUno &&
         state.lukyHand.length ===
-            1
+            1 &&
+        !state.lukyUnoSaid
     ) {
 
         if (
@@ -2695,6 +3509,10 @@ function playerCatchLukyUno() {
             false;
 
 
+        state.lukyUnoSaid =
+            false;
+
+
         emitGameEvent(
             "player-speech",
             {
@@ -2709,12 +3527,47 @@ function playerCatchLukyUno() {
         );
 
 
+        addHistory({
+            actor:
+                "player",
+
+            type:
+                "uno-catch",
+
+            text:
+                `${getCurrentPlayerName()} nachytal Lukyho, že neřekl UNO.`,
+
+            unoSaid:
+                false
+        });
+
+
         drawCards(
             "luky",
             GAME_CONFIG
                 .lukyUno
                 .caughtPenaltyCards
         );
+
+
+        addHistory({
+            actor:
+                "luky",
+
+            type:
+                "uno-penalty",
+
+            text:
+                "Luky si za neřečené UNO lízl 2 karty.",
+
+            amount:
+                GAME_CONFIG
+                    .lukyUno
+                    .caughtPenaltyCards,
+
+            unoSaid:
+                false
+        });
 
 
         emitGameEvent(
@@ -2734,6 +3587,24 @@ function playerCatchLukyUno() {
         );
 
 
+        /*
+            Nová zadaná hláška.
+        */
+
+        emitGameEvent(
+            "luky-speech",
+            {
+                text:
+                    getLukyCaughtUnoPenaltyQuote(),
+
+                duration:
+                    GAME_CONFIG
+                        .speech
+                        .defaultDurationMs
+            }
+        );
+
+
         const result =
             registerCaughtLukyUnoAchievement();
 
@@ -2745,6 +3616,7 @@ function playerCatchLukyUno() {
 
         saveGame();
 
+
         emitStateChanged();
 
 
@@ -2752,20 +3624,61 @@ function playerCatchLukyUno() {
     }
 
 
-    emitGameEvent(
-        "luky-speech",
-        {
-            text:
-                getLukyCardCountQuote(
-                    state.lukyHand.length
-                ),
+    /* =====================================================
+       MÁ 1 KARTU A UNO UŽ ŘEKL
+    ===================================================== */
 
-            duration:
-                GAME_CONFIG
-                    .speech
-                    .defaultDurationMs
-        }
-    );
+    if (
+        state.lukyHand.length ===
+            1 &&
+        state.lukyUnoSaid
+    ) {
+
+        emitGameEvent(
+            "luky-speech",
+            {
+                text:
+                    getLukyUnoAlreadySaidQuote(),
+
+                duration:
+                    GAME_CONFIG
+                        .speech
+                        .defaultDurationMs
+            }
+        );
+
+
+        return false;
+    }
+
+
+    /* =====================================================
+       VÍC NEŽ 1 KARTA
+    ===================================================== */
+
+    if (
+        state.lukyHand.length >
+        1
+    ) {
+
+        emitGameEvent(
+            "luky-speech",
+            {
+                text:
+                    getLukyCardCountQuote(
+                        state.lukyHand.length
+                    ),
+
+                duration:
+                    GAME_CONFIG
+                        .speech
+                        .defaultDurationMs
+            }
+        );
+
+
+        return false;
+    }
 
 
     return false;
@@ -2783,6 +3696,21 @@ function restorePendingUnoState() {
 
 
     if (!state) {
+
+        return;
+    }
+
+
+    if (
+        state.playerUnoDeferred
+    ) {
+
+        /*
+            Save mohl vzniknout při čekání na sedmičku.
+            Modal si obnoví UI podle stavu až později.
+            Timer se tady nespouští.
+        */
+
         return;
     }
 
@@ -2804,6 +3732,7 @@ function restorePendingUnoState() {
     if (
         state.pendingLukyUno &&
         state.lukyForgotUno &&
+        !state.lukyUnoSaid &&
         state.lukyHand.length ===
             1
     ) {
@@ -2849,7 +3778,8 @@ function maybeActivateYellowEvent() {
 
 
     if (
-        state.turnCount < 4
+        state.turnCount <
+        4
     ) {
 
         return;
@@ -2908,6 +3838,18 @@ function askLukyAboutYellow() {
         );
 
 
+    addHistory({
+        actor:
+            "player",
+
+        type:
+            "yellow-question",
+
+        text:
+            `${getCurrentPlayerName()} se zeptal: „Má někdo žlutou?“`
+    });
+
+
     emitGameEvent(
         "luky-speech",
         {
@@ -2924,6 +3866,20 @@ function askLukyAboutYellow() {
     );
 
 
+    addHistory({
+        actor:
+            "luky",
+
+        type:
+            "yellow-answer",
+
+        text:
+            hasYellow
+                ? "Luky odpověděl: „Já.“"
+                : "Luky mlčel."
+    });
+
+
     if (hasYellow) {
 
         const result =
@@ -2938,6 +3894,7 @@ function askLukyAboutYellow() {
 
     saveGame();
 
+
     emitStateChanged();
 
 
@@ -2946,7 +3903,7 @@ function askLukyAboutYellow() {
 
 
 /* =========================================================
-   OPENING LUKYHO
+   OPENING HLÁŠKA
 ========================================================= */
 
 function triggerOpeningQuote() {
@@ -2962,6 +3919,7 @@ function triggerOpeningQuote() {
 
 
     if (!slot) {
+
         return;
     }
 
@@ -2980,6 +3938,7 @@ function triggerOpeningQuote() {
 
 
     if (!selection) {
+
         return;
     }
 
@@ -3009,7 +3968,7 @@ function triggerOpeningQuote() {
 
 
 /* =========================================================
-   SILNÁ REAKCE NA HRÁČOVU PENALIZACI
+   REAKCE NA SILNOU PENALIZACI OD HRÁČE
 ========================================================= */
 
 function maybeTriggerHeavyDrawQuote(
@@ -3017,8 +3976,10 @@ function maybeTriggerHeavyDrawQuote(
 ) {
 
     if (
-        amount < 4
+        amount <
+        4
     ) {
+
         return;
     }
 
@@ -3030,6 +3991,7 @@ function maybeTriggerHeavyDrawQuote(
 
 
     if (!slot) {
+
         return;
     }
 
@@ -3041,6 +4003,7 @@ function maybeTriggerHeavyDrawQuote(
 
 
     if (!text) {
+
         return;
     }
 
@@ -3107,6 +4070,7 @@ function maybeTriggerStrongSituationEmote() {
 
 
     if (!slot) {
+
         return;
     }
 
@@ -3176,6 +4140,7 @@ function maybeTriggerMildSituationEmote() {
 
 
     if (!slot) {
+
         return;
     }
 
@@ -3224,7 +4189,7 @@ function maybeTriggerMildSituationEmote() {
 
 
 /* =========================================================
-   LUKY MÁ VÝRAZNĚ MÉNĚ KARET
+   LUKY VÝRAZNĚ VEDE
 ========================================================= */
 
 function maybeTriggerLukyCardLeadEmote() {
@@ -3247,11 +4212,6 @@ function maybeTriggerLukyCardLeadEmote() {
     }
 
 
-    /*
-        Ani při velké výhodě se emote
-        nemá objevovat pokaždé.
-    */
-
     if (
         !randomChance(
             0.18
@@ -3272,7 +4232,7 @@ function maybeTriggerLukyCardLeadEmote() {
 
 
 /* =========================================================
-   HRÁČ MUSÍ LÍZAT
+   HRÁČ NUCENĚ LÍŽE
 ========================================================= */
 
 function maybeTriggerPlayerDrawReaction() {
@@ -3288,13 +4248,10 @@ function maybeTriggerPlayerDrawReaction() {
 
 
     if (!slot) {
+
         return;
     }
 
-
-    /*
-        Pavel třikrát po sobě líže.
-    */
 
     if (
         slot.characterId ===
@@ -3349,7 +4306,8 @@ function showTemporaryEmote(
 
 
     if (
-        GAME_RUNTIME.emoteTimer
+        GAME_RUNTIME
+            .emoteTimer
     ) {
 
         clearTimeout(
@@ -3407,7 +4365,9 @@ function showTemporaryEmote(
    KONEC PARTIE
 ========================================================= */
 
-async function finishGame(winner) {
+async function finishGame(
+    winner
+) {
 
     const state =
         GAME_RUNTIME.state;
@@ -3425,6 +4385,37 @@ async function finishGame(winner) {
 
     state.status =
         "finished";
+
+
+    if (
+        winner ===
+        "player"
+    ) {
+
+        addHistory({
+            actor:
+                "player",
+
+            type:
+                "win",
+
+            text:
+                `${getCurrentPlayerName()} vyhrál partii.`
+        });
+
+    } else {
+
+        addHistory({
+            actor:
+                "luky",
+
+            type:
+                "win",
+
+            text:
+                "Luky vyhrál partii."
+        });
+    }
 
 
     clearRuntimeTimers();
@@ -3448,7 +4439,8 @@ async function finishGame(winner) {
 
 
     if (
-        winner === "player"
+        winner ===
+        "player"
     ) {
 
         updatedSlot =
@@ -3481,6 +4473,11 @@ async function finishGame(winner) {
     );
 
 
+    /*
+        Hudební systém na tento event později
+        naváže stopMusic().
+    */
+
     emitGameEvent(
         "game-over",
         {
@@ -3494,17 +4491,22 @@ async function finishGame(winner) {
             playerImage:
                 getConfiguredPlayerEndImage(
                     characterId,
-                    winner === "player"
+                    winner ===
+                        "player"
                         ? "win"
                         : "lose"
                 ),
 
             lukyImage:
                 getConfiguredLukyEndImage(
-                    winner === "luky"
+                    winner ===
+                        "luky"
                         ? "win"
                         : "lose"
-                )
+                ),
+
+            history:
+                state.history
         }
     );
 
@@ -3548,7 +4550,8 @@ function announceUnlockedAchievements(
                         }
                     );
                 },
-                index * 700
+                index *
+                700
             );
         }
     );
@@ -3556,7 +4559,7 @@ function announceUnlockedAchievements(
 
 
 /* =========================================================
-   KONEC TAHU
+   DOKONČENÍ TAHU
 ========================================================= */
 
 function completeTurn() {
@@ -3566,6 +4569,7 @@ function completeTurn() {
 
 
     if (!state) {
+
         return;
     }
 
@@ -3573,7 +4577,8 @@ function completeTurn() {
     state.turnCount =
         normalizeNonNegativeInteger(
             state.turnCount
-        ) + 1;
+        ) +
+        1;
 
 
     state.updatedAt =
@@ -3725,7 +4730,8 @@ function clearRuntimeTimers() {
         );
 
 
-        GAME_RUNTIME.lukyUnoTimer =
+        GAME_RUNTIME
+            .lukyUnoTimer =
             null;
     }
 
@@ -3741,7 +4747,8 @@ function clearRuntimeTimers() {
         );
 
 
-        GAME_RUNTIME.lukyPhraseTimer =
+        GAME_RUNTIME
+            .lukyPhraseTimer =
             null;
     }
 
@@ -3757,7 +4764,8 @@ function clearRuntimeTimers() {
         );
 
 
-        GAME_RUNTIME.emoteTimer =
+        GAME_RUNTIME
+            .emoteTimer =
             null;
     }
 
