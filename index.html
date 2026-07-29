@@ -153,18 +153,7 @@
                     id="save-slots"
                     class="save-slots"
                 >
-
-                    <!--
-                        Sloty vytvoří JavaScript.
-
-                        Prázdný slot:
-                        Nová hra
-
-                        Obsazený:
-                        Dany
-                        12 W / 8 L
-                    -->
-
+                    <!-- JavaScript -->
                 </div>
 
             </div>
@@ -209,9 +198,14 @@
                 </header>
 
 
-                <div class="character-grid">
+                <div
+                    id="character-grid"
+                    class="character-grid"
+                >
 
-                    <!-- DANY -->
+                    <!-- ==================================
+                         DANY
+                    =================================== -->
 
                     <button
                         type="button"
@@ -222,7 +216,7 @@
                         <div class="character-image-wrap">
 
                             <img
-                                src="assets/images/dany.jpg"
+                                src="assets/images/Dany_default.jpg"
                                 alt="Dany"
                                 class="character-image"
                                 data-character-image="dany"
@@ -245,7 +239,9 @@
                     </button>
 
 
-                    <!-- FILIP -->
+                    <!-- ==================================
+                         FILIP
+                    =================================== -->
 
                     <button
                         type="button"
@@ -256,7 +252,7 @@
                         <div class="character-image-wrap">
 
                             <img
-                                src="assets/images/filip.jpg"
+                                src="assets/images/Fila_default.jpg"
                                 alt="Filip"
                                 class="character-image"
                                 data-character-image="filip"
@@ -279,7 +275,9 @@
                     </button>
 
 
-                    <!-- 96 -->
+                    <!-- ==================================
+                         96
+                    =================================== -->
 
                     <button
                         type="button"
@@ -295,7 +293,7 @@
                         <div class="character-image-wrap">
 
                             <img
-                                src="assets/images/96.jpg"
+                                src="assets/images/Pavel_default.png"
                                 alt="96"
                                 class="character-image"
                                 data-character-image="96"
@@ -318,6 +316,68 @@
                     </button>
 
                 </div>
+
+
+                <!-- ==========================================
+                     VÝBĚR SKINU
+
+                     Zobrazí se po kliknutí na postavu.
+                =========================================== -->
+
+                <section
+                    id="skin-selection"
+                    class="skin-selection"
+                    hidden
+                >
+
+                    <div class="skin-selection-header">
+
+                        <div>
+
+                            <span class="panel-kicker">
+                                Vzhled postavy
+                            </span>
+
+                            <h3 id="skin-selection-title">
+                                Dany
+                            </h3>
+
+                        </div>
+
+
+                        <button
+                            type="button"
+                            class="secondary-action-button"
+                            id="change-character-button"
+                        >
+                            Změnit postavu
+                        </button>
+
+                    </div>
+
+
+                    <div
+                        id="skin-grid"
+                        class="skin-grid"
+                    >
+                        <!-- JavaScript -->
+                    </div>
+
+
+                    <div class="skin-selection-actions">
+
+                        <button
+                            type="button"
+                            class="menu-button menu-button-primary"
+                            id="confirm-character-button"
+                            disabled
+                        >
+                            Začít hru
+                        </button>
+
+                    </div>
+
+                </section>
 
             </div>
 
@@ -364,10 +424,22 @@
                 <div class="slot-summary">
 
                     <div
-                        class="slot-summary-avatar"
-                        id="slot-summary-avatar"
+                        class="slot-summary-avatar slot-summary-avatar-image"
                     >
-                        D
+
+                        <img
+                            id="slot-summary-image"
+                            src="assets/images/Dany_default.jpg"
+                            alt=""
+                        >
+
+                        <span
+                            id="slot-summary-avatar"
+                            hidden
+                        >
+                            D
+                        </span>
+
                     </div>
 
 
@@ -375,6 +447,13 @@
 
                         <span id="slot-summary-record">
                             0 W / 0 L
+                        </span>
+
+                        <span
+                            id="slot-summary-skin"
+                            class="slot-summary-status"
+                        >
+                            Výchozí vzhled
                         </span>
 
                         <span
@@ -411,10 +490,82 @@
 
                     <button
                         type="button"
+                        class="menu-button"
+                        id="change-skin-button"
+                    >
+                        Změnit skin
+                    </button>
+
+
+                    <button
+                        type="button"
                         class="menu-button menu-button-danger"
                         id="reset-slot-button"
                     >
                         Smazat progres slotu
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ==========================================
+             ZMĚNA SKINU EXISTUJÍCÍHO SLOTU
+        =========================================== -->
+
+        <section
+            id="screen-skin-select"
+            class="screen"
+            hidden
+        >
+
+            <div class="panel-shell">
+
+                <header class="panel-header">
+
+                    <button
+                        type="button"
+                        class="icon-button back-button"
+                        id="skin-select-back"
+                        aria-label="Zpět"
+                    >
+                        ←
+                    </button>
+
+
+                    <div>
+                        <span class="panel-kicker">
+                            Herní slot
+                        </span>
+
+                        <h2 id="existing-skin-title">
+                            Vyber skin
+                        </h2>
+                    </div>
+
+                </header>
+
+
+                <div
+                    id="existing-skin-grid"
+                    class="skin-grid"
+                >
+                    <!-- JavaScript -->
+                </div>
+
+
+                <div class="skin-selection-actions">
+
+                    <button
+                        type="button"
+                        class="menu-button menu-button-primary"
+                        id="save-skin-button"
+                        disabled
+                    >
+                        Uložit vzhled
                     </button>
 
                 </div>
@@ -465,9 +616,7 @@
                     id="achievements-list"
                     class="achievements-list"
                 >
-
-                    <!-- JS -->
-
+                    <!-- JavaScript -->
                 </div>
 
             </div>
@@ -539,7 +688,7 @@
                         <div class="opponent-photo-wrap">
 
                             <img
-                                src="assets/images/luky.jpg"
+                                src="assets/images/Luky_default.png"
                                 alt="Luky"
                                 class="opponent-photo"
                                 id="luky-photo"
@@ -591,9 +740,7 @@
                         class="luky-hand"
                         aria-label="Karty Lukyho"
                     >
-
-                        <!-- JS -->
-
+                        <!-- JavaScript -->
                     </div>
 
                 </section>
@@ -649,7 +796,7 @@
                             id="discard-pile"
                             class="discard-pile"
                         >
-                            <!-- JS -->
+                            <!-- JavaScript -->
                         </div>
 
                         <span class="discard-zone-label">
@@ -737,7 +884,7 @@
                         <div class="player-avatar-wrap">
 
                             <img
-                                src="assets/images/dany.jpg"
+                                src="assets/images/Dany_default.jpg"
                                 alt=""
                                 class="player-avatar"
                                 id="player-avatar"
@@ -789,9 +936,7 @@
                         class="player-hand"
                         aria-label="Tvoje karty"
                     >
-
-                        <!-- JS -->
-
+                        <!-- JavaScript -->
                     </div>
 
                 </section>
@@ -973,7 +1118,7 @@
 
             <section
                 id="modal-game-over"
-                class="modal game-over-modal"
+                class="modal game-over-modal game-over-modal-wide"
                 hidden
                 role="dialog"
                 aria-modal="true"
@@ -987,6 +1132,57 @@
                 <h2 id="game-over-title">
                     Vyhrál jsi!
                 </h2>
+
+
+                <div class="game-over-characters">
+
+                    <!-- HRÁČ -->
+
+                    <div class="game-over-character">
+
+                        <div class="game-over-image-wrap">
+
+                            <img
+                                id="game-over-player-image"
+                                src="assets/images/Dany_default.jpg"
+                                alt=""
+                            >
+
+                        </div>
+
+                        <strong id="game-over-player-name">
+                            Dany
+                        </strong>
+
+                    </div>
+
+
+                    <!-- LUKY -->
+
+                    <div class="game-over-versus">
+                        VS
+                    </div>
+
+
+                    <div class="game-over-character">
+
+                        <div class="game-over-image-wrap">
+
+                            <img
+                                id="game-over-luky-image"
+                                src="assets/images/Luky_lose.png"
+                                alt="Luky"
+                            >
+
+                        </div>
+
+                        <strong>
+                            Luky
+                        </strong>
+
+                    </div>
+
+                </div>
 
 
                 <div
@@ -1101,23 +1297,17 @@
         >
 
             <span class="card-corner card-corner-top">
-
                 <span class="card-corner-value"></span>
-
             </span>
 
 
             <span class="card-center">
-
                 <span class="card-center-value"></span>
-
             </span>
 
 
             <span class="card-corner card-corner-bottom">
-
                 <span class="card-corner-value"></span>
-
             </span>
 
         </button>
@@ -1173,6 +1363,63 @@
             <span class="save-slot-arrow">
                 ›
             </span>
+
+        </button>
+
+    </template>
+
+
+    <!-- ==========================================
+         TEMPLATE SKINU
+    =========================================== -->
+
+    <template id="skin-card-template">
+
+        <button
+            type="button"
+            class="skin-card"
+        >
+
+            <div class="skin-preview-wrap">
+
+                <img
+                    class="skin-preview-image"
+                    src=""
+                    alt=""
+                >
+
+
+                <div
+                    class="skin-lock-overlay"
+                    hidden
+                >
+
+                    <span class="skin-lock-icon">
+                        🔒
+                    </span>
+
+                    <strong class="skin-lock-title">
+                        Zamčeno
+                    </strong>
+
+                    <span class="skin-lock-requirement"></span>
+
+                </div>
+
+            </div>
+
+
+            <div class="skin-card-info">
+
+                <strong class="skin-card-name">
+                    Výchozí
+                </strong>
+
+                <span
+                    class="skin-card-status"
+                ></span>
+
+            </div>
 
         </button>
 
