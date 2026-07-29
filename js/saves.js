@@ -8,11 +8,12 @@
    Ukládá:
    - 3 sloty
    - vybranou postavu slotu
+   - vybraný skin slotu
    - W / L slotu
    - rozehranou partii
    - historii použitých opening hlášek
 
-   Achievementy se ukládají zvlášť v achievements.js.
+   Achievementy jsou globální a ukládají se zvlášť.
 ========================================================= */
 
 
@@ -25,6 +26,8 @@ function createEmptySaveSlot(slotIndex) {
         slotIndex,
 
         characterId: null,
+
+        skinId: null,
 
         wins: 0,
 
@@ -148,10 +151,21 @@ function normalizeSaveSlot(
             : null;
 
 
+    const skinId =
+        characterId
+            ? normalizeSkinId(
+                characterId,
+                rawSlot.skinId
+            )
+            : null;
+
+
     return {
         slotIndex,
 
         characterId,
+
+        skinId,
 
         wins:
             normalizeNonNegativeInteger(
@@ -187,10 +201,54 @@ function normalizeSaveSlot(
 
 
 /* =========================================================
-   VALIDACE ROZEHRANÉ HRY
+   SKIN SLOTU
 
-   Detailní pravidla hry budou řešit game.js.
-   Save vrstva pouze ověřuje základní strukturu.
+   Pokud save pochází ze starší verze a skinId chybí,
+   automaticky použijeme default skin postavy.
+========================================================= */
+
+function normalizeSkinId(
+    characterId,
+    rawSkinId
+) {
+    const character =
+        getCharacterConfig(
+            characterId
+        );
+
+    if (!character) {
+        return null;
+    }
+
+
+    const defaultSkinId =
+        character.defaultSkinId ||
+        "default";
+
+
+    if (
+        typeof rawSkinId !== "string" ||
+        !rawSkinId.trim()
+    ) {
+        return defaultSkinId;
+    }
+
+
+    const requestedSkin =
+        getConfiguredCharacterSkin(
+            characterId,
+            rawSkinId.trim()
+        );
+
+
+    return requestedSkin
+        ? requestedSkin.id
+        : defaultSkinId;
+}
+
+
+/* =========================================================
+   VALIDACE ROZEHRANÉ HRY
 ========================================================= */
 
 function normalizeSavedGame(rawGame) {
@@ -290,6 +348,11 @@ function normalizeSavedGame(rawGame) {
         yellowEventUsed:
             Boolean(
                 rawGame.yellowEventUsed
+            ),
+
+        playerForcedDrawStreak:
+            normalizeNonNegativeInteger(
+                rawGame.playerForcedDrawStreak
             ),
 
         gameNumber:
@@ -567,6 +630,9 @@ function serializeSaveSlot(slot) {
         characterId:
             slot.characterId,
 
+        skinId:
+            slot.skinId,
+
         wins:
             normalizeNonNegativeInteger(
                 slot.wins
@@ -682,6 +748,11 @@ function serializeSavedGame(game) {
                 game.yellowEventUsed
             ),
 
+        playerForcedDrawStreak:
+            normalizeNonNegativeInteger(
+                game.playerForcedDrawStreak
+            ),
+
         gameNumber:
             Math.max(
                 1,
@@ -753,16 +824,13 @@ function hasActiveGame(slot) {
 /* =========================================================
    VYTVOŘENÍ NOVÉHO SLOTU S POSTAVOU
 
-   Toto se používá pouze při:
-   - založení hry v prázdném slotu
-   - kompletním resetu slotu a následném výběru postavy
-
-   W/L tedy začíná 0 / 0.
+   Defaultně nastaví výchozí skin.
 ========================================================= */
 
 function createNewCharacterSlot(
     slotIndex,
-    characterId
+    characterId,
+    skinId = null
 ) {
     const character =
         getCharacterConfig(
@@ -777,6 +845,14 @@ function createNewCharacterSlot(
     }
 
 
+    const resolvedSkinId =
+        normalizeSkinId(
+            characterId,
+            skinId ||
+            character.defaultSkinId
+        );
+
+
     const timestamp =
         getSaveTimestamp();
 
@@ -785,6 +861,9 @@ function createNewCharacterSlot(
         slotIndex,
 
         characterId,
+
+        skinId:
+            resolvedSkinId,
 
         wins: 0,
 
@@ -843,11 +922,15 @@ function saveSlot(
 
 /* =========================================================
    ZALOŽENÍ POSTAVY V PRÁZDNÉM SLOTU
+
+   Výběr skinu je volitelný.
+   Pokud není uveden, použije se default.
 ========================================================= */
 
 function initializeSlot(
     slotIndex,
-    characterId
+    characterId,
+    skinId = null
 ) {
     const slots =
         loadSaveSlots();
@@ -856,7 +939,8 @@ function initializeSlot(
     const slot =
         createNewCharacterSlot(
             slotIndex,
-            characterId
+            characterId,
+            skinId
         );
 
 
@@ -872,16 +956,130 @@ function initializeSlot(
 
 
 /* =========================================================
+   ZMĚNA SKINU SLOTU
+
+   Ověří, že skin existuje.
+
+   Samotné ověření odemčení skinu dělá achievement vrstva
+   před zavoláním této funkce.
+========================================================= */
+
+function setSlotSkin(
+    slotIndex,
+    skinId
+) {
+    const slots =
+        loadSaveSlots();
+
+    const slot =
+        slots[slotIndex];
+
+
+    if (
+        !slot ||
+        isSaveSlotEmpty(slot)
+    ) {
+        throw new Error(
+            "Nelze změnit skin prázdného slotu."
+        );
+    }
+
+
+    const skin =
+        getConfiguredCharacterSkin(
+            slot.characterId,
+            skinId
+        );
+
+
+    if (!skin) {
+        throw new Error(
+            `Neznámý skin: ${skinId}`
+        );
+    }
+
+
+    slot.skinId =
+        skin.id;
+
+    slot.updatedAt =
+        getSaveTimestamp();
+
+
+    saveAllSlots(slots);
+
+
+    return slot;
+}
+
+
+/* =========================================================
+   ZÍSKÁNÍ VYBRANÉHO SKINU SLOTU
+========================================================= */
+
+function getSlotSkin(slot) {
+    if (
+        !slot ||
+        !slot.characterId
+    ) {
+        return null;
+    }
+
+
+    const skinId =
+        normalizeSkinId(
+            slot.characterId,
+            slot.skinId
+        );
+
+
+    return (
+        getConfiguredCharacterSkin(
+            slot.characterId,
+            skinId
+        ) ||
+        getDefaultCharacterSkin(
+            slot.characterId
+        )
+    );
+}
+
+
+/* =========================================================
+   OBRÁZEK POSTAVY SLOTU
+========================================================= */
+
+function getSlotCharacterImage(slot) {
+    const skin =
+        getSlotSkin(slot);
+
+
+    if (skin?.image) {
+        return skin.image;
+    }
+
+
+    return (
+        slot?.characterId
+            ? getCharacterImage(
+                slot.characterId
+            )
+            : ""
+    );
+}
+
+
+/* =========================================================
    RESET SLOTU
 
    Maže:
    - postavu
+   - skin
    - W/L
    - rozehranou partii
    - historii openingů tohoto slotu
 
-   Achievementy se zde vůbec neřeší,
-   takže zůstávají zachované.
+   Achievementy se nemažou.
 ========================================================= */
 
 function resetSaveSlot(
@@ -953,7 +1151,7 @@ function saveCurrentGame(
 /* =========================================================
    SMAZÁNÍ ROZEHRANÉ PARTIE
 
-   W/L zůstává.
+   W/L, postava a skin zůstávají.
 ========================================================= */
 
 function clearCurrentGame(
@@ -1202,7 +1400,8 @@ function saveSlotQuoteHistory(
 
    Součet ze všech slotů.
 
-   Nejde o achievement data.
+   Achievementy ale mají vlastní globální progres,
+   takže toto je pouze přehled aktuálních slotů.
 ========================================================= */
 
 function getCombinedSlotStats() {
@@ -1241,9 +1440,6 @@ function getCombinedSlotStats() {
 
 /* =========================================================
    EXISTUJE UŽ NĚJAKÝ ZALOŽENÝ SLOT?
-
-   Hodí se pro zvýraznění doporučené postavy 96
-   při úplně prvním založení hry.
 ========================================================= */
 
 function hasAnyInitializedSlot() {
@@ -1255,7 +1451,7 @@ function hasAnyInitializedSlot() {
 
 
 /* =========================================================
-   PRVNÍ SPUŠTĚNÍ HRY?
+   PRVNÍ VÝBĚR POSTAVY?
 ========================================================= */
 
 function isFirstCharacterSelection() {
@@ -1264,12 +1460,7 @@ function isFirstCharacterSelection() {
 
 
 /* =========================================================
-   IMPORT / EXPORT PRO DEBUG
-
-   Zatím se nezobrazuje hráči.
-
-   Hodí se během vývoje, když budeme potřebovat
-   zkontrolovat save data v konzoli.
+   EXPORT SAVE PRO DEBUG
 ========================================================= */
 
 function exportSaveData() {
@@ -1285,6 +1476,10 @@ function exportSaveData() {
     };
 }
 
+
+/* =========================================================
+   IMPORT SAVE PRO DEBUG
+========================================================= */
 
 function importSaveData(data) {
     if (
@@ -1323,7 +1518,6 @@ function importSaveData(data) {
 /* =========================================================
    KOMPLETNÍ SMAZÁNÍ SLOTŮ PRO DEBUG
 
-   POZOR:
    Achievementy nemaže.
 ========================================================= */
 
