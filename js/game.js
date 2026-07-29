@@ -527,6 +527,23 @@ function addHistory({
 
     if (result) {
 
+        /*
+            Poslední veřejná akce má popisovat hráče nebo Lukyho.
+            Systémové pomocné záznamy (např. zamíchání balíčku)
+            nesmí přepsat důležitou informaci v poli stavu hry.
+        */
+
+        if (
+            actor === "player" ||
+            actor === "luky"
+        ) {
+
+            state.lastAction = {
+                ...result
+            };
+        }
+
+
         emitGameEvent(
             "history-changed",
             {
@@ -678,7 +695,8 @@ function getHistoryColorName(
 
 function getPlayedCardsHistoryText(
     actorName,
-    cards
+    cards,
+    chosenColor = null
 ) {
 
     if (
@@ -689,6 +707,33 @@ function getPlayedCardsHistoryText(
     ) {
 
         return `${actorName} zahrál kartu.`;
+    }
+
+
+    const wildCard =
+        cards.find(
+            (card) =>
+                isWildCard(
+                    card
+                )
+        );
+
+
+    if (wildCard) {
+
+        const colorText =
+            getHistoryColorName(
+                chosenColor
+            );
+
+
+        if (colorText) {
+
+            return `${actorName} změnil barvu na ${colorText}.`;
+        }
+
+
+        return `${actorName} změnil barvu.`;
     }
 
 
@@ -1038,7 +1083,8 @@ async function playerPlayCards(
         text:
             getPlayedCardsHistoryText(
                 getCurrentPlayerName(),
-                cards
+                cards,
+                state.currentColor
             ),
 
         cards,
@@ -1085,10 +1131,6 @@ async function playerPlayCards(
 
     /* =====================================================
        VÝHRA
-
-       Proběhne PŘED 0 / 7 efektem.
-
-       Tedy poslední karta 0 = výhra a žádná výměna.
     ===================================================== */
 
     if (
@@ -1253,11 +1295,6 @@ async function playerPlayCards(
 
     /* =====================================================
        SEDMIČKA
-
-       Pokud hráč skončil na jedné kartě,
-       UNO timer zatím NEBĚŽÍ.
-
-       Nejdřív se musí rozhodnout o výměně.
     ===================================================== */
 
     if (
@@ -1429,10 +1466,6 @@ async function resolvePlayerSevenChoice(
     completeTurn();
 
 
-    /*
-        UNO se vyhodnotí až TEĎ.
-    */
-
     await handlePlayerUnoAfterPlay();
 
 
@@ -1471,10 +1504,6 @@ function playerDraw() {
         return false;
     }
 
-
-    /* =====================================================
-       PENALIZACE
-    ===================================================== */
 
     if (
         state.drawPenalty >
@@ -1549,10 +1578,6 @@ function playerDraw() {
     }
 
 
-    /* =====================================================
-       STŮJ
-    ===================================================== */
-
     if (
         state.skipChainCount >
         0
@@ -1561,10 +1586,6 @@ function playerDraw() {
         return false;
     }
 
-
-    /* =====================================================
-       BĚŽNÉ LÍZNUTÍ
-    ===================================================== */
 
     drawCards(
         "player",
@@ -1929,12 +1950,6 @@ function swapHands() {
         );
 
 
-    /*
-        Po výměně se původní UNO stav Lukyho ruší.
-
-        AI si nepamatuje bývalou ruku.
-    */
-
     resetLukyUnoState();
 }
 
@@ -1992,11 +2007,6 @@ function drawCards(
             );
 
 
-        /*
-            Jakmile Luky dobírá a nemá už jednu kartu,
-            jeho předchozí UNO stav není relevantní.
-        */
-
         if (
             state.lukyHand.length !==
             1
@@ -2039,9 +2049,6 @@ function drawOneCard() {
 
 /* =========================================================
    OBNOVENÍ BALÍČKU
-
-   Horní odhozená karta zůstává na stole.
-   Všechny ostatní se zamíchají do nového balíčku.
 ========================================================= */
 
 function recycleDiscardPile() {
@@ -2309,10 +2316,6 @@ async function executeLukyDecision(
     }
 
 
-    /* =====================================================
-       VEZME +X
-    ===================================================== */
-
     if (
         decision.action ===
             "draw" &&
@@ -2378,10 +2381,6 @@ async function executeLukyDecision(
     }
 
 
-    /* =====================================================
-       LUKY STOJÍ
-    ===================================================== */
-
     if (
         decision.action ===
         "skip"
@@ -2418,10 +2417,6 @@ async function executeLukyDecision(
         return;
     }
 
-
-    /* =====================================================
-       BĚŽNĚ LÍZNE
-    ===================================================== */
 
     if (
         decision.action ===
@@ -2564,7 +2559,8 @@ async function executeLukyDecision(
         text:
             getPlayedCardsHistoryText(
                 "Luky",
-                cards
+                cards,
+                state.currentColor
             ),
 
         cards,
@@ -2590,12 +2586,6 @@ async function executeLukyDecision(
     );
 
 
-    /* =====================================================
-       LUKY VYHRÁL
-
-       Opět před efektem 0 / 7.
-    ===================================================== */
-
     if (
         state.lukyHand.length ===
         0
@@ -2609,10 +2599,6 @@ async function executeLukyDecision(
         return;
     }
 
-
-    /* =====================================================
-       +2 / +4
-    ===================================================== */
 
     if (
         effect.type ===
@@ -2643,10 +2629,6 @@ async function executeLukyDecision(
         return;
     }
 
-
-    /* =====================================================
-       STŮJ
-    ===================================================== */
 
     if (
         effect.type ===
@@ -2686,10 +2668,6 @@ async function executeLukyDecision(
     }
 
 
-    /* =====================================================
-       0
-    ===================================================== */
-
     if (
         isZeroCard(
             cards[0]
@@ -2723,10 +2701,6 @@ async function executeLukyDecision(
         );
     }
 
-
-    /* =====================================================
-       7
-    ===================================================== */
 
     if (
         isSevenCard(
@@ -2833,31 +2807,21 @@ async function handlePlayerUnoAfterPlay() {
     }
 
 
+    /*
+        UNO okno je záměrně zcela skryté.
+
+        Hra hráči NESMÍ napovídat, že má jednu kartu
+        a že má říct UNO.
+
+        Nepřidává se systémový záznam,
+        neposílá se UI odpočet
+        a UI se nijak nepřepíná.
+
+        Běží pouze interní timer.
+    */
+
     state.pendingPlayerUno =
         true;
-
-
-    addHistory({
-        actor:
-            "system",
-
-        type:
-            "uno-window",
-
-        text:
-            `${getCurrentPlayerName()} má jednu kartu a musí říct UNO.`
-    });
-
-
-    emitGameEvent(
-        "player-uno-window-started",
-        {
-            duration:
-                GAME_CONFIG
-                    .playerUno
-                    .callWindowMs
-        }
-    );
 
 
     await new Promise(
@@ -2898,6 +2862,26 @@ async function handlePlayerUnoAfterPlay() {
                             false;
 
 
+                        const penalty =
+                            GAME_CONFIG
+                                .playerUno
+                                .missedPenaltyCards;
+
+
+                        const playerName =
+                            getCurrentPlayerName();
+
+
+                        const missedUnoText =
+                            `${playerName} neřekl UNO a proto si líže ${formatHistoryCardAmount(penalty)}.`;
+
+
+                        drawCards(
+                            "player",
+                            penalty
+                        );
+
+
                         addHistory({
                             actor:
                                 "player",
@@ -2906,24 +2890,14 @@ async function handlePlayerUnoAfterPlay() {
                                 "uno-missed",
 
                             text:
-                                `${getCurrentPlayerName()} neřekl UNO a bere si 2 karty.`,
+                                missedUnoText,
 
                             amount:
-                                GAME_CONFIG
-                                    .playerUno
-                                    .missedPenaltyCards,
+                                penalty,
 
                             unoSaid:
                                 false
                         });
-
-
-                        drawCards(
-                            "player",
-                            GAME_CONFIG
-                                .playerUno
-                                .missedPenaltyCards
-                        );
 
 
                         emitGameEvent(
@@ -2943,10 +2917,12 @@ async function handlePlayerUnoAfterPlay() {
                         emitGameEvent(
                             "player-missed-uno",
                             {
-                                penalty:
-                                    GAME_CONFIG
-                                        .playerUno
-                                        .missedPenaltyCards
+                                penalty,
+
+                                playerName,
+
+                                text:
+                                    missedUnoText
                             }
                         );
 
@@ -2993,11 +2969,25 @@ function playerCallUno() {
     }
 
 
+    /*
+        Jedna karta = hráč nelže.
+
+        Pokud běží skryté UNO okno,
+        UNO se přijme bez reakce Lukyho.
+    */
+
     if (
-        state.pendingPlayerUno &&
         state.playerHand.length ===
-            1
+        1
     ) {
+
+        if (
+            !state.pendingPlayerUno
+        ) {
+
+            return false;
+        }
+
 
         state.pendingPlayerUno =
             false;
@@ -3057,21 +3047,27 @@ function playerCallUno() {
 
 
     /*
-        Falešné UNO.
+        Falešné UNO pouze se 2+ kartami.
     */
 
-    emitGameEvent(
-        "luky-speech",
-        {
-            text:
-                getFalseUnoQuote(),
+    if (
+        state.playerHand.length >=
+        2
+    ) {
 
-            duration:
-                GAME_CONFIG
-                    .speech
-                    .defaultDurationMs
-        }
-    );
+        emitGameEvent(
+            "luky-speech",
+            {
+                text:
+                    getFalseUnoQuote(),
+
+                duration:
+                    GAME_CONFIG
+                        .speech
+                        .defaultDurationMs
+            }
+        );
+    }
 
 
     return false;
@@ -3179,6 +3175,65 @@ function resetLukyUnoState() {
    LUKYHO UNO
 ========================================================= */
 
+function registerLukyUnoAnnouncement() {
+
+    const state =
+        GAME_RUNTIME.state;
+
+
+    const previousPlayText =
+        (
+            state?.lastAction?.actor ===
+                "luky" &&
+            state?.lastAction?.type ===
+                "play"
+        )
+            ? state.lastAction.text
+            : "";
+
+
+    const entry =
+        addHistory({
+            actor:
+                "luky",
+
+            type:
+                "uno",
+
+            text:
+                "Luky řekl UNO!",
+
+            unoSaid:
+                true
+        });
+
+
+    /*
+        Poslední akce zachová zahranou kartu
+        a následné UNO.
+
+        Např.:
+        Luky změnil barvu na modrou. Luky řekl UNO!
+    */
+
+    if (
+        previousPlayText &&
+        entry
+    ) {
+
+        state.lastAction = {
+            ...entry,
+
+            text:
+                `${previousPlayText} Luky řekl UNO!`
+        };
+    }
+
+
+    return entry;
+}
+
+
 function handleLukyUnoAfterPlay() {
 
     const state =
@@ -3219,10 +3274,6 @@ function handleLukyUnoAfterPlay() {
             .lukyUnoCatchOpen =
             true;
 
-
-        /*
-            Je po všem zazní i když na UNO zapomněl.
-        */
 
         emitGameEvent(
             "luky-speech",
@@ -3275,10 +3326,6 @@ function handleLukyUnoAfterPlay() {
     }
 
 
-    /*
-        ŘEKL UNO SPRÁVNĚ HNED.
-    */
-
     state.pendingLukyUno =
         false;
 
@@ -3296,19 +3343,7 @@ function handleLukyUnoAfterPlay() {
         false;
 
 
-    addHistory({
-        actor:
-            "luky",
-
-        type:
-            "uno",
-
-        text:
-            "Luky řekl UNO!",
-
-        unoSaid:
-            true
-    });
+    registerLukyUnoAnnouncement();
 
 
     emitGameEvent(
@@ -3324,10 +3359,6 @@ function handleLukyUnoAfterPlay() {
         }
     );
 
-
-    /*
-        Po chvíli může následovat "Je po všem."
-    */
 
     const delay =
         getRandomLukyAfterUnoDelay();
@@ -3413,19 +3444,7 @@ function resolveForgottenLukyUno() {
         false;
 
 
-    addHistory({
-        actor:
-            "luky",
-
-        type:
-            "uno",
-
-        text:
-            "Luky řekl UNO!",
-
-        unoSaid:
-            true
-    });
+    registerLukyUnoAnnouncement();
 
 
     emitGameEvent(
@@ -3464,10 +3483,6 @@ function playerCatchLukyUno() {
         return false;
     }
 
-
-    /* =====================================================
-       SPRÁVNĚ NACHYTÁN
-    ===================================================== */
 
     if (
         GAME_RUNTIME
@@ -3587,10 +3602,6 @@ function playerCatchLukyUno() {
         );
 
 
-        /*
-            Nová zadaná hláška.
-        */
-
         emitGameEvent(
             "luky-speech",
             {
@@ -3624,10 +3635,6 @@ function playerCatchLukyUno() {
     }
 
 
-    /* =====================================================
-       MÁ 1 KARTU A UNO UŽ ŘEKL
-    ===================================================== */
-
     if (
         state.lukyHand.length ===
             1 &&
@@ -3651,10 +3658,6 @@ function playerCatchLukyUno() {
         return false;
     }
 
-
-    /* =====================================================
-       VÍC NEŽ 1 KARTA
-    ===================================================== */
 
     if (
         state.lukyHand.length >
@@ -3704,12 +3707,6 @@ function restorePendingUnoState() {
     if (
         state.playerUnoDeferred
     ) {
-
-        /*
-            Save mohl vzniknout při čekání na sedmičku.
-            Modal si obnoví UI podle stavu až později.
-            Timer se tady nespouští.
-        */
 
         return;
     }
@@ -4472,11 +4469,6 @@ async function finishGame(
             .newlyUnlocked
     );
 
-
-    /*
-        Hudební systém na tento event později
-        naváže stopMusic().
-    */
 
     emitGameEvent(
         "game-over",
