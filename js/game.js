@@ -4,37 +4,8 @@
 /* =========================================================
    DOTS UNO
    HLAVNÍ HERNÍ ENGINE
-
-   Řeší:
-   - vytvoření partie
-   - rozdání 7 karet
-   - tah hráče / Lukyho
-   - dobírání
-   - +2 / +4 řetězce
-   - Stůj řetězce
-   - Změnu směru
-   - 0
-   - 7
-   - Kuř!
-   - výběr barvy
-   - UNO hráče
-   - Lukyho UNO + zapomenutí
-   - win / lose
-   - W/L
-   - achievementy
-   - speciální žlutý event
-   - emote události
-   - automatické ukládání
-
-   UI s enginem komunikuje pomocí funkcí a CustomEventů.
 ========================================================= */
 
-
-/* =========================================================
-   RUNTIME
-
-   Toto se přímo neukládá do save.
-========================================================= */
 
 const GAME_RUNTIME = {
 
@@ -42,73 +13,30 @@ const GAME_RUNTIME = {
 
     state: null,
 
-    /*
-        Hráč zahrál 7 a engine čeká,
-        zda chce výměnu rukou.
-    */
-
     pendingSevenChoice: false,
-
-
-    /*
-        Výběr barvy řeší UI ještě před samotným
-        potvrzením tahu, takže zde nemusíme držet
-        rozpracovanou Wild kartu.
-    */
-
-
-    /*
-        UNO hráče.
-    */
 
     playerUnoTimer: null,
 
     playerUnoResolver: null,
 
-
-    /*
-        Lukyho zapomenuté UNO.
-    */
-
     lukyUnoTimer: null,
 
     lukyUnoCatchOpen: false,
 
-
-    /*
-        Timer pro "Je po všem."
-    */
-
     lukyPhraseTimer: null,
-
-
-    /*
-        Emote systém.
-    */
 
     emoteCooldownUntil: 0,
 
     emoteTimer: null,
 
-
-    /*
-        Ochrana před spuštěním několika
-        Lukyho tahů současně.
-    */
-
     lukyTurnRunning: false,
-
-
-    /*
-        Hra je pozastavená např. menu.
-    */
 
     paused: false
 };
 
 
 /* =========================================================
-   HERNÍ EVENTY PRO UI
+   EVENTY PRO UI
 ========================================================= */
 
 function emitGameEvent(
@@ -127,7 +55,7 @@ function emitGameEvent(
 
 
 /* =========================================================
-   AKTUÁLNÍ STAV
+   STAV
 ========================================================= */
 
 function getGameState() {
@@ -141,10 +69,11 @@ function getActiveSlotIndex() {
 
 
 /* =========================================================
-   VYTVOŘENÍ NOVÉ PARTIE
+   NOVÁ PARTIE
 ========================================================= */
 
 function startNewGame(slotIndex) {
+
     clearRuntimeTimers();
 
 
@@ -185,35 +114,26 @@ function startNewGame(slotIndex) {
 
 
     const playerHand = [];
+
     const lukyHand = [];
 
-
-    /*
-        Rozdáme oběma 7 karet.
-    */
 
     for (
         let index = 0;
         index < GAME_CONFIG.startingHandSize;
         index += 1
     ) {
+
         playerHand.push(
             deck.pop()
         );
+
 
         lukyHand.push(
             deck.pop()
         );
     }
 
-
-    /*
-        První karta na stole.
-
-        Její speciální efekt při samotném startu
-        neprovádíme. Slouží jako výchozí karta
-        pro první tah.
-    */
 
     const firstDiscard =
         deck.pop();
@@ -265,34 +185,19 @@ function startNewGame(slotIndex) {
 
         lukyForgotUno: false,
 
-        /*
-            Počet po sobě jdoucích běžných tahů,
-            kdy hráč neměl kartu a musel líznout.
-
-            Používá se hlavně pro Pavel_angry.
-        */
-
         playerForcedDrawStreak: 0,
-
-
-        /*
-            Počet dokončených tahů.
-        */
 
         turnCount: 0,
 
-
-        /*
-            Žlutý event.
-
-            Pouze každá pátá hra je kandidát.
-        */
-
         yellowEventEligible:
-            GAME_CONFIG.yellowEvent.enabled &&
+            GAME_CONFIG
+                .yellowEvent
+                .enabled &&
             (
                 gameNumber %
-                GAME_CONFIG.yellowEvent.everyNthGame
+                GAME_CONFIG
+                    .yellowEvent
+                    .everyNthGame
             ) === 0,
 
         yellowEventAvailable: false,
@@ -325,10 +230,6 @@ function startNewGame(slotIndex) {
     );
 
 
-    /*
-        Úvodní Lukyho hláška.
-    */
-
     triggerOpeningQuote();
 
 
@@ -340,12 +241,13 @@ function startNewGame(slotIndex) {
 
 
 /* =========================================================
-   POKRAČOVÁNÍ ULOŽENÉ PARTIE
+   POKRAČOVÁNÍ PARTIE
 ========================================================= */
 
 function continueSavedGame(
     slotIndex
 ) {
+
     clearRuntimeTimers();
 
 
@@ -372,6 +274,7 @@ function continueSavedGame(
 
 
     if (!saved) {
+
         return startNewGame(
             slotIndex
         );
@@ -381,37 +284,37 @@ function continueSavedGame(
     GAME_RUNTIME.slotIndex =
         slotIndex;
 
-    GAME_RUNTIME.state =
-        {
-            ...saved,
 
-            /*
-                Starší save tyto hodnoty nemusel mít.
-            */
+    GAME_RUNTIME.state = {
 
-            playerForcedDrawStreak:
-                normalizeNonNegativeInteger(
-                    saved.playerForcedDrawStreak
-                ),
+        ...saved,
 
-            turnCount:
-                normalizeNonNegativeInteger(
-                    saved.turnCount
-                ),
+        playerForcedDrawStreak:
+            normalizeNonNegativeInteger(
+                saved.playerForcedDrawStreak
+            ),
 
-            yellowEventEligible:
-                typeof saved.yellowEventEligible ===
-                    "boolean"
-                    ? saved.yellowEventEligible
-                    : (
-                        saved.gameNumber %
-                        GAME_CONFIG.yellowEvent.everyNthGame
-                    ) === 0
-        };
+        turnCount:
+            normalizeNonNegativeInteger(
+                saved.turnCount
+            ),
+
+        yellowEventEligible:
+            typeof saved.yellowEventEligible ===
+                "boolean"
+                ? saved.yellowEventEligible
+                : (
+                    saved.gameNumber %
+                    GAME_CONFIG
+                        .yellowEvent
+                        .everyNthGame
+                ) === 0
+    };
 
 
     GAME_RUNTIME.pendingSevenChoice =
         false;
+
 
     GAME_RUNTIME.paused =
         false;
@@ -431,14 +334,6 @@ function continueSavedGame(
     emitStateChanged();
 
 
-    /*
-        Pokud byl save vytvořen během UNO situace,
-        restartujeme časové okno.
-
-        Není potřeba ukládat přesné zbývající
-        milisekundy.
-    */
-
     restorePendingUnoState();
 
 
@@ -448,6 +343,7 @@ function continueSavedGame(
         !GAME_RUNTIME.state
             .pendingPlayerUno
     ) {
+
         scheduleLukyTurn();
     }
 
@@ -457,10 +353,11 @@ function continueSavedGame(
 
 
 /* =========================================================
-   VÝCHOZÍ BARVA PRVNÍ KARTY
+   PRVNÍ BARVA
 ========================================================= */
 
 function getInitialColor(card) {
+
     if (
         !card ||
         isWildCard(card)
@@ -474,10 +371,11 @@ function getInitialColor(card) {
 
 
 /* =========================================================
-   AKTUÁLNÍ VRCHNÍ KARTA
+   VRCHNÍ KARTA
 ========================================================= */
 
 function getCurrentTopCard() {
+
     return getTopDiscardCard(
         GAME_RUNTIME.state
     );
@@ -485,17 +383,19 @@ function getCurrentTopCard() {
 
 
 /* =========================================================
-   VALIDACE VÝBĚRU HRÁČE
+   VALIDACE HRÁČOVA TAHU
 ========================================================= */
 
 function validatePlayerPlay(
     cardIds
 ) {
+
     const state =
         GAME_RUNTIME.state;
 
 
     if (!state) {
+
         return invalidPlay(
             "Hra není spuštěná."
         );
@@ -506,6 +406,7 @@ function validatePlayerPlay(
         state.status !==
         "playing"
     ) {
+
         return invalidPlay(
             "Partie už skončila."
         );
@@ -515,6 +416,7 @@ function validatePlayerPlay(
     if (
         GAME_RUNTIME.paused
     ) {
+
         return invalidPlay(
             "Hra je pozastavená."
         );
@@ -525,6 +427,7 @@ function validatePlayerPlay(
         GAME_RUNTIME
             .pendingSevenChoice
     ) {
+
         return invalidPlay(
             "Nejdřív dokonči rozhodnutí o sedmičce."
         );
@@ -535,6 +438,7 @@ function validatePlayerPlay(
         state.turn !==
         "player"
     ) {
+
         return invalidPlay(
             "Teď hraje Luky."
         );
@@ -553,6 +457,7 @@ function validatePlayerPlay(
         cards.length !==
             cardIds.length
     ) {
+
         return invalidPlay(
             "Vybrané karty nejsou v ruce."
         );
@@ -564,25 +469,28 @@ function validatePlayerPlay(
             cards
         )
     ) {
+
         return invalidPlay(
             "Přes Kuř! lze zahrát pouze stejné karty."
         );
     }
 
 
-    /*
-        +2 / +4 řetězec.
-    */
+    /* =====================================================
+       +2 / +4 ŘETĚZEC
+    ===================================================== */
 
     if (
         state.drawPenalty > 0
     ) {
+
         if (
             !canCounterDrawStack(
                 cards,
                 state.topPenaltyType
             )
         ) {
+
             return invalidPlay(
                 "Těmito kartami nelze přehodit dobírací penalizaci."
             );
@@ -595,18 +503,20 @@ function validatePlayerPlay(
     }
 
 
-    /*
-        Stůj řetězec.
-    */
+    /* =====================================================
+       STŮJ ŘETĚZEC
+    ===================================================== */
 
     if (
         state.skipChainCount > 0
     ) {
+
         if (
             !canCounterSkip(
                 cards
             )
         ) {
+
             return invalidPlay(
                 "Na Stůj lze odpovědět pouze kartou Stůj."
             );
@@ -619,9 +529,9 @@ function validatePlayerPlay(
     }
 
 
-    /*
-        Běžný tah.
-    */
+    /* =====================================================
+       BĚŽNÝ TAH
+    ===================================================== */
 
     const first =
         cards[0];
@@ -634,6 +544,7 @@ function validatePlayerPlay(
             state.currentColor
         )
     ) {
+
         return invalidPlay(
             "Tuto kartu teď nelze zahrát."
         );
@@ -647,6 +558,7 @@ function validatePlayerPlay(
 
 
 function validPlayResult(cards) {
+
     return {
         valid: true,
 
@@ -661,10 +573,14 @@ function validPlayResult(cards) {
 
 
 function invalidPlay(message) {
+
     return {
         valid: false,
+
         message,
+
         cards: [],
+
         needsColorChoice: false
     };
 }
@@ -672,14 +588,13 @@ function invalidPlay(message) {
 
 /* =========================================================
    ZAHRÁNÍ KARET HRÁČEM
-
-   chosenColor je nutná u Wild / +4.
 ========================================================= */
 
 async function playerPlayCards(
     cardIds,
     chosenColor = null
 ) {
+
     const validation =
         validatePlayerPlay(
             cardIds
@@ -687,6 +602,7 @@ async function playerPlayCards(
 
 
     if (!validation.valid) {
+
         emitGameEvent(
             "invalid-action",
             {
@@ -695,20 +611,24 @@ async function playerPlayCards(
             }
         );
 
+
         return validation;
     }
 
 
     if (
-        validation.needsColorChoice &&
+        validation
+            .needsColorChoice &&
         !isPlayableColor(
             chosenColor
         )
     ) {
+
         return {
             valid: false,
 
-            needsColorChoice: true,
+            needsColorChoice:
+                true,
 
             cards:
                 validation.cards
@@ -719,14 +639,14 @@ async function playerPlayCards(
     const state =
         GAME_RUNTIME.state;
 
+
     const cards =
         validation.cards;
 
 
-    /*
-        Čekající UNO hráče z předchozího stavu
-        už v tomto okamžiku nemá existovat.
-    */
+    const previousSkipChain =
+        state.skipChainCount;
+
 
     cancelPlayerUnoTimer();
 
@@ -761,13 +681,14 @@ async function playerPlayCards(
         );
 
 
-    /*
-        Kuř!
-    */
+    /* =====================================================
+       KUŘ!
+    ===================================================== */
 
     if (
         effect.isKur
     ) {
+
         emitGameEvent(
             "player-speech",
             {
@@ -786,7 +707,8 @@ async function playerPlayCards(
     emitGameEvent(
         "cards-played",
         {
-            actor: "player",
+            actor:
+                "player",
 
             cards,
 
@@ -798,38 +720,35 @@ async function playerPlayCards(
     );
 
 
-    /*
-        Jakmile nemá hráč žádné karty,
-        partie okamžitě končí.
-
-        0 / 7 / +2 atd. už další efekt neprovádí.
-    */
+    /* =====================================================
+       VÝHRA
+    ===================================================== */
 
     if (
         state.playerHand.length ===
         0
     ) {
+
         await finishGame(
             "player"
         );
 
+
         return {
             valid: true,
+
             finished: true
         };
     }
 
 
-    /*
-        Reset série nuceného běžného lízání.
-    */
-
-    state.playerForcedDrawStreak = 0;
+    state.playerForcedDrawStreak =
+        0;
 
 
-    /*
-        +2 / +4.
-    */
+    /* =====================================================
+       +2 / +4
+    ===================================================== */
 
     if (
         effect.type ===
@@ -837,6 +756,7 @@ async function playerPlayCards(
         effect.type ===
             CARD_TYPES.WILD_DRAW_FOUR
     ) {
+
         handleDrawCardPlay(
             "player",
             cards,
@@ -853,12 +773,14 @@ async function playerPlayCards(
 
 
         saveGame();
+
         emitStateChanged();
 
 
         if (
             !state.pendingPlayerUno
         ) {
+
             scheduleLukyTurn();
         }
 
@@ -869,14 +791,31 @@ async function playerPlayCards(
     }
 
 
-    /*
-        STŮJ.
-    */
+    /* =====================================================
+       STŮJ
+    ===================================================== */
 
     if (
         effect.type ===
         CARD_TYPES.SKIP
     ) {
+
+        /*
+            Pokud už Stůj řetězec běžel,
+            právě hráč Lukyho Stůj přehodil.
+        */
+
+        if (
+            previousSkipChain > 0
+        ) {
+
+            emitSkipCounterQuote(
+                "player",
+                previousSkipChain
+            );
+        }
+
+
         handleSkipPlay(
             "player"
         );
@@ -886,12 +825,14 @@ async function playerPlayCards(
 
 
         saveGame();
+
         emitStateChanged();
 
 
         if (
             !state.pendingPlayerUno
         ) {
+
             scheduleLukyTurn();
         }
 
@@ -902,49 +843,54 @@ async function playerPlayCards(
     }
 
 
-    /*
-        NULA.
-    */
+    /* =====================================================
+       NULA
+    ===================================================== */
 
     if (
         isZeroCard(
             cards[0]
         )
     ) {
+
         swapHands();
 
 
         emitGameEvent(
             "hands-swapped",
             {
-                reason: "zero",
-                actor: "player"
+                reason:
+                    "zero",
+
+                actor:
+                    "player"
             }
         );
     }
 
 
-    /*
-        SEDMIČKA.
+    /* =====================================================
+       SEDMIČKA
 
-        Nejdřív se zeptáme hráče a další tah
-        nezačne, dokud neodpoví.
-    */
+       DŮLEŽITÉ:
+       UNO vyhodnotíme až PO rozhodnutí o výměně,
+       protože až tehdy víme, s kolika kartami hráč
+       skutečně zůstal.
+    ===================================================== */
 
     if (
         isSevenCard(
             cards[0]
         )
     ) {
+
         GAME_RUNTIME
             .pendingSevenChoice =
             true;
 
 
-        await handlePlayerUnoAfterPlay();
-
-
         saveGame();
+
         emitStateChanged();
 
 
@@ -956,16 +902,18 @@ async function playerPlayCards(
 
         return {
             valid: true,
-            pendingSevenChoice: true
+
+            pendingSevenChoice:
+                true
         };
     }
 
 
-    /*
-        REVERSE v 1v1 nemá speciální efekt.
+    /* =====================================================
+       BĚŽNÁ KARTA / REVERSE
 
-        U ostatních karet normálně přejde tah na Lukyho.
-    */
+       Reverse v 1v1 nic speciálního nedělá.
+    ===================================================== */
 
     state.turn =
         "luky";
@@ -978,12 +926,14 @@ async function playerPlayCards(
 
 
     saveGame();
+
     emitStateChanged();
 
 
     if (
         !state.pendingPlayerUno
     ) {
+
         scheduleLukyTurn();
     }
 
@@ -995,12 +945,13 @@ async function playerPlayCards(
 
 
 /* =========================================================
-   HRÁČ ROZHODNE O SEDMIČCE
+   ROZHODNUTÍ O SEDMIČCE
 ========================================================= */
 
-function resolvePlayerSevenChoice(
+async function resolvePlayerSevenChoice(
     wantsSwap
 ) {
+
     const state =
         GAME_RUNTIME.state;
 
@@ -1010,6 +961,7 @@ function resolvePlayerSevenChoice(
         !GAME_RUNTIME
             .pendingSevenChoice
     ) {
+
         return false;
     }
 
@@ -1020,6 +972,7 @@ function resolvePlayerSevenChoice(
 
 
     if (wantsSwap) {
+
         swapHands();
 
 
@@ -1040,8 +993,11 @@ function resolvePlayerSevenChoice(
         emitGameEvent(
             "hands-swapped",
             {
-                reason: "seven",
-                actor: "player"
+                reason:
+                    "seven",
+
+                actor:
+                    "player"
             }
         );
     }
@@ -1053,13 +1009,23 @@ function resolvePlayerSevenChoice(
 
     completeTurn();
 
+
+    /*
+        UNO řešíme až po případné výměně rukou.
+    */
+
+    await handlePlayerUnoAfterPlay();
+
+
     saveGame();
+
     emitStateChanged();
 
 
     if (
         !state.pendingPlayerUno
     ) {
+
         scheduleLukyTurn();
     }
 
@@ -1070,12 +1036,10 @@ function resolvePlayerSevenChoice(
 
 /* =========================================================
    HRÁČ LÍZNE
-
-   Domácí pravidlo:
-   po líznutí už kartu nesmí zahrát.
 ========================================================= */
 
 function playerDraw() {
+
     const state =
         GAME_RUNTIME.state;
 
@@ -1083,18 +1047,19 @@ function playerDraw() {
     if (
         !canPlayerAct()
     ) {
+
         return false;
     }
 
 
-    /*
-        Pokud běží +2/+4 penalizace,
-        hráč bere celý součet a stojí.
-    */
+    /* =====================================================
+       PENALIZACE
+    ===================================================== */
 
     if (
         state.drawPenalty > 0
     ) {
+
         const amount =
             state.drawPenalty;
 
@@ -1108,9 +1073,13 @@ function playerDraw() {
         emitGameEvent(
             "cards-drawn",
             {
-                actor: "player",
+                actor:
+                    "player",
+
                 amount,
-                penalty: true
+
+                penalty:
+                    true
             }
         );
 
@@ -1118,7 +1087,14 @@ function playerDraw() {
         clearDrawPenalty();
 
 
-        state.playerForcedDrawStreak = 0;
+        state.playerForcedDrawStreak =
+            0;
+
+
+        /*
+            Hráč vzal penalizaci a stojí.
+            Hraje znovu Luky.
+        */
 
         state.turn =
             "luky";
@@ -1126,26 +1102,41 @@ function playerDraw() {
 
         completeTurn();
 
+
         saveGame();
+
         emitStateChanged();
 
+
+        maybeTriggerStrongSituationEmote();
+
+
         scheduleLukyTurn();
+
 
         return true;
     }
 
 
     /*
-        Pokud hráč čelí Stůj, nelze normálně lízat.
-        Musí Stůj přehodit, nebo stát.
+        Při Stůj se nelíže.
+        Hráč musí buď dát vlastní Stůj,
+        nebo použít playerAcceptSkip().
     */
 
     if (
         state.skipChainCount > 0
     ) {
+
         return false;
     }
 
+
+    /* =====================================================
+       BĚŽNÉ LÍZNUTÍ
+
+       Po líznutí tah okamžitě končí.
+    ===================================================== */
 
     drawCards(
         "player",
@@ -1153,22 +1144,24 @@ function playerDraw() {
     );
 
 
-    state.playerForcedDrawStreak += 1;
+    state.playerForcedDrawStreak +=
+        1;
 
 
     emitGameEvent(
         "cards-drawn",
         {
-            actor: "player",
-            amount: 1,
-            penalty: false
+            actor:
+                "player",
+
+            amount:
+                1,
+
+            penalty:
+                false
         }
     );
 
-
-    /*
-        Pavel může reagovat po opakovaném nuceném lízání.
-    */
 
     maybeTriggerPlayerDrawReaction();
 
@@ -1179,8 +1172,11 @@ function playerDraw() {
 
     completeTurn();
 
+
     saveGame();
+
     emitStateChanged();
+
 
     scheduleLukyTurn();
 
@@ -1190,25 +1186,23 @@ function playerDraw() {
 
 
 /* =========================================================
-   HRÁČ AKCEPTUJE STŮJ
-
-   UI tuto funkci většinou nebude potřebovat přímo:
-   při Stůj lze zobrazit možnost přehodit vlastní Stůj,
-   jinak engine může automaticky vyhodnotit stojící tah.
-
-   Funkci ale necháváme veřejnou.
+   HRÁČ PŘIJME STŮJ
 ========================================================= */
 
 function playerAcceptSkip() {
+
     const state =
         GAME_RUNTIME.state;
 
 
     if (
         !state ||
+        state.status !== "playing" ||
         state.turn !== "player" ||
-        state.skipChainCount <= 0
+        state.skipChainCount <= 0 ||
+        GAME_RUNTIME.paused
     ) {
+
         return false;
     }
 
@@ -1217,8 +1211,8 @@ function playerAcceptSkip() {
 
 
     /*
-        Poslední Stůj zahrál Luky,
-        takže Luky hraje znovu.
+        Poslední Stůj zahrál Luky.
+        Hráč stojí a Luky hraje znovu.
     */
 
     state.turn =
@@ -1227,8 +1221,11 @@ function playerAcceptSkip() {
 
     completeTurn();
 
+
     saveGame();
+
     emitStateChanged();
+
 
     scheduleLukyTurn();
 
@@ -1242,14 +1239,21 @@ function playerAcceptSkip() {
 ========================================================= */
 
 function canPlayerAct() {
+
     return Boolean(
+
         GAME_RUNTIME.state &&
+
         GAME_RUNTIME.state.status ===
             "playing" &&
+
         GAME_RUNTIME.state.turn ===
             "player" &&
+
         !GAME_RUNTIME.paused &&
-        !GAME_RUNTIME.pendingSevenChoice
+
+        !GAME_RUNTIME
+            .pendingSevenChoice
     );
 }
 
@@ -1263,6 +1267,7 @@ function handleDrawCardPlay(
     cards,
     effect
 ) {
+
     const state =
         GAME_RUNTIME.state;
 
@@ -1275,7 +1280,8 @@ function handleDrawCardPlay(
         effect.type;
 
 
-    state.skipChainCount = 0;
+    state.skipChainCount =
+        0;
 
 
     state.turn =
@@ -1305,13 +1311,17 @@ function handleDrawCardPlay(
 
 
 function clearDrawPenalty() {
+
     const state =
         GAME_RUNTIME.state;
 
 
-    state.drawPenalty = 0;
+    state.drawPenalty =
+        0;
 
-    state.topPenaltyType = null;
+
+    state.topPenaltyType =
+        null;
 }
 
 
@@ -1320,15 +1330,21 @@ function clearDrawPenalty() {
 ========================================================= */
 
 function handleSkipPlay(actor) {
+
     const state =
         GAME_RUNTIME.state;
 
 
-    state.skipChainCount += 1;
+    state.skipChainCount +=
+        1;
 
-    state.drawPenalty = 0;
 
-    state.topPenaltyType = null;
+    state.drawPenalty =
+        0;
+
+
+    state.topPenaltyType =
+        null;
 
 
     state.turn =
@@ -1353,20 +1369,23 @@ function handleSkipPlay(actor) {
 
 
 function clearSkipChain() {
+
     GAME_RUNTIME
         .state
-        .skipChainCount = 0;
+        .skipChainCount =
+        0;
 }
 
 
 /* =========================================================
-   STŮJ HLÁŠKA
+   STŮJ HLÁŠKY
 ========================================================= */
 
 function emitSkipCounterQuote(
     actor,
     counterNumber
 ) {
+
     const text =
         actor === "luky"
             ? getSkipCounterQuote(
@@ -1398,6 +1417,7 @@ function emitSkipCounterQuote(
 ========================================================= */
 
 function swapHands() {
+
     const state =
         GAME_RUNTIME.state;
 
@@ -1416,24 +1436,18 @@ function swapHands() {
         sortHand(
             player
         );
-
-
-    /*
-        Luky si žádnou informaci o předchozí ruce
-        hráče neuchovává. AI pracuje jen s novým
-        gameState.
-    */
 }
 
 
 /* =========================================================
-   DOBÍRÁNÍ KARET
+   DOBÍRÁNÍ
 ========================================================= */
 
 function drawCards(
     actor,
     amount
 ) {
+
     const state =
         GAME_RUNTIME.state;
 
@@ -1449,6 +1463,7 @@ function drawCards(
         index < amount;
         index += 1
     ) {
+
         const card =
             drawOneCard();
 
@@ -1467,11 +1482,14 @@ function drawCards(
     if (
         actor === "luky"
     ) {
+
         state.lukyHand =
             sortHand(
                 state.lukyHand
             );
+
     } else {
+
         state.playerHand =
             sortHand(
                 state.playerHand
@@ -1481,6 +1499,7 @@ function drawCards(
 
 
 function drawOneCard() {
+
     const state =
         GAME_RUNTIME.state;
 
@@ -1489,6 +1508,7 @@ function drawOneCard() {
         state.drawPile.length ===
         0
     ) {
+
         recycleDiscardPile();
     }
 
@@ -1501,10 +1521,11 @@ function drawOneCard() {
 
 
 /* =========================================================
-   OBNOVENÍ DOBÍRACÍHO BALÍČKU
+   OBNOVENÍ BALÍČKU
 ========================================================= */
 
 function recycleDiscardPile() {
+
     const state =
         GAME_RUNTIME.state;
 
@@ -1513,6 +1534,7 @@ function recycleDiscardPile() {
         state.discardPile.length <=
         1
     ) {
+
         return;
     }
 
@@ -1543,12 +1565,14 @@ function recycleDiscardPile() {
 ========================================================= */
 
 function pushCardsToDiscard(cards) {
+
     const state =
         GAME_RUNTIME.state;
 
 
     cards.forEach(
         (card) => {
+
             state.discardPile.push(
                 card
             );
@@ -1558,13 +1582,14 @@ function pushCardsToDiscard(cards) {
 
 
 /* =========================================================
-   AKTUÁLNÍ BARVA
+   BARVA
 ========================================================= */
 
 function updateCurrentColorAfterPlay(
     cards,
     chosenColor
 ) {
+
     const state =
         GAME_RUNTIME.state;
 
@@ -1580,8 +1605,10 @@ function updateCurrentColorAfterPlay(
             lastCard
         )
     ) {
+
         state.currentColor =
             chosenColor;
+
 
         return;
     }
@@ -1593,6 +1620,7 @@ function updateCurrentColorAfterPlay(
 
 
 function isPlayableColor(color) {
+
     return [
         CARD_COLORS.RED,
         CARD_COLORS.YELLOW,
@@ -1609,6 +1637,7 @@ function isPlayableColor(color) {
 ========================================================= */
 
 function scheduleLukyTurn() {
+
     const state =
         GAME_RUNTIME.state;
 
@@ -1618,20 +1647,10 @@ function scheduleLukyTurn() {
         state.status !== "playing" ||
         state.turn !== "luky" ||
         GAME_RUNTIME.paused ||
-        GAME_RUNTIME.lukyTurnRunning
-    ) {
-        return;
-    }
-
-
-    /*
-        Čekáme-li na hráčovo UNO,
-        Luky zatím nezačne.
-    */
-
-    if (
+        GAME_RUNTIME.lukyTurnRunning ||
         state.pendingPlayerUno
     ) {
+
         return;
     }
 
@@ -1641,6 +1660,7 @@ function scheduleLukyTurn() {
 
 
 async function runLukyTurn() {
+
     const state =
         GAME_RUNTIME.state;
 
@@ -1650,6 +1670,7 @@ async function runLukyTurn() {
         state.turn !== "luky" ||
         state.status !== "playing"
     ) {
+
         return;
     }
 
@@ -1659,22 +1680,26 @@ async function runLukyTurn() {
 
 
     try {
+
         await waitForLukyThinking(
             {
                 onThinkingStart:
                     (text) => {
+
                         emitGameEvent(
                             "luky-speech",
                             {
                                 text,
 
-                                thinking: true
+                                thinking:
+                                    true
                             }
                         );
                     },
 
                 onThinkingEnd:
                     () => {
+
                         emitGameEvent(
                             "luky-thinking-end",
                             {}
@@ -1689,6 +1714,7 @@ async function runLukyTurn() {
             state.status !== "playing" ||
             state.turn !== "luky"
         ) {
+
             return;
         }
 
@@ -1702,7 +1728,9 @@ async function runLukyTurn() {
         await executeLukyDecision(
             decision
         );
+
     } finally {
+
         GAME_RUNTIME.lukyTurnRunning =
             false;
     }
@@ -1710,12 +1738,13 @@ async function runLukyTurn() {
 
 
 /* =========================================================
-   PROVEDENÍ LUKYHO ROZHODNUTÍ
+   PROVEDENÍ AI TAHU
 ========================================================= */
 
 async function executeLukyDecision(
     decision
 ) {
+
     const state =
         GAME_RUNTIME.state;
 
@@ -1724,18 +1753,21 @@ async function executeLukyDecision(
         !decision ||
         !state
     ) {
+
         return;
     }
 
 
     /* =====================================================
-       LUKY MUSÍ VZÍT PENALIZACI
+       DOBÍRACÍ PENALIZACE
     ===================================================== */
 
     if (
-        decision.action === "draw" &&
+        decision.action ===
+            "draw" &&
         state.drawPenalty > 0
     ) {
+
         const amount =
             state.drawPenalty;
 
@@ -1749,9 +1781,13 @@ async function executeLukyDecision(
         emitGameEvent(
             "cards-drawn",
             {
-                actor: "luky",
+                actor:
+                    "luky",
+
                 amount,
-                penalty: true
+
+                penalty:
+                    true
             }
         );
 
@@ -1759,23 +1795,22 @@ async function executeLukyDecision(
         clearDrawPenalty();
 
 
-        /*
-            Luky penalizaci vzal a vynechává tah.
-
-            Hraje znovu hráč.
-        */
-
         state.turn =
             "player";
 
 
         completeTurn();
 
+
         saveGame();
+
         emitStateChanged();
 
 
-        maybeTriggerStrongSituationEmote();
+        /*
+            Tady se Lukymu nedařilo,
+            takže nedáváme jeho pozitivní emote.
+        */
 
 
         return;
@@ -1787,14 +1822,16 @@ async function executeLukyDecision(
     ===================================================== */
 
     if (
-        decision.action === "skip"
+        decision.action ===
+        "skip"
     ) {
+
         clearSkipChain();
 
 
         /*
-            Poslední Stůj zahrál hráč,
-            takže hráč hraje znovu.
+            Poslední Stůj zahrál hráč.
+            Luky stojí a hráč hraje znovu.
         */
 
         state.turn =
@@ -1803,7 +1840,9 @@ async function executeLukyDecision(
 
         completeTurn();
 
+
         saveGame();
+
         emitStateChanged();
 
 
@@ -1816,8 +1855,10 @@ async function executeLukyDecision(
     ===================================================== */
 
     if (
-        decision.action === "draw"
+        decision.action ===
+        "draw"
     ) {
+
         drawCards(
             "luky",
             1
@@ -1827,9 +1868,14 @@ async function executeLukyDecision(
         emitGameEvent(
             "cards-drawn",
             {
-                actor: "luky",
-                amount: 1,
-                penalty: false
+                actor:
+                    "luky",
+
+                amount:
+                    1,
+
+                penalty:
+                    false
             }
         );
 
@@ -1840,7 +1886,9 @@ async function executeLukyDecision(
 
         completeTurn();
 
+
         saveGame();
+
         emitStateChanged();
 
 
@@ -1852,31 +1900,39 @@ async function executeLukyDecision(
         decision.action !==
         "play"
     ) {
+
         return;
     }
 
 
     const cards =
-        decision.cards || [];
+        decision.cards ||
+        [];
 
 
     if (
-        cards.length === 0
+        cards.length ===
+        0
     ) {
+
         state.turn =
             "player";
 
+
         completeTurn();
 
+
         saveGame();
+
         emitStateChanged();
+
 
         return;
     }
 
 
-    const wasSkipCounter =
-        state.skipChainCount > 0;
+    const previousSkipChain =
+        state.skipChainCount;
 
 
     state.lukyHand =
@@ -1909,20 +1965,11 @@ async function executeLukyDecision(
         );
 
 
-    if (
-        effect.isKur
-    ) {
-        /*
-            Lukyho "Kuř!" jsme nedefinovali.
-            Hra tedy pouze provede Kuř!, bez hlášky.
-        */
-    }
-
-
     emitGameEvent(
         "cards-played",
         {
-            actor: "luky",
+            actor:
+                "luky",
 
             cards,
 
@@ -1934,41 +1981,27 @@ async function executeLukyDecision(
     );
 
 
-    /*
-        Výhra Lukyho.
-    */
+    /* =====================================================
+       VÝHRA LUKYHO
+    ===================================================== */
 
     if (
         state.lukyHand.length ===
         0
     ) {
+
         await finishGame(
             "luky"
         );
+
 
         return;
     }
 
 
-    /*
-        STŮJ counter hláška.
-    */
-
-    if (
-        effect.type ===
-            CARD_TYPES.SKIP &&
-        wasSkipCounter
-    ) {
-        emitSkipCounterQuote(
-            "luky",
-            state.skipChainCount
-        );
-    }
-
-
-    /*
-        +2 / +4.
-    */
+    /* =====================================================
+       +2 / +4
+    ===================================================== */
 
     if (
         effect.type ===
@@ -1976,6 +2009,7 @@ async function executeLukyDecision(
         effect.type ===
             CARD_TYPES.WILD_DRAW_FOUR
     ) {
+
         handleDrawCardPlay(
             "luky",
             cards,
@@ -1990,6 +2024,7 @@ async function executeLukyDecision(
 
 
         saveGame();
+
         emitStateChanged();
 
 
@@ -1997,14 +2032,26 @@ async function executeLukyDecision(
     }
 
 
-    /*
-        STŮJ.
-    */
+    /* =====================================================
+       STŮJ
+    ===================================================== */
 
     if (
         effect.type ===
         CARD_TYPES.SKIP
     ) {
+
+        if (
+            previousSkipChain > 0
+        ) {
+
+            emitSkipCounterQuote(
+                "luky",
+                previousSkipChain
+            );
+        }
+
+
         handleSkipPlay(
             "luky"
         );
@@ -2017,6 +2064,7 @@ async function executeLukyDecision(
 
 
         saveGame();
+
         emitStateChanged();
 
 
@@ -2024,50 +2072,59 @@ async function executeLukyDecision(
     }
 
 
-    /*
-        NULA.
-    */
+    /* =====================================================
+       NULA
+    ===================================================== */
 
     if (
         isZeroCard(
             cards[0]
         )
     ) {
+
         swapHands();
 
 
         emitGameEvent(
             "hands-swapped",
             {
-                reason: "zero",
-                actor: "luky"
+                reason:
+                    "zero",
+
+                actor:
+                    "luky"
             }
         );
     }
 
 
-    /*
-        SEDMIČKA.
-    */
+    /* =====================================================
+       SEDMIČKA
+    ===================================================== */
 
     if (
         isSevenCard(
             cards[0]
         )
     ) {
+
         if (
             shouldLukySwapOnSeven(
                 state
             )
         ) {
+
             swapHands();
 
 
             emitGameEvent(
                 "hands-swapped",
                 {
-                    reason: "seven",
-                    actor: "luky"
+                    reason:
+                        "seven",
+
+                    actor:
+                        "luky"
                 }
             );
         }
@@ -2084,7 +2141,16 @@ async function executeLukyDecision(
     handleLukyUnoAfterPlay();
 
 
+    /*
+        Pokud má Luky výrazně méně karet,
+        může občas reagovat posměšným emotem.
+    */
+
+    maybeTriggerLukyCardLeadEmote();
+
+
     saveGame();
+
     emitStateChanged();
 }
 
@@ -2094,6 +2160,7 @@ async function executeLukyDecision(
 ========================================================= */
 
 async function handlePlayerUnoAfterPlay() {
+
     const state =
         GAME_RUNTIME.state;
 
@@ -2102,8 +2169,10 @@ async function handlePlayerUnoAfterPlay() {
         state.playerHand.length !==
         1
     ) {
+
         state.pendingPlayerUno =
             false;
+
 
         return;
     }
@@ -2124,12 +2193,6 @@ async function handlePlayerUnoAfterPlay() {
     );
 
 
-    /*
-        Zastavíme pokračování hry maximálně na 3 s.
-        Jakmile hráč řekne UNO, Promise se ukončí
-        okamžitě.
-    */
-
     await new Promise(
         (resolve) => {
 
@@ -2147,6 +2210,7 @@ async function handlePlayerUnoAfterPlay() {
                             .playerUnoTimer =
                             null;
 
+
                         GAME_RUNTIME
                             .playerUnoResolver =
                             null;
@@ -2155,7 +2219,9 @@ async function handlePlayerUnoAfterPlay() {
                         if (
                             !state.pendingPlayerUno
                         ) {
+
                             resolve();
+
                             return;
                         }
 
@@ -2198,6 +2264,7 @@ async function handlePlayerUnoAfterPlay() {
 
 
                         saveGame();
+
                         emitStateChanged();
 
 
@@ -2208,6 +2275,7 @@ async function handlePlayerUnoAfterPlay() {
                             state.turn ===
                             "luky"
                         ) {
+
                             scheduleLukyTurn();
                         }
                     },
@@ -2221,10 +2289,11 @@ async function handlePlayerUnoAfterPlay() {
 
 
 /* =========================================================
-   TLAČÍTKO UNO!
+   HRÁČ ŘEKNE UNO
 ========================================================= */
 
 function playerCallUno() {
+
     const state =
         GAME_RUNTIME.state;
 
@@ -2234,14 +2303,12 @@ function playerCallUno() {
     }
 
 
-    /*
-        Platné UNO.
-    */
-
     if (
         state.pendingPlayerUno &&
-        state.playerHand.length === 1
+        state.playerHand.length ===
+            1
     ) {
+
         state.pendingPlayerUno =
             false;
 
@@ -2266,12 +2333,15 @@ function playerCallUno() {
 
 
         saveGame();
+
         emitStateChanged();
 
 
         if (
-            state.turn === "luky"
+            state.turn ===
+            "luky"
         ) {
+
             scheduleLukyTurn();
         }
 
@@ -2303,22 +2373,24 @@ function playerCallUno() {
 
 
 /* =========================================================
-   ZRUŠENÍ PLAYER UNO TIMERU
+   PLAYER UNO TIMER
 ========================================================= */
 
 function cancelPlayerUnoTimer(
     resolvePromise = false
 ) {
+
     if (
         GAME_RUNTIME.playerUnoTimer
     ) {
+
         clearTimeout(
             GAME_RUNTIME
                 .playerUnoTimer
         );
 
-        GAME_RUNTIME
-            .playerUnoTimer =
+
+        GAME_RUNTIME.playerUnoTimer =
             null;
     }
 
@@ -2327,13 +2399,13 @@ function cancelPlayerUnoTimer(
         resolvePromise &&
         GAME_RUNTIME.playerUnoResolver
     ) {
+
         const resolver =
             GAME_RUNTIME
                 .playerUnoResolver;
 
 
-        GAME_RUNTIME
-            .playerUnoResolver =
+        GAME_RUNTIME.playerUnoResolver =
             null;
 
 
@@ -2347,6 +2419,7 @@ function cancelPlayerUnoTimer(
 ========================================================= */
 
 function handleLukyUnoAfterPlay() {
+
     const state =
         GAME_RUNTIME.state;
 
@@ -2355,23 +2428,23 @@ function handleLukyUnoAfterPlay() {
         state.lukyHand.length !==
         1
     ) {
+
         state.pendingLukyUno =
             false;
 
+
         state.lukyForgotUno =
             false;
+
 
         GAME_RUNTIME
             .lukyUnoCatchOpen =
             false;
 
+
         return;
     }
 
-
-    /*
-        "Je po všem." zazní vždy.
-    */
 
     const forgot =
         shouldLukyForgetUno();
@@ -2380,6 +2453,7 @@ function handleLukyUnoAfterPlay() {
     state.pendingLukyUno =
         forgot;
 
+
     state.lukyForgotUno =
         forgot;
 
@@ -2387,7 +2461,9 @@ function handleLukyUnoAfterPlay() {
     if (forgot) {
 
         /*
-            Nejdřív "Je po všem.",
+            Nejdřív:
+            "Je po všem."
+
             UNO až později.
         */
 
@@ -2417,12 +2493,8 @@ function handleLukyUnoAfterPlay() {
         emitGameEvent(
             "luky-uno-forgotten-window",
             {
-                /*
-                    UI nemusí hráči prozrazovat,
-                    že toto okno skutečně běží.
-                */
-
-                duration: delay
+                duration:
+                    delay
             }
         );
 
@@ -2430,9 +2502,7 @@ function handleLukyUnoAfterPlay() {
         GAME_RUNTIME
             .lukyUnoTimer =
             setTimeout(
-                () => {
-                    resolveForgottenLukyUno();
-                },
+                resolveForgottenLukyUno,
                 delay
             );
 
@@ -2442,14 +2512,16 @@ function handleLukyUnoAfterPlay() {
 
 
     /*
-        UNO řekl správně hned.
+        Normální UNO.
     */
 
     state.pendingLukyUno =
         false;
 
+
     state.lukyForgotUno =
         false;
+
 
     GAME_RUNTIME
         .lukyUnoCatchOpen =
@@ -2470,12 +2542,7 @@ function handleLukyUnoAfterPlay() {
     );
 
 
-    /*
-        Po 2–3 sekundách:
-        "Je po všem."
-    */
-
-    const phraseDelay =
+    const delay =
         getRandomLukyAfterUnoDelay();
 
 
@@ -2488,8 +2555,10 @@ function handleLukyUnoAfterPlay() {
                     GAME_RUNTIME.state &&
                     GAME_RUNTIME.state
                         .lukyHand
-                        .length === 1
+                        .length ===
+                        1
                 ) {
+
                     emitGameEvent(
                         "luky-speech",
                         {
@@ -2504,16 +2573,17 @@ function handleLukyUnoAfterPlay() {
                     );
                 }
             },
-            phraseDelay
+            delay
         );
 }
 
 
 /* =========================================================
-   LUKY SI POZDĚ VZPOMENE NA UNO
+   LUKY SI VZPOMENE
 ========================================================= */
 
 function resolveForgottenLukyUno() {
+
     const state =
         GAME_RUNTIME.state;
 
@@ -2526,11 +2596,14 @@ function resolveForgottenLukyUno() {
     if (
         !state ||
         !state.pendingLukyUno ||
-        state.lukyHand.length !== 1
+        state.lukyHand.length !==
+            1
     ) {
+
         GAME_RUNTIME
             .lukyUnoCatchOpen =
             false;
+
 
         return;
     }
@@ -2539,8 +2612,10 @@ function resolveForgottenLukyUno() {
     state.pendingLukyUno =
         false;
 
+
     state.lukyForgotUno =
         false;
+
 
     GAME_RUNTIME
         .lukyUnoCatchOpen =
@@ -2562,15 +2637,17 @@ function resolveForgottenLukyUno() {
 
 
     saveGame();
+
     emitStateChanged();
 }
 
 
 /* =========================================================
-   TLAČÍTKO "NEŘEKL JSI UNO!"
+   NEŘEKL JSI UNO!
 ========================================================= */
 
 function playerCatchLukyUno() {
+
     const state =
         GAME_RUNTIME.state;
 
@@ -2580,24 +2657,24 @@ function playerCatchLukyUno() {
     }
 
 
-    /*
-        Správné nachytání.
-    */
-
     if (
         GAME_RUNTIME
             .lukyUnoCatchOpen &&
         state.pendingLukyUno &&
-        state.lukyHand.length === 1
+        state.lukyHand.length ===
+            1
     ) {
+
         if (
             GAME_RUNTIME
                 .lukyUnoTimer
         ) {
+
             clearTimeout(
                 GAME_RUNTIME
                     .lukyUnoTimer
             );
+
 
             GAME_RUNTIME
                 .lukyUnoTimer =
@@ -2612,6 +2689,7 @@ function playerCatchLukyUno() {
 
         state.pendingLukyUno =
             false;
+
 
         state.lukyForgotUno =
             false;
@@ -2642,42 +2720,37 @@ function playerCatchLukyUno() {
         emitGameEvent(
             "cards-drawn",
             {
-                actor: "luky",
+                actor:
+                    "luky",
 
                 amount:
                     GAME_CONFIG
                         .lukyUno
                         .caughtPenaltyCards,
 
-                unoPenalty: true
+                unoPenalty:
+                    true
             }
         );
 
 
-        const achievement =
+        const result =
             registerCaughtLukyUnoAchievement();
 
 
         announceUnlockedAchievements(
-            achievement
-                .newlyUnlocked
+            result.newlyUnlocked
         );
 
 
         saveGame();
+
         emitStateChanged();
 
 
         return true;
     }
 
-
-    /*
-        Nesmyslné použití tlačítka.
-
-        Tlačítko zůstává aktivní celou dobu,
-        takže jeho stav nic neprozrazuje.
-    */
 
     emitGameEvent(
         "luky-speech",
@@ -2704,6 +2777,7 @@ function playerCatchLukyUno() {
 ========================================================= */
 
 function restorePendingUnoState() {
+
     const state =
         GAME_RUNTIME.state;
 
@@ -2715,15 +2789,13 @@ function restorePendingUnoState() {
 
     if (
         state.pendingPlayerUno &&
-        state.playerHand.length === 1
+        state.playerHand.length ===
+            1
     ) {
-        /*
-            Při loadu dostane hráč celé nové
-            3sekundové okno.
-        */
 
         state.pendingPlayerUno =
             false;
+
 
         handlePlayerUnoAfterPlay();
     }
@@ -2732,8 +2804,10 @@ function restorePendingUnoState() {
     if (
         state.pendingLukyUno &&
         state.lukyForgotUno &&
-        state.lukyHand.length === 1
+        state.lukyHand.length ===
+            1
     ) {
+
         GAME_RUNTIME
             .lukyUnoCatchOpen =
             true;
@@ -2746,9 +2820,7 @@ function restorePendingUnoState() {
         GAME_RUNTIME
             .lukyUnoTimer =
             setTimeout(
-                () => {
-                    resolveForgottenLukyUno();
-                },
+                resolveForgottenLukyUno,
                 delay
             );
     }
@@ -2760,6 +2832,7 @@ function restorePendingUnoState() {
 ========================================================= */
 
 function maybeActivateYellowEvent() {
+
     const state =
         GAME_RUNTIME.state;
 
@@ -2770,27 +2843,25 @@ function maybeActivateYellowEvent() {
         state.yellowEventAvailable ||
         state.yellowEventUsed
     ) {
+
         return;
     }
 
-
-    /*
-        Ne hned na začátku.
-
-        Od čtvrtého dokončeného tahu má každé další
-        kolo malou šanci event aktivovat.
-    */
 
     if (
         state.turnCount < 4
     ) {
+
         return;
     }
 
 
     if (
-        randomChance(0.12)
+        randomChance(
+            0.12
+        )
     ) {
+
         state.yellowEventAvailable =
             true;
 
@@ -2804,10 +2875,11 @@ function maybeActivateYellowEvent() {
 
 
 /* =========================================================
-   "MÁ NĚKDO ŽLUTOU?"
+   MÁ NĚKDO ŽLUTOU?
 ========================================================= */
 
 function askLukyAboutYellow() {
+
     const state =
         GAME_RUNTIME.state;
 
@@ -2817,12 +2889,14 @@ function askLukyAboutYellow() {
         !state.yellowEventAvailable ||
         state.yellowEventUsed
     ) {
+
         return false;
     }
 
 
     state.yellowEventUsed =
         true;
+
 
     state.yellowEventAvailable =
         false;
@@ -2851,6 +2925,7 @@ function askLukyAboutYellow() {
 
 
     if (hasYellow) {
+
         const result =
             registerLukyYellowAchievement();
 
@@ -2862,6 +2937,7 @@ function askLukyAboutYellow() {
 
 
     saveGame();
+
     emitStateChanged();
 
 
@@ -2870,10 +2946,11 @@ function askLukyAboutYellow() {
 
 
 /* =========================================================
-   OTEVÍRACÍ HLÁŠKA LUKYHO
+   OPENING LUKYHO
 ========================================================= */
 
 function triggerOpeningQuote() {
+
     const slotIndex =
         GAME_RUNTIME.slotIndex;
 
@@ -2932,15 +3009,13 @@ function triggerOpeningQuote() {
 
 
 /* =========================================================
-   "NALOŽENÍ" LUKYMU
-
-   +4 nebo minimálně celková hodnota +4
-   v rámci Kuř!.
+   SILNÁ REAKCE NA HRÁČOVU PENALIZACI
 ========================================================= */
 
 function maybeTriggerHeavyDrawQuote(
     amount
 ) {
+
     if (
         amount < 4
     ) {
@@ -2988,10 +3063,11 @@ function maybeTriggerHeavyDrawQuote(
 
 
 /* =========================================================
-   EMOTE SYSTÉM
+   EMOTE COOLDOWN
 ========================================================= */
 
 function isEmoteCooldownActive() {
+
     return (
         Date.now() <
         GAME_RUNTIME
@@ -3001,6 +3077,7 @@ function isEmoteCooldownActive() {
 
 
 function beginEmoteCooldown() {
+
     GAME_RUNTIME
         .emoteCooldownUntil =
         Date.now() +
@@ -3010,21 +3087,15 @@ function beginEmoteCooldown() {
 
 /* =========================================================
    SILNÁ VÝHODA LUKYHO
-
-   Např. Luky hodil +2/+4.
 ========================================================= */
 
 function maybeTriggerStrongSituationEmote() {
-    if (
-        isEmoteCooldownActive()
-    ) {
-        return;
-    }
-
 
     if (
+        isEmoteCooldownActive() ||
         !shouldShowLukyStrongEmote()
     ) {
+
         return;
     }
 
@@ -3040,26 +3111,26 @@ function maybeTriggerStrongSituationEmote() {
     }
 
 
-    /*
-        U 96 se náhodně rozhodne:
-        - Luky se posmívá
-        - Pavel reaguje
-        Nikdy oba současně.
-    */
-
     if (
-        slot.characterId === "96"
+        slot.characterId ===
+        "96"
     ) {
+
         if (
-            randomChance(0.5)
+            randomChance(
+                0.5
+            )
         ) {
+
             showTemporaryEmote(
                 "luky",
                 getConfiguredLukyEmote(
                     "grin"
                 )
             );
+
         } else {
+
             showTemporaryEmote(
                 "player",
                 getConfiguredCharacterEmote(
@@ -3084,22 +3155,16 @@ function maybeTriggerStrongSituationEmote() {
 
 
 /* =========================================================
-   MENŠÍ VÝHODA LUKYHO
-
-   Např. Stůj.
+   MÍRNÁ VÝHODA LUKYHO
 ========================================================= */
 
 function maybeTriggerMildSituationEmote() {
-    if (
-        isEmoteCooldownActive()
-    ) {
-        return;
-    }
-
 
     if (
+        isEmoteCooldownActive() ||
         !shouldShowLukyMildEmote()
     ) {
+
         return;
     }
 
@@ -3116,18 +3181,25 @@ function maybeTriggerMildSituationEmote() {
 
 
     if (
-        slot.characterId === "96"
+        slot.characterId ===
+        "96"
     ) {
+
         if (
-            randomChance(0.5)
+            randomChance(
+                0.5
+            )
         ) {
+
             showTemporaryEmote(
                 "luky",
                 getConfiguredLukyEmote(
                     "mild"
                 )
             );
+
         } else {
+
             showTemporaryEmote(
                 "player",
                 getConfiguredCharacterEmote(
@@ -3152,10 +3224,59 @@ function maybeTriggerMildSituationEmote() {
 
 
 /* =========================================================
+   LUKY MÁ VÝRAZNĚ MÉNĚ KARET
+========================================================= */
+
+function maybeTriggerLukyCardLeadEmote() {
+
+    if (
+        isEmoteCooldownActive()
+    ) {
+
+        return;
+    }
+
+
+    if (
+        !isLukyClearlyAhead(
+            GAME_RUNTIME.state
+        )
+    ) {
+
+        return;
+    }
+
+
+    /*
+        Ani při velké výhodě se emote
+        nemá objevovat pokaždé.
+    */
+
+    if (
+        !randomChance(
+            0.18
+        )
+    ) {
+
+        return;
+    }
+
+
+    showTemporaryEmote(
+        "luky",
+        getConfiguredLukyEmote(
+            "grin"
+        )
+    );
+}
+
+
+/* =========================================================
    HRÁČ MUSÍ LÍZAT
 ========================================================= */
 
 function maybeTriggerPlayerDrawReaction() {
+
     const state =
         GAME_RUNTIME.state;
 
@@ -3172,14 +3293,16 @@ function maybeTriggerPlayerDrawReaction() {
 
 
     /*
-        Třetí nucené líznutí Pavla za sebou
-        považujeme za silnou špatnou situaci.
+        Pavel třikrát po sobě líže.
     */
 
     if (
-        slot.characterId === "96" &&
-        state.playerForcedDrawStreak >= 3
+        slot.characterId ===
+            "96" &&
+        state.playerForcedDrawStreak >=
+            3
     ) {
+
         if (
             !isEmoteCooldownActive() &&
             randomChance(
@@ -3188,6 +3311,7 @@ function maybeTriggerPlayerDrawReaction() {
                     .strongSituationChance
             )
         ) {
+
             showTemporaryEmote(
                 "player",
                 getConfiguredCharacterEmote(
@@ -3202,26 +3326,24 @@ function maybeTriggerPlayerDrawReaction() {
     }
 
 
-    /*
-        Jedno běžné líznutí = mírná situace.
-    */
-
     maybeTriggerMildSituationEmote();
 }
 
 
 /* =========================================================
-   ZOBRAZENÍ EMOTU
+   EMOTE
 ========================================================= */
 
 function showTemporaryEmote(
     actor,
     image
 ) {
+
     if (
         !image ||
         isEmoteCooldownActive()
     ) {
+
         return false;
     }
 
@@ -3229,6 +3351,7 @@ function showTemporaryEmote(
     if (
         GAME_RUNTIME.emoteTimer
     ) {
+
         clearTimeout(
             GAME_RUNTIME
                 .emoteTimer
@@ -3247,7 +3370,9 @@ function showTemporaryEmote(
         "emote-start",
         {
             actor,
+
             image,
+
             duration
         }
     );
@@ -3279,18 +3404,21 @@ function showTemporaryEmote(
 
 
 /* =========================================================
-   UKONČENÍ PARTIE
+   KONEC PARTIE
 ========================================================= */
 
 async function finishGame(winner) {
+
     const state =
         GAME_RUNTIME.state;
 
 
     if (
         !state ||
-        state.status === "finished"
+        state.status ===
+            "finished"
     ) {
+
         return;
     }
 
@@ -3322,11 +3450,14 @@ async function finishGame(winner) {
     if (
         winner === "player"
     ) {
+
         updatedSlot =
             registerPlayerWin(
                 slotIndex
             );
+
     } else {
+
         updatedSlot =
             registerLukyWin(
                 slotIndex
@@ -3338,6 +3469,7 @@ async function finishGame(winner) {
         registerFinishedGameForAchievements(
             {
                 winner,
+
                 characterId
             }
         );
@@ -3382,23 +3514,28 @@ async function finishGame(winner) {
 
 
 /* =========================================================
-   ACHIEVEMENT TOASTY
+   ACHIEVEMENT EVENTY
 ========================================================= */
 
 function announceUnlockedAchievements(
     definitions
 ) {
+
     if (
         !Array.isArray(
             definitions
         )
     ) {
+
         return;
     }
 
 
     definitions.forEach(
-        (definition, index) => {
+        (
+            definition,
+            index
+        ) => {
 
             setTimeout(
                 () => {
@@ -3419,10 +3556,11 @@ function announceUnlockedAchievements(
 
 
 /* =========================================================
-   DOKONČENÍ TAHU
+   KONEC TAHU
 ========================================================= */
 
 function completeTurn() {
+
     const state =
         GAME_RUNTIME.state;
 
@@ -3447,19 +3585,23 @@ function completeTurn() {
 
 
 /* =========================================================
-   AUTOMATICKÉ ULOŽENÍ
+   SAVE
 ========================================================= */
 
 function saveGame() {
+
     const state =
         GAME_RUNTIME.state;
 
 
     if (
         !state ||
-        state.status !== "playing" ||
-        GAME_RUNTIME.slotIndex === null
+        state.status !==
+            "playing" ||
+        GAME_RUNTIME.slotIndex ===
+            null
     ) {
+
         return;
     }
 
@@ -3476,10 +3618,11 @@ function saveGame() {
 
 
 /* =========================================================
-   STATE CHANGED
+   STATE EVENT
 ========================================================= */
 
 function emitStateChanged() {
+
     emitGameEvent(
         "state-changed",
         {
@@ -3494,10 +3637,11 @@ function emitStateChanged() {
 
 
 /* =========================================================
-   PAUSE / RESUME
+   PAUSE
 ========================================================= */
 
 function pauseGame() {
+
     GAME_RUNTIME.paused =
         true;
 
@@ -3510,6 +3654,7 @@ function pauseGame() {
 
 
 function resumeGame() {
+
     GAME_RUNTIME.paused =
         false;
 
@@ -3521,9 +3666,11 @@ function resumeGame() {
 
 
     if (
-        GAME_RUNTIME.state?.turn ===
-            "luky"
+        GAME_RUNTIME.state
+            ?.turn ===
+        "luky"
     ) {
+
         scheduleLukyTurn();
     }
 }
@@ -3534,7 +3681,9 @@ function resumeGame() {
 ========================================================= */
 
 function saveAndLeaveGame() {
+
     saveGame();
+
 
     clearRuntimeTimers();
 
@@ -3547,60 +3696,68 @@ function saveAndLeaveGame() {
         "game-left",
         {
             slotIndex:
-                GAME_RUNTIME.slotIndex
+                GAME_RUNTIME
+                    .slotIndex
         }
     );
 }
 
 
 /* =========================================================
-   TIMER CLEANUP
+   TIMERY
 ========================================================= */
 
 function clearRuntimeTimers() {
+
     cancelPlayerUnoTimer(
         true
     );
 
 
     if (
-        GAME_RUNTIME.lukyUnoTimer
+        GAME_RUNTIME
+            .lukyUnoTimer
     ) {
+
         clearTimeout(
             GAME_RUNTIME
                 .lukyUnoTimer
         );
 
-        GAME_RUNTIME
-            .lukyUnoTimer =
+
+        GAME_RUNTIME.lukyUnoTimer =
             null;
     }
 
 
     if (
-        GAME_RUNTIME.lukyPhraseTimer
+        GAME_RUNTIME
+            .lukyPhraseTimer
     ) {
+
         clearTimeout(
             GAME_RUNTIME
                 .lukyPhraseTimer
         );
 
-        GAME_RUNTIME
-            .lukyPhraseTimer =
+
+        GAME_RUNTIME.lukyPhraseTimer =
             null;
     }
 
 
     if (
-        GAME_RUNTIME.emoteTimer
+        GAME_RUNTIME
+            .emoteTimer
     ) {
+
         clearTimeout(
             GAME_RUNTIME
                 .emoteTimer
         );
 
-        GAME_RUNTIME
-            .emoteTimer =
+
+        GAME_RUNTIME.emoteTimer =
             null;
     }
 
@@ -3608,6 +3765,7 @@ function clearRuntimeTimers() {
     GAME_RUNTIME
         .lukyUnoCatchOpen =
         false;
+
 
     GAME_RUNTIME
         .lukyTurnRunning =
@@ -3620,6 +3778,7 @@ function clearRuntimeTimers() {
 ========================================================= */
 
 function debugGameState() {
+
     console.log(
         "DOTS UNO game state:",
         GAME_RUNTIME.state
