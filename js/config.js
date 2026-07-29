@@ -92,7 +92,7 @@ const GAME_CONFIG = {
         */
 
         defaultImage:
-            "assets/images/Luky_emote.jpg",
+            "assets/images/Luky_default.png",
 
         fallback: "L",
 
