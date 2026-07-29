@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    >
+
+    <meta
+        name="theme-color"
+        content="#111111"
+    >
+
+    <meta
+        name="description"
+        content="DOTS UNO – karetní hra Dream of the Sun."
+    >
+
+    <title>DOTS UNO</title>
+
+    <link
+        rel="stylesheet"
+        href="assets/style.css"
+    >
+</head>
+
+<body>
+
+    <div
+        id="app"
+        class="app"
+    >
+
+        <!-- ==========================================
+             HLAVNÍ MENU
+        =========================================== -->
+
+        <section
+            id="screen-menu"
+            class="screen screen-menu"
+        >
+
+            <div class="menu-shell">
+
+                <header class="game-logo">
+
+                    <div class="game-logo-mark">
+                        DOTS
+                    </div>
+
+                    <h1>UNO</h1>
+
+                    <p>
+                        Dream of the Sun
+                    </p>
+
+                </header>
+
+
+                <div class="menu-actions">
+
+                    <button
+                        type="button"
+                        class="menu-button menu-button-primary"
+                        id="open-slots-button"
+                    >
+                        Hrát
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="menu-button"
+                        id="open-achievements-button"
+                    >
+                        Achievementy
+                    </button>
+
+                </div>
+
+
+                <div class="global-score">
+
+                    <span class="global-score-label">
+                        Celkem
+                    </span>
+
+                    <div class="global-score-values">
+
+                        <span>
+                            Ty:
+                            <strong id="global-player-wins">
+                                0
+                            </strong>
+                        </span>
+
+                        <span>
+                            Luky:
+                            <strong id="global-luky-wins">
+                                0
+                            </strong>
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ==========================================
+             VÝBĚR SLOTU
+        =========================================== -->
+
+        <section
+            id="screen-slots"
+            class="screen"
+            hidden
+        >
+
+            <div class="panel-shell">
+
+                <header class="panel-header">
+
+                    <button
+                        type="button"
+                        class="icon-button back-button"
+                        data-go-screen="screen-menu"
+                        aria-label="Zpět"
+                    >
+                        ←
+                    </button>
+
+
+                    <div>
+                        <span class="panel-kicker">
+                            Uložené hry
+                        </span>
+
+                        <h2>
+                            Vyber slot
+                        </h2>
+                    </div>
+
+                </header>
+
+
+                <div
+                    id="save-slots"
+                    class="save-slots"
+                >
+
+                    <!--
+                        Sloty vytvoří JavaScript.
+
+                        Prázdný slot:
+                        Nová hra
+
+                        Obsazený:
+                        Dany
+                        12 W / 8 L
+                    -->
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ==========================================
+             VÝBĚR POSTAVY
+        =========================================== -->
+
+        <section
+            id="screen-character-select"
+            class="screen"
+            hidden
+        >
+
+            <div class="panel-shell">
+
+                <header class="panel-header">
+
+                    <button
+                        type="button"
+                        class="icon-button back-button"
+                        id="character-select-back"
+                        aria-label="Zpět"
+                    >
+                        ←
+                    </button>
+
+
+                    <div>
+                        <span class="panel-kicker">
+                            Nová hra
+                        </span>
+
+                        <h2>
+                            Vyber postavu
+                        </h2>
+                    </div>
+
+                </header>
+
+
+                <div class="character-grid">
+
+                    <!-- DANY -->
+
+                    <button
+                        type="button"
+                        class="character-card"
+                        data-character="dany"
+                    >
+
+                        <div class="character-image-wrap">
+
+                            <img
+                                src="assets/images/dany.jpg"
+                                alt="Dany"
+                                class="character-image"
+                                data-character-image="dany"
+                            >
+
+                            <div
+                                class="character-image-fallback"
+                                data-character-fallback="dany"
+                                hidden
+                            >
+                                D
+                            </div>
+
+                        </div>
+
+                        <span class="character-name">
+                            Dany
+                        </span>
+
+                    </button>
+
+
+                    <!-- FILIP -->
+
+                    <button
+                        type="button"
+                        class="character-card"
+                        data-character="filip"
+                    >
+
+                        <div class="character-image-wrap">
+
+                            <img
+                                src="assets/images/filip.jpg"
+                                alt="Filip"
+                                class="character-image"
+                                data-character-image="filip"
+                            >
+
+                            <div
+                                class="character-image-fallback"
+                                data-character-fallback="filip"
+                                hidden
+                            >
+                                F
+                            </div>
+
+                        </div>
+
+                        <span class="character-name">
+                            Filip
+                        </span>
+
+                    </button>
+
+
+                    <!-- 96 -->
+
+                    <button
+                        type="button"
+                        class="character-card character-card-recommended"
+                        data-character="96"
+                    >
+
+                        <span class="recommended-badge">
+                            Doporučeno
+                        </span>
+
+
+                        <div class="character-image-wrap">
+
+                            <img
+                                src="assets/images/96.jpg"
+                                alt="96"
+                                class="character-image"
+                                data-character-image="96"
+                            >
+
+                            <div
+                                class="character-image-fallback"
+                                data-character-fallback="96"
+                                hidden
+                            >
+                                96
+                            </div>
+
+                        </div>
+
+                        <span class="character-name">
+                            96
+                        </span>
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ==========================================
+             MENU OBSAZENÉHO SLOTU
+        =========================================== -->
+
+        <section
+            id="screen-slot-actions"
+            class="screen"
+            hidden
+        >
+
+            <div class="panel-shell compact-panel">
+
+                <header class="panel-header">
+
+                    <button
+                        type="button"
+                        class="icon-button back-button"
+                        data-go-screen="screen-slots"
+                        aria-label="Zpět"
+                    >
+                        ←
+                    </button>
+
+
+                    <div>
+                        <span class="panel-kicker">
+                            Herní slot
+                        </span>
+
+                        <h2 id="slot-actions-character">
+                            Dany
+                        </h2>
+                    </div>
+
+                </header>
+
+
+                <div class="slot-summary">
+
+                    <div
+                        class="slot-summary-avatar"
+                        id="slot-summary-avatar"
+                    >
+                        D
+                    </div>
+
+
+                    <div class="slot-summary-data">
+
+                        <span id="slot-summary-record">
+                            0 W / 0 L
+                        </span>
+
+                        <span
+                            id="slot-summary-status"
+                            class="slot-summary-status"
+                        >
+                            Bez rozehrané partie
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="menu-actions">
+
+                    <button
+                        type="button"
+                        class="menu-button menu-button-primary"
+                        id="continue-game-button"
+                    >
+                        Pokračovat
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="menu-button"
+                        id="start-next-game-button"
+                    >
+                        Hrát další partii
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="menu-button menu-button-danger"
+                        id="reset-slot-button"
+                    >
+                        Smazat progres slotu
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ==========================================
+             ACHIEVEMENTY
+        =========================================== -->
+
+        <section
+            id="screen-achievements"
+            class="screen"
+            hidden
+        >
+
+            <div class="panel-shell">
+
+                <header class="panel-header">
+
+                    <button
+                        type="button"
+                        class="icon-button back-button"
+                        data-go-screen="screen-menu"
+                        aria-label="Zpět"
+                    >
+                        ←
+                    </button>
+
+
+                    <div>
+                        <span class="panel-kicker">
+                            Progres
+                        </span>
+
+                        <h2>
+                            Achievementy
+                        </h2>
+                    </div>
+
+                </header>
+
+
+                <div
+                    id="achievements-list"
+                    class="achievements-list"
+                >
+
+                    <!-- JS -->
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ==========================================
+             HERNÍ STŮL
+        =========================================== -->
+
+        <section
+            id="screen-game"
+            class="screen screen-game"
+            hidden
+        >
+
+            <div class="game-table">
+
+                <!-- ==================================
+                     HORNÍ LIŠTA
+                =================================== -->
+
+                <header class="game-topbar">
+
+                    <button
+                        type="button"
+                        class="icon-button"
+                        id="game-menu-button"
+                        aria-label="Menu"
+                    >
+                        ☰
+                    </button>
+
+
+                    <div class="game-slot-info">
+
+                        <span id="game-character-name">
+                            Dany
+                        </span>
+
+                        <span id="game-slot-score">
+                            0 W / 0 L
+                        </span>
+
+                    </div>
+
+
+                    <div class="game-opponent-score">
+
+                        Luky:
+                        <strong id="game-luky-score">
+                            0
+                        </strong>
+
+                    </div>
+
+                </header>
+
+
+                <!-- ==================================
+                     LUKY
+                =================================== -->
+
+                <section class="opponent-area">
+
+                    <div class="opponent-profile">
+
+                        <div class="opponent-photo-wrap">
+
+                            <img
+                                src="assets/images/luky.jpg"
+                                alt="Luky"
+                                class="opponent-photo"
+                                id="luky-photo"
+                            >
+
+                            <div
+                                class="opponent-photo-fallback"
+                                id="luky-photo-fallback"
+                                hidden
+                            >
+                                L
+                            </div>
+
+                        </div>
+
+
+                        <div class="opponent-info">
+
+                            <h2>
+                                Luky
+                            </h2>
+
+                            <span id="luky-card-count">
+                                7 karet
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- HLÁŠKA LUKYHO -->
+
+                    <div
+                        id="luky-speech"
+                        class="speech-bubble"
+                        hidden
+                    >
+
+                        <span id="luky-speech-text"></span>
+
+                    </div>
+
+
+                    <!-- KARTY LUKYHO -->
+
+                    <div
+                        id="luky-hand"
+                        class="luky-hand"
+                        aria-label="Karty Lukyho"
+                    >
+
+                        <!-- JS -->
+
+                    </div>
+
+                </section>
+
+
+                <!-- ==================================
+                     STŘED STOLU
+                =================================== -->
+
+                <section class="table-center">
+
+                    <!-- AKTUÁLNÍ PENALIZACE -->
+
+                    <div
+                        id="draw-penalty-indicator"
+                        class="draw-penalty-indicator"
+                        hidden
+                    >
+
+                        Bere se
+
+                        <strong id="draw-penalty-value">
+                            +2
+                        </strong>
+
+                    </div>
+
+
+                    <!-- BALÍČEK -->
+
+                    <button
+                        type="button"
+                        class="draw-pile"
+                        id="draw-pile"
+                        aria-label="Líznout kartu"
+                    >
+
+                        <div class="card-back">
+                            <span>DOTS</span>
+                        </div>
+
+                    </button>
+
+
+                    <!-- ODHOD -->
+
+                    <div
+                        class="discard-zone"
+                        id="discard-zone"
+                    >
+
+                        <div
+                            id="discard-pile"
+                            class="discard-pile"
+                        >
+                            <!-- JS -->
+                        </div>
+
+                        <span class="discard-zone-label">
+                            Odhodit
+                        </span>
+
+                    </div>
+
+
+                    <!-- AKTUÁLNÍ BARVA -->
+
+                    <div
+                        id="current-color-indicator"
+                        class="current-color-indicator"
+                    >
+
+                        <span>
+                            Barva
+                        </span>
+
+                        <strong id="current-color-label">
+                            —
+                        </strong>
+
+                    </div>
+
+                </section>
+
+
+                <!-- ==================================
+                     SPECIÁLNÍ EVENT
+                =================================== -->
+
+                <div
+                    id="yellow-event"
+                    class="yellow-event"
+                    hidden
+                >
+
+                    <button
+                        type="button"
+                        class="secondary-action-button"
+                        id="ask-yellow-button"
+                    >
+                        Má někdo žlutou?
+                    </button>
+
+                </div>
+
+
+                <!-- ==================================
+                     OVLÁDÁNÍ
+                =================================== -->
+
+                <section class="game-controls">
+
+                    <button
+                        type="button"
+                        class="uno-button"
+                        id="uno-button"
+                    >
+                        UNO!
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="catch-uno-button"
+                        id="catch-uno-button"
+                    >
+                        Neřekl jsi UNO!
+                    </button>
+
+                </section>
+
+
+                <!-- ==================================
+                     HRÁČ
+                =================================== -->
+
+                <section class="player-area">
+
+                    <div class="player-profile">
+
+                        <div class="player-avatar-wrap">
+
+                            <img
+                                src="assets/images/dany.jpg"
+                                alt=""
+                                class="player-avatar"
+                                id="player-avatar"
+                            >
+
+                            <div
+                                class="player-avatar-fallback"
+                                id="player-avatar-fallback"
+                                hidden
+                            >
+                                D
+                            </div>
+
+                        </div>
+
+
+                        <div class="player-info">
+
+                            <h2 id="player-name">
+                                Dany
+                            </h2>
+
+                            <span id="player-card-count">
+                                7 karet
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- HLÁŠKA HRÁČE -->
+
+                    <div
+                        id="player-speech"
+                        class="speech-bubble player-speech"
+                        hidden
+                    >
+
+                        <span id="player-speech-text"></span>
+
+                    </div>
+
+
+                    <!-- RUKA HRÁČE -->
+
+                    <div
+                        id="player-hand"
+                        class="player-hand"
+                        aria-label="Tvoje karty"
+                    >
+
+                        <!-- JS -->
+
+                    </div>
+
+                </section>
+
+
+                <!-- ==================================
+                     STAV HRY
+                =================================== -->
+
+                <div
+                    id="game-status"
+                    class="game-status"
+                    aria-live="polite"
+                >
+                    Připravuji hru...
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ==========================================
+             MODÁLNÍ OKNA
+        =========================================== -->
+
+        <div
+            id="modal-overlay"
+            class="modal-overlay"
+            hidden
+        >
+
+            <!-- ----------------------------------
+                 VÝBĚR BARVY
+            ----------------------------------- -->
+
+            <section
+                id="modal-color"
+                class="modal"
+                hidden
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="color-modal-title"
+            >
+
+                <h2 id="color-modal-title">
+                    Vyber barvu
+                </h2>
+
+
+                <div class="color-choice-grid">
+
+                    <button
+                        type="button"
+                        class="color-choice color-red"
+                        data-color-choice="red"
+                        aria-label="Červená"
+                    ></button>
+
+                    <button
+                        type="button"
+                        class="color-choice color-yellow"
+                        data-color-choice="yellow"
+                        aria-label="Žlutá"
+                    ></button>
+
+                    <button
+                        type="button"
+                        class="color-choice color-green"
+                        data-color-choice="green"
+                        aria-label="Zelená"
+                    ></button>
+
+                    <button
+                        type="button"
+                        class="color-choice color-blue"
+                        data-color-choice="blue"
+                        aria-label="Modrá"
+                    ></button>
+
+                </div>
+
+            </section>
+
+
+            <!-- ----------------------------------
+                 SEDMIČKA
+            ----------------------------------- -->
+
+            <section
+                id="modal-seven"
+                class="modal"
+                hidden
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="seven-modal-title"
+            >
+
+                <h2 id="seven-modal-title">
+                    Chceš Lukyho karty?
+                </h2>
+
+
+                <div class="modal-actions">
+
+                    <button
+                        type="button"
+                        class="modal-button modal-button-primary"
+                        id="seven-swap-yes"
+                    >
+                        Ano
+                    </button>
+
+                    <button
+                        type="button"
+                        class="modal-button"
+                        id="seven-swap-no"
+                    >
+                        Ne
+                    </button>
+
+                </div>
+
+            </section>
+
+
+            <!-- ----------------------------------
+                 RESET SLOTU
+            ----------------------------------- -->
+
+            <section
+                id="modal-reset-slot"
+                class="modal"
+                hidden
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="reset-slot-title"
+            >
+
+                <h2 id="reset-slot-title">
+                    Smazat progres?
+                </h2>
+
+                <p>
+                    Opravdu si přejete smazat veškerý progres tohoto slotu?
+                </p>
+
+                <p class="modal-note">
+                    Achievementy zůstanou zachované.
+                </p>
+
+
+                <div class="modal-actions">
+
+                    <button
+                        type="button"
+                        class="modal-button modal-button-danger"
+                        id="confirm-reset-slot"
+                    >
+                        Ano
+                    </button>
+
+                    <button
+                        type="button"
+                        class="modal-button"
+                        id="cancel-reset-slot"
+                    >
+                        Ne
+                    </button>
+
+                </div>
+
+            </section>
+
+
+            <!-- ----------------------------------
+                 KONEC PARTIE
+            ----------------------------------- -->
+
+            <section
+                id="modal-game-over"
+                class="modal game-over-modal"
+                hidden
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="game-over-title"
+            >
+
+                <span class="game-over-kicker">
+                    Konec partie
+                </span>
+
+                <h2 id="game-over-title">
+                    Vyhrál jsi!
+                </h2>
+
+
+                <div
+                    id="game-over-score"
+                    class="game-over-score"
+                >
+                    1 W / 0 L
+                </div>
+
+
+                <div class="modal-actions">
+
+                    <button
+                        type="button"
+                        class="modal-button modal-button-primary"
+                        id="play-again-button"
+                    >
+                        Další partie
+                    </button>
+
+                    <button
+                        type="button"
+                        class="modal-button"
+                        id="game-over-menu-button"
+                    >
+                        Menu
+                    </button>
+
+                </div>
+
+            </section>
+
+
+            <!-- ----------------------------------
+                 MENU BĚHEM HRY
+            ----------------------------------- -->
+
+            <section
+                id="modal-game-menu"
+                class="modal"
+                hidden
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="game-menu-title"
+            >
+
+                <h2 id="game-menu-title">
+                    Hra
+                </h2>
+
+
+                <div class="modal-actions modal-actions-vertical">
+
+                    <button
+                        type="button"
+                        class="modal-button modal-button-primary"
+                        id="resume-game-button"
+                    >
+                        Pokračovat
+                    </button>
+
+                    <button
+                        type="button"
+                        class="modal-button"
+                        id="save-and-menu-button"
+                    >
+                        Uložit a odejít
+                    </button>
+
+                </div>
+
+            </section>
+
+        </div>
+
+
+        <!-- ==========================================
+             TOAST / ACHIEVEMENT
+        =========================================== -->
+
+        <div
+            id="toast"
+            class="toast"
+            hidden
+            aria-live="polite"
+        >
+
+            <span
+                id="toast-title"
+                class="toast-title"
+            ></span>
+
+            <span
+                id="toast-text"
+                class="toast-text"
+            ></span>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==========================================
+         TEMPLATE KARTY
+    =========================================== -->
+
+    <template id="card-template">
+
+        <button
+            type="button"
+            class="game-card"
+        >
+
+            <span class="card-corner card-corner-top">
+
+                <span class="card-corner-value"></span>
+
+            </span>
+
+
+            <span class="card-center">
+
+                <span class="card-center-value"></span>
+
+            </span>
+
+
+            <span class="card-corner card-corner-bottom">
+
+                <span class="card-corner-value"></span>
+
+            </span>
+
+        </button>
+
+    </template>
+
+
+    <!-- ==========================================
+         TEMPLATE ZADNÍ STRANY KARTY
+    =========================================== -->
+
+    <template id="card-back-template">
+
+        <div class="game-card game-card-back">
+
+            <div class="card-back-inner">
+                DOTS
+            </div>
+
+        </div>
+
+    </template>
+
+
+    <!-- ==========================================
+         TEMPLATE SLOTU
+    =========================================== -->
+
+    <template id="save-slot-template">
+
+        <button
+            type="button"
+            class="save-slot"
+        >
+
+            <div class="save-slot-number"></div>
+
+
+            <div class="save-slot-main">
+
+                <strong class="save-slot-title">
+                    Nová hra
+                </strong>
+
+                <span
+                    class="save-slot-record"
+                    hidden
+                ></span>
+
+            </div>
+
+
+            <span class="save-slot-arrow">
+                ›
+            </span>
+
+        </button>
+
+    </template>
+
+
+    <!-- ==========================================
+         TEMPLATE ACHIEVEMENTU
+    =========================================== -->
+
+    <template id="achievement-template">
+
+        <article class="achievement-card">
+
+            <div class="achievement-icon">
+                ★
+            </div>
+
+
+            <div class="achievement-content">
+
+                <h3 class="achievement-title"></h3>
+
+                <p class="achievement-description"></p>
+
+                <div
+                    class="achievement-progress"
+                    hidden
+                >
+
+                    <div class="achievement-progress-track">
+
+                        <div class="achievement-progress-value"></div>
+
+                    </div>
+
+                    <span class="achievement-progress-text"></span>
+
+                </div>
+
+            </div>
+
+        </article>
+
+    </template>
+
+
+    <!-- ==========================================
+         JAVASCRIPT
+    =========================================== -->
+
+    <script src="js/config.js"></script>
+    <script src="js/cards.js"></script>
+    <script src="js/quotes.js"></script>
+    <script src="js/saves.js"></script>
+    <script src="js/achievements.js"></script>
+    <script src="js/ai.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/ui.js"></script>
+
+</body>
+</html>
