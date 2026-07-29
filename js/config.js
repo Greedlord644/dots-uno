@@ -130,9 +130,6 @@ const GAME_CONFIG = {
 
     /* =====================================================
        SKINY
-
-       Názvy jsou názvy zobrazované hráči.
-       ID a názvy souborů neměníme.
     ===================================================== */
 
     skins: {
@@ -152,7 +149,6 @@ const GAME_CONFIG = {
                 unlockedByDefault:
                     true
             },
-
 
             {
                 id:
@@ -186,7 +182,6 @@ const GAME_CONFIG = {
                     true
             },
 
-
             {
                 id:
                     "skin1",
@@ -219,18 +214,12 @@ const GAME_CONFIG = {
                     true
             },
 
-
             {
                 id:
                     "skin1",
 
                 name:
                     "Osvícený",
-
-                /*
-                    DŮLEŽITÉ:
-                    správný název souboru je Pavel_skin1.jpg
-                */
 
                 image:
                     "assets/images/Pavel_skin1.jpg",
@@ -312,14 +301,9 @@ const GAME_CONFIG = {
     /* =====================================================
        LUKYHO PŘEMÝŠLENÍ
 
-       Standard:
-       2–4 sekundy
-
-       Občas:
-       6–8 sekund
-
-       Pokud má Luky hodně karet:
-       trochu rychlejší tempo.
+       Standardně 2–4 sekundy.
+       Občas 6–8 sekund.
+       S velkou rukou trochu rychleji.
     ===================================================== */
 
     aiThinking: {
@@ -330,11 +314,6 @@ const GAME_CONFIG = {
         normalMaxMs:
             4000,
 
-
-        /*
-            Občasný dlouhý tah.
-        */
-
         slowChance:
             0.16,
 
@@ -344,11 +323,6 @@ const GAME_CONFIG = {
         slowMaxMs:
             8000,
 
-
-        /*
-            Při velké ruce Luky obvykle reaguje rychleji.
-        */
-
         largeHandThreshold:
             12,
 
@@ -357,11 +331,6 @@ const GAME_CONFIG = {
 
         largeHandMaxMs:
             3000,
-
-
-        /*
-            Pravděpodobnost zobrazení "...".
-        */
 
         showThinkingDotsChance:
             0.48,
@@ -378,10 +347,8 @@ const GAME_CONFIG = {
     playerUno: {
 
         /*
-            Timer začne až ve chvíli, kdy hráč dokončil
-            případné rozhodnutí po zahrání karty.
-
-            Např.:
+            Timer začne až po dokončení případného
+            rozhodnutí hráče:
             - výběr barvy
             - rozhodnutí po sedmičce
         */
@@ -435,12 +402,10 @@ const GAME_CONFIG = {
         longDurationMs:
             3600,
 
-
         /*
-            Úvodní provokace zůstane až 6 sekund.
-
-            UI ji zároveň schová okamžitě při prvním
-            skutečném tahu hráče.
+            Úvodní hláška zůstane až 6 sekund.
+            UI ji později zároveň schová při prvním
+            tahu hráče.
         */
 
         openingDurationMs:
@@ -454,9 +419,14 @@ const GAME_CONFIG = {
     /* =====================================================
        HUDBA
 
-       Hudba je globální preference, nikoliv součást slotu.
+       Zdroj:
+       YouTube video U5yeo4MMSKg
 
-       Skrytý YouTube player bude ovládat settings.js / ui.js.
+       Při každé nové partii se náhodně vybere jeden
+       z níže uvedených začátků skladeb.
+
+       Nastavení zapnuto/vypnuto bude globální
+       a uložené přes dotsUno.settings.
     ===================================================== */
 
     music: {
@@ -476,36 +446,246 @@ const GAME_CONFIG = {
                 "youtube-music-player"
         },
 
-
         /*
-            Výchozí hlasitost 0–100.
-
-            Necháváme nižší, aby hudba nebyla rušivá.
+            0–100.
         */
 
         volume:
             32,
 
-
-        /*
-            Po spuštění nové partie vybereme náhodný track.
-
-            Timestampy sem doplníme podle tracklistu
-            konkrétního YouTube videa.
-
-            Formát:
+        tracks: [
 
             {
-                id: "track_1",
-                title: "Název",
-                startSeconds: 0
+                id:
+                    "orff_fortuna",
+
+                title:
+                    "Orff - Fortuna",
+
+                startSeconds:
+                    0
+            },
+
+            {
+                id:
+                    "wagner_valkyries",
+
+                title:
+                    "Wagner - Ride of the Valkyries",
+
+                startSeconds:
+                    154
+            },
+
+            {
+                id:
+                    "beethoven_5_1",
+
+                title:
+                    "Beethoven - Symphony No. 5: I. Allegro con brio",
+
+                startSeconds:
+                    464
+            },
+
+            {
+                id:
+                    "mozart_40_1",
+
+                title:
+                    "Mozart - Symphony No. 40: I. Molto allegro",
+
+                startSeconds:
+                    950
+            },
+
+            {
+                id:
+                    "mozart_requiem_dies_irae",
+
+                title:
+                    "Mozart - Requiem: Dies irae",
+
+                startSeconds:
+                    1399
+            },
+
+            {
+                id:
+                    "verdi_requiem_dies_irae",
+
+                title:
+                    "Verdi - Requiem: Dies irae",
+
+                startSeconds:
+                    1517
+            },
+
+            {
+                id:
+                    "beethoven_5_3",
+
+                title:
+                    "Beethoven - Symphony No. 5: III. Allegro",
+
+                startSeconds:
+                    1637
+            },
+
+            {
+                id:
+                    "beethoven_egmont",
+
+                title:
+                    "Beethoven - Egmont: Overture",
+
+                startSeconds:
+                    2171
+            },
+
+            {
+                id:
+                    "beethoven_9_2",
+
+                title:
+                    "Beethoven - Symphony No. 9: II. Molto vivace",
+
+                startSeconds:
+                    2714
+            },
+
+            {
+                id:
+                    "schubert_4_1",
+
+                title:
+                    "Schubert - Symphony No. 4 'Tragic': I. Adagio molto",
+
+                startSeconds:
+                    3542
+            },
+
+            {
+                id:
+                    "mozart_40_4",
+
+                title:
+                    "Mozart - Symphony No. 40: IV. Allegro assai",
+
+                startSeconds:
+                    4129
+            },
+
+            {
+                id:
+                    "vivaldi_winter",
+
+                title:
+                    "Vivaldi - The Four Seasons: Winter I",
+
+                startSeconds:
+                    4552
+            },
+
+            {
+                id:
+                    "vivaldi_summer",
+
+                title:
+                    "Vivaldi - The Four Seasons: Summer III",
+
+                startSeconds:
+                    4749
+            },
+
+            {
+                id:
+                    "grieg_mountain_king",
+
+                title:
+                    "Grieg - In the Hall of the Mountain King",
+
+                startSeconds:
+                    4919
+            },
+
+            {
+                id:
+                    "tchaikovsky_piano_concerto",
+
+                title:
+                    "Tchaikovsky - Piano Concerto No. 1: III. Allegro con fuoco",
+
+                startSeconds:
+                    5079
+            },
+
+            {
+                id:
+                    "rachmaninoff_etude_39_5",
+
+                title:
+                    "Rachmaninoff - Études-Tableaux Op. 39 No. 5",
+
+                startSeconds:
+                    5493
+            },
+
+            {
+                id:
+                    "chopin_op10_12",
+
+                title:
+                    "Chopin - Étude Op. 10 No. 12",
+
+                startSeconds:
+                    5817
+            },
+
+            {
+                id:
+                    "chopin_op25_11",
+
+                title:
+                    "Chopin - Étude Op. 25 No. 11",
+
+                startSeconds:
+                    5970
+            },
+
+            {
+                id:
+                    "chopin_op25_12",
+
+                title:
+                    "Chopin - Étude Op. 25 No. 12",
+
+                startSeconds:
+                    6183
+            },
+
+            {
+                id:
+                    "chopin_prelude_24",
+
+                title:
+                    "Chopin - Prelude Op. 28 No. 24",
+
+                startSeconds:
+                    6333
+            },
+
+            {
+                id:
+                    "bach_busoni_toccata",
+
+                title:
+                    "Bach/Busoni - Toccata and Fugue in D Minor",
+
+                startSeconds:
+                    6507
             }
-
-            Pokud tracks zatím zůstane prázdné,
-            hudební systém použije začátek videa.
-        */
-
-        tracks: []
+        ]
     },
 
 
@@ -668,19 +848,12 @@ const GAME_CONFIG = {
 
     /* =====================================================
        EMOTY
-
-       Cooldown 5–8 sekund.
     ===================================================== */
 
     emotes: {
 
         enabled:
             true,
-
-
-        /*
-            Emote bude na obrazovce výrazněji a déle.
-        */
 
         durationMinMs:
             2600,
@@ -707,8 +880,6 @@ const GAME_CONFIG = {
 
     /* =====================================================
        HISTORIE HRY
-
-       Omezení zabrání nekonečnému růstu save.
     ===================================================== */
 
     history: {
@@ -1073,9 +1244,6 @@ function randomChance(
 
 /* =========================================================
    AI – DÉLKA PŘEMÝŠLENÍ
-
-   handCount je volitelný, aby zůstala kompatibilita
-   se starším ai.js, dokud ho neupravíme.
 ========================================================= */
 
 function getRandomAiThinkingTime(
@@ -1106,7 +1274,7 @@ function getRandomAiThinkingTime(
 
 
     /*
-        Občas přemýšlí výrazně déle.
+        Občas přemýšlí déle.
     */
 
     if (
@@ -1172,11 +1340,6 @@ function getRandomMusicTrack() {
             .music
             .tracks;
 
-
-    /*
-        Dokud nemáme timestampy tracklistu,
-        použije se začátek videa.
-    */
 
     if (
         !Array.isArray(tracks) ||
