@@ -378,6 +378,7 @@ img {
 .game-card:focus-visible,
 .uno-button:focus-visible,
 .catch-uno-button:focus-visible,
+.skip-accept-button:focus-visible,
 .draw-pile:focus-visible,
 .color-choice:focus-visible {
     outline:
@@ -595,8 +596,7 @@ img {
         transform 160ms ease,
         background 160ms ease,
         border-color 160ms ease,
-        box-shadow 160ms ease,
-        opacity 160ms ease;
+        box-shadow 160ms ease;
 }
 
 .character-card:hover {
@@ -638,10 +638,17 @@ img {
         var(--panel);
 }
 
+.character-card.is-first-recommendation {
+    box-shadow:
+        0 0 0 2px rgba(239, 199, 104, 0.12);
+}
+
 .recommended-badge {
     position: absolute;
     top: 12px;
     right: 12px;
+
+    z-index: 2;
 
     padding: 5px 8px;
 
@@ -770,8 +777,7 @@ img {
         transform 160ms ease,
         background 160ms ease,
         border-color 160ms ease,
-        box-shadow 160ms ease,
-        opacity 160ms ease;
+        box-shadow 160ms ease;
 }
 
 .skin-card:hover {
@@ -1734,6 +1740,7 @@ img {
     z-index: 4;
 
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
     gap: 10px;
 
@@ -1741,7 +1748,8 @@ img {
 }
 
 .uno-button,
-.catch-uno-button {
+.catch-uno-button,
+.skip-accept-button {
     appearance: none;
 
     min-height: 44px;
@@ -1757,7 +1765,10 @@ img {
     transition:
         transform 150ms ease,
         filter 150ms ease,
-        box-shadow 150ms ease;
+        box-shadow 150ms ease,
+        background 150ms ease,
+        border-color 150ms ease,
+        color 150ms ease;
 }
 
 .uno-button {
@@ -1799,6 +1810,51 @@ img {
 
     border-color:
         rgba(215, 167, 68, 0.3);
+}
+
+
+/* =========================================
+   STOJÍM
+
+   Zobrazuje se pouze při aktivním
+   Stůj řetězci na tahu hráče.
+========================================= */
+
+.skip-accept-button {
+    color: #ffd0d0;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(174, 49, 49, 0.52),
+            rgba(104, 24, 24, 0.62)
+        );
+
+    border:
+        1px solid rgba(232, 101, 101, 0.4);
+
+    box-shadow:
+        0 10px 24px rgba(80, 10, 10, 0.18);
+}
+
+.skip-accept-button:hover {
+    transform: translateY(-2px);
+
+    color: #ffe1e1;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(195, 60, 60, 0.62),
+            rgba(123, 31, 31, 0.72)
+        );
+
+    border-color:
+        rgba(232, 101, 101, 0.62);
+}
+
+.skip-accept-button:active {
+    transform: translateY(0);
 }
 
 
@@ -1895,6 +1951,8 @@ img {
 
     user-select: none;
 
+    touch-action: none;
+
     transition:
         transform 150ms ease,
         filter 150ms ease,
@@ -1943,11 +2001,7 @@ img {
 }
 
 .game-card.is-dragging {
-    opacity: 0.86;
-
-    transform:
-        scale(1.06)
-        rotate(-2deg);
+    opacity: 0.9;
 
     cursor: grabbing;
 
@@ -2106,6 +2160,8 @@ img {
         );
 
     cursor: default;
+
+    touch-action: auto;
 }
 
 .game-card-back::before {
@@ -2155,19 +2211,19 @@ img {
     position: relative;
     z-index: 4;
 
-    width: min(100%, 520px);
+    width: min(100%, 560px);
     margin: 6px auto 0;
 
     padding: 7px 12px;
 
     color:
-        rgba(255, 255, 255, 0.62);
+        rgba(255, 255, 255, 0.68);
 
     background:
-        rgba(5, 12, 10, 0.54);
+        rgba(5, 12, 10, 0.58);
 
     border:
-        1px solid rgba(255, 255, 255, 0.06);
+        1px solid rgba(255, 255, 255, 0.07);
 
     border-radius: 999px;
 
@@ -2703,7 +2759,8 @@ img {
     }
 
     .uno-button,
-    .catch-uno-button {
+    .catch-uno-button,
+    .skip-accept-button {
         min-height: 40px;
 
         padding: 8px 12px;
@@ -2846,11 +2903,20 @@ img {
     .game-controls {
         display: grid;
         grid-template-columns:
-            auto auto;
+            repeat(2, minmax(0, auto));
+
+        justify-content: center;
+    }
+
+    .skip-accept-button {
+        grid-column: 1 / -1;
+
+        justify-self: center;
     }
 
     .uno-button,
-    .catch-uno-button {
+    .catch-uno-button,
+    .skip-accept-button {
         white-space: nowrap;
     }
 
