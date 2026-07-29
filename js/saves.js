@@ -7,13 +7,21 @@
 
    Ukládá:
    - 3 sloty
-   - vybranou postavu slotu
-   - vybraný skin slotu
-   - W / L slotu
+   - postavu
+   - skin
+   - W / L
    - rozehranou partii
-   - historii použitých opening hlášek
+   - historii úvodních hlášek
 
-   Achievementy jsou globální a ukládají se zvlášť.
+   Rozehraná partie navíc ukládá:
+   - historii akcí
+   - poslední akci
+   - UNO stav hráče i Lukyho
+   - žlutý event
+   - turnCount
+   - nucené dobírání
+
+   Achievementy a globální nastavení jsou mimo sloty.
 ========================================================= */
 
 
@@ -22,45 +30,61 @@
 ========================================================= */
 
 function createEmptySaveSlot(slotIndex) {
+
     return {
+
         slotIndex,
 
-        characterId: null,
+        characterId:
+            null,
 
-        skinId: null,
+        skinId:
+            null,
 
-        wins: 0,
+        wins:
+            0,
 
-        losses: 0,
+        losses:
+            0,
 
-        currentGame: null,
+        currentGame:
+            null,
 
         quoteHistory:
             createEmptyQuoteHistory(),
 
-        createdAt: null,
+        createdAt:
+            null,
 
-        updatedAt: null
+        updatedAt:
+            null
     };
 }
 
 
 /* =========================================================
-   PRÁZDNÉ SLOTY
+   VÝCHOZÍ SLOTY
 ========================================================= */
 
 function createDefaultSaveSlots() {
-    const slots = [];
+
+    const slots =
+        [];
+
 
     for (
         let index = 0;
         index < GAME_CONFIG.saveSlotCount;
         index += 1
     ) {
+
         slots.push(
-            createEmptySaveSlot(index)
+            createEmptySaveSlot(
+                index
+            )
         );
     }
+
 
     return slots;
 }
@@ -74,20 +98,32 @@ function readJsonFromStorage(
     key,
     fallbackValue
 ) {
+
     try {
+
         const raw =
-            localStorage.getItem(key);
+            localStorage.getItem(
+                key
+            );
+
 
         if (!raw) {
+
             return fallbackValue;
         }
 
-        return JSON.parse(raw);
+
+        return JSON.parse(
+            raw
+        );
+
     } catch (error) {
+
         console.error(
             `Nepodařilo se načíst localStorage: ${key}`,
             error
         );
+
 
         return fallbackValue;
     }
@@ -98,18 +134,26 @@ function writeJsonToStorage(
     key,
     value
 ) {
+
     try {
+
         localStorage.setItem(
             key,
-            JSON.stringify(value)
+            JSON.stringify(
+                value
+            )
         );
 
+
         return true;
+
     } catch (error) {
+
         console.error(
             `Nepodařilo se uložit localStorage: ${key}`,
             error
         );
+
 
         return false;
     }
@@ -121,32 +165,43 @@ function writeJsonToStorage(
 ========================================================= */
 
 function getSaveTimestamp() {
-    return new Date().toISOString();
+
+    return new Date()
+        .toISOString();
 }
 
 
 /* =========================================================
-   VALIDACE SLOTU
+   NORMALIZACE SLOTU
 ========================================================= */
 
 function normalizeSaveSlot(
     rawSlot,
     slotIndex
 ) {
+
     const empty =
-        createEmptySaveSlot(slotIndex);
+        createEmptySaveSlot(
+            slotIndex
+        );
+
 
     if (
         !rawSlot ||
-        typeof rawSlot !== "object"
+        typeof rawSlot !==
+            "object"
     ) {
+
         return empty;
     }
 
 
     const characterId =
-        typeof rawSlot.characterId === "string" &&
-        getCharacterConfig(rawSlot.characterId)
+        typeof rawSlot.characterId ===
+            "string" &&
+        getCharacterConfig(
+            rawSlot.characterId
+        )
             ? rawSlot.characterId
             : null;
 
@@ -161,6 +216,7 @@ function normalizeSaveSlot(
 
 
     return {
+
         slotIndex,
 
         characterId,
@@ -201,22 +257,22 @@ function normalizeSaveSlot(
 
 
 /* =========================================================
-   SKIN SLOTU
-
-   Pokud save pochází ze starší verze a skinId chybí,
-   automaticky použijeme default skin postavy.
+   SKIN
 ========================================================= */
 
 function normalizeSkinId(
     characterId,
     rawSkinId
 ) {
+
     const character =
         getCharacterConfig(
             characterId
         );
 
+
     if (!character) {
+
         return null;
     }
 
@@ -227,42 +283,51 @@ function normalizeSkinId(
 
 
     if (
-        typeof rawSkinId !== "string" ||
+        typeof rawSkinId !==
+            "string" ||
         !rawSkinId.trim()
     ) {
+
         return defaultSkinId;
     }
 
 
-    const requestedSkin =
+    const requested =
         getConfiguredCharacterSkin(
             characterId,
             rawSkinId.trim()
         );
 
 
-    return requestedSkin
-        ? requestedSkin.id
+    return requested
+        ? requested.id
         : defaultSkinId;
 }
 
 
 /* =========================================================
-   VALIDACE ROZEHRANÉ HRY
+   ROZEHRANÁ HRA
 ========================================================= */
 
-function normalizeSavedGame(rawGame) {
+function normalizeSavedGame(
+    rawGame
+) {
+
     if (
         !rawGame ||
-        typeof rawGame !== "object"
+        typeof rawGame !==
+            "object"
     ) {
+
         return null;
     }
 
 
     if (
-        rawGame.status === "finished"
+        rawGame.status ===
+        "finished"
     ) {
+
         return null;
     }
 
@@ -276,12 +341,20 @@ function normalizeSavedGame(rawGame) {
         );
 
 
+    const history =
+        normalizeGameHistory(
+            rawGame.history
+        );
+
+
     return {
+
         version:
             normalizeNonNegativeInteger(
                 rawGame.version
             ) ||
             GAME_CONFIG.storageVersion,
+
 
         status:
             normalizeOptionalString(
@@ -289,102 +362,191 @@ function normalizeSavedGame(rawGame) {
             ) ||
             "playing",
 
+
         turn:
-            rawGame.turn === "luky"
+            rawGame.turn ===
+                "luky"
                 ? "luky"
                 : "player",
+
 
         playerHand:
             normalizeCardArray(
                 rawGame.playerHand
             ),
 
+
         lukyHand:
             normalizeCardArray(
                 rawGame.lukyHand
             ),
+
 
         drawPile:
             normalizeCardArray(
                 rawGame.drawPile
             ),
 
+
         discardPile:
             normalizeCardArray(
                 rawGame.discardPile
             ),
+
 
         currentColor:
             normalizeCardColor(
                 rawGame.currentColor
             ),
 
+
         drawPenalty:
             normalizeNonNegativeInteger(
                 rawGame.drawPenalty
             ),
+
 
         topPenaltyType:
             normalizeOptionalString(
                 rawGame.topPenaltyType
             ),
 
+
         skipChainCount:
             normalizeNonNegativeInteger(
                 rawGame.skipChainCount
             ),
+
+
+        /*
+            Hráč je po tahu na jedné kartě
+            a běží jeho 3sekundové UNO okno.
+        */
 
         pendingPlayerUno:
             Boolean(
                 rawGame.pendingPlayerUno
             ),
 
+
+        /*
+            Luky má jednu kartu a ještě musí
+            nebo nemusí UNO doříct.
+        */
+
         pendingLukyUno:
             Boolean(
                 rawGame.pendingLukyUno
             ),
+
+
+        /*
+            Aktuální situace:
+            Luky UNO zapomněl a lze ho nachytat.
+        */
 
         lukyForgotUno:
             Boolean(
                 rawGame.lukyForgotUno
             ),
 
+
+        /*
+            Luky má jednu kartu a v tomto stavu
+            už UNO skutečně řekl.
+
+            To potřebujeme rozlišit od:
+            "má jednu kartu, ale ještě UNO neřekl".
+        */
+
+        lukyUnoSaid:
+            Boolean(
+                rawGame.lukyUnoSaid
+            ),
+
+
+        /*
+            Hráč po zahrání karty skončil na jedné,
+            ale ještě řeší modal, např. 7.
+
+            Během toho ho Luky NESMÍ nachytat.
+        */
+
+        playerUnoDeferred:
+            Boolean(
+                rawGame.playerUnoDeferred
+            ),
+
+
         yellowEventEligible:
-            typeof rawGame.yellowEventEligible === "boolean"
+            typeof rawGame.yellowEventEligible ===
+                "boolean"
                 ? rawGame.yellowEventEligible
                 : (
-                    GAME_CONFIG.yellowEvent.enabled &&
+                    GAME_CONFIG
+                        .yellowEvent
+                        .enabled &&
                     gameNumber %
-                        GAME_CONFIG.yellowEvent.everyNthGame ===
+                        GAME_CONFIG
+                            .yellowEvent
+                            .everyNthGame ===
                         0
                 ),
+
 
         yellowEventAvailable:
             Boolean(
                 rawGame.yellowEventAvailable
             ),
 
+
         yellowEventUsed:
             Boolean(
                 rawGame.yellowEventUsed
             ),
+
 
         playerForcedDrawStreak:
             normalizeNonNegativeInteger(
                 rawGame.playerForcedDrawStreak
             ),
 
+
         turnCount:
             normalizeNonNegativeInteger(
                 rawGame.turnCount
             ),
 
+
+        /*
+            Historie partie.
+        */
+
+        history,
+
+
+        /*
+            Poslední důležitá akce.
+            Pokud ve starém save chybí, vezmeme
+            nejnovější záznam historie.
+        */
+
+        lastAction:
+            normalizeHistoryEntry(
+                rawGame.lastAction
+            ) ||
+            history[0] ||
+            null,
+
+
         gameNumber,
+
 
         startedAt:
             normalizeOptionalString(
                 rawGame.startedAt
             ),
+
 
         updatedAt:
             normalizeOptionalString(
@@ -395,11 +557,19 @@ function normalizeSavedGame(rawGame) {
 
 
 /* =========================================================
-   KARTY ZE SAVE
+   KARTY
 ========================================================= */
 
-function normalizeCardArray(cards) {
-    if (!Array.isArray(cards)) {
+function normalizeCardArray(
+    cards
+) {
+
+    if (
+        !Array.isArray(
+            cards
+        )
+    ) {
+
         return [];
     }
 
@@ -407,9 +577,436 @@ function normalizeCardArray(cards) {
     return cards
         .map(
             (card) =>
-                deserializeCard(card)
+                deserializeCard(
+                    card
+                )
         )
-        .filter(Boolean);
+        .filter(
+            Boolean
+        );
+}
+
+
+/* =========================================================
+   HISTORIE HRY
+========================================================= */
+
+function normalizeGameHistory(
+    rawHistory
+) {
+
+    if (
+        !Array.isArray(
+            rawHistory
+        )
+    ) {
+
+        return [];
+    }
+
+
+    const normalized =
+        rawHistory
+            .map(
+                normalizeHistoryEntry
+            )
+            .filter(
+                Boolean
+            );
+
+
+    return normalized.slice(
+        0,
+        GAME_CONFIG
+            .history
+            .maxEntries
+    );
+}
+
+
+function normalizeHistoryEntry(
+    rawEntry
+) {
+
+    if (
+        !rawEntry ||
+        typeof rawEntry !==
+            "object"
+    ) {
+
+        return null;
+    }
+
+
+    const actor =
+        normalizeHistoryActor(
+            rawEntry.actor
+        );
+
+
+    const type =
+        normalizeOptionalString(
+            rawEntry.type
+        );
+
+
+    const text =
+        normalizeOptionalString(
+            rawEntry.text
+        );
+
+
+    /*
+        Historie musí mít alespoň typ nebo text.
+    */
+
+    if (
+        !type &&
+        !text
+    ) {
+
+        return null;
+    }
+
+
+    return {
+
+        id:
+            normalizeOptionalString(
+                rawEntry.id
+            ) ||
+            createHistoryEntryId(),
+
+
+        actor,
+
+
+        type:
+            type ||
+            "info",
+
+
+        text:
+            text ||
+            "",
+
+
+        cards:
+            normalizeHistoryCardArray(
+                rawEntry.cards
+            ),
+
+
+        amount:
+            normalizeOptionalInteger(
+                rawEntry.amount
+            ),
+
+
+        color:
+            normalizeCardColor(
+                rawEntry.color
+            ),
+
+
+        unoSaid:
+            typeof rawEntry.unoSaid ===
+                "boolean"
+                ? rawEntry.unoSaid
+                : null,
+
+
+        timestamp:
+            normalizeOptionalString(
+                rawEntry.timestamp
+            ) ||
+            getSaveTimestamp()
+    };
+}
+
+
+function normalizeHistoryActor(
+    actor
+) {
+
+    if (
+        actor === "player" ||
+        actor === "luky" ||
+        actor === "system"
+    ) {
+
+        return actor;
+    }
+
+
+    return "system";
+}
+
+
+/* =========================================================
+   KARTY V HISTORII
+
+   Ukládáme jen informace potřebné pro UI,
+   ne celý herní objekt karty.
+========================================================= */
+
+function normalizeHistoryCardArray(
+    rawCards
+) {
+
+    if (
+        !Array.isArray(
+            rawCards
+        )
+    ) {
+
+        return [];
+    }
+
+
+    return rawCards
+        .map(
+            normalizeHistoryCard
+        )
+        .filter(
+            Boolean
+        );
+}
+
+
+function normalizeHistoryCard(
+    rawCard
+) {
+
+    if (
+        !rawCard ||
+        typeof rawCard !==
+            "object"
+    ) {
+
+        return null;
+    }
+
+
+    const type =
+        normalizeOptionalString(
+            rawCard.type
+        );
+
+
+    if (!type) {
+
+        return null;
+    }
+
+
+    return {
+
+        type,
+
+        color:
+            normalizeOptionalString(
+                rawCard.color
+            ),
+
+        value:
+            rawCard.value ??
+            null
+    };
+}
+
+
+/* =========================================================
+   NOVÉ ID HISTORIE
+========================================================= */
+
+function createHistoryEntryId() {
+
+    return (
+        `history-${Date.now()}-` +
+        Math.random()
+            .toString(36)
+            .slice(2, 9)
+    );
+}
+
+
+/* =========================================================
+   VYTVOŘENÍ HISTORICKÉHO ZÁZNAMU
+
+   game.js bude používat tuto funkci.
+========================================================= */
+
+function createHistoryEntry({
+    actor = "system",
+    type = "info",
+    text = "",
+    cards = [],
+    amount = null,
+    color = null,
+    unoSaid = null
+} = {}) {
+
+    return {
+
+        id:
+            createHistoryEntryId(),
+
+        actor:
+            normalizeHistoryActor(
+                actor
+            ),
+
+        type:
+            String(
+                type ||
+                "info"
+            ),
+
+        text:
+            String(
+                text ||
+                ""
+            ),
+
+        cards:
+            serializeHistoryCards(
+                cards
+            ),
+
+        amount:
+            Number.isFinite(
+                Number(amount)
+            )
+                ? Number(amount)
+                : null,
+
+        color:
+            color ||
+            null,
+
+        unoSaid:
+            typeof unoSaid ===
+                "boolean"
+                ? unoSaid
+                : null,
+
+        timestamp:
+            getSaveTimestamp()
+    };
+}
+
+
+/* =========================================================
+   KARTY → HISTORIE
+========================================================= */
+
+function serializeHistoryCards(
+    cards
+) {
+
+    if (
+        !Array.isArray(
+            cards
+        )
+    ) {
+
+        return [];
+    }
+
+
+    return cards
+        .map(
+            (card) => {
+
+                if (!card) {
+                    return null;
+                }
+
+
+                return {
+
+                    type:
+                        card.type,
+
+                    color:
+                        card.color ??
+                        null,
+
+                    value:
+                        card.value ??
+                        null
+                };
+            }
+        )
+        .filter(
+            Boolean
+        );
+}
+
+
+/* =========================================================
+   PŘIDÁNÍ ZÁZNAMU DO STAVU HRY
+
+   Nejnovější je VŽDY na indexu 0.
+========================================================= */
+
+function appendGameHistoryEntry(
+    gameState,
+    entry
+) {
+
+    if (
+        !gameState ||
+        !entry
+    ) {
+
+        return null;
+    }
+
+
+    if (
+        !Array.isArray(
+            gameState.history
+        )
+    ) {
+
+        gameState.history =
+            [];
+    }
+
+
+    const normalized =
+        normalizeHistoryEntry(
+            entry
+        );
+
+
+    if (!normalized) {
+
+        return null;
+    }
+
+
+    gameState.history.unshift(
+        normalized
+    );
+
+
+    gameState.history =
+        gameState.history.slice(
+            0,
+            GAME_CONFIG
+                .history
+                .maxEntries
+        );
+
+
+    gameState.lastAction =
+        normalized;
+
+
+    return normalized;
 }
 
 
@@ -417,36 +1014,59 @@ function normalizeCardArray(cards) {
    HISTORIE HLÁŠEK
 ========================================================= */
 
-function normalizeQuoteHistory(rawHistory) {
+function normalizeQuoteHistory(
+    rawHistory
+) {
+
     const fallback =
         createEmptyQuoteHistory();
 
+
     if (
         !rawHistory ||
-        typeof rawHistory !== "object"
+        typeof rawHistory !==
+            "object"
     ) {
+
         return fallback;
     }
 
 
-    const characterHistory = {};
+    const characterHistory =
+        {};
+
 
     const rawCharacters =
-        rawHistory.opening?.character;
+        rawHistory
+            .opening
+            ?.character;
 
 
     if (
         rawCharacters &&
-        typeof rawCharacters === "object"
+        typeof rawCharacters ===
+            "object"
     ) {
+
         Object.entries(
             rawCharacters
-        ).forEach(
-            ([characterId, indexes]) => {
+        )
+            .forEach(
+                ([
+                    characterId,
+                    indexes
+                ]) => {
 
-                if (
-                    Array.isArray(indexes)
-                ) {
+                    if (
+                        !Array.isArray(
+                            indexes
+                        )
+                    ) {
+
+                        return;
+                    }
+
+
                     characterHistory[
                         characterId
                     ] =
@@ -466,14 +1086,15 @@ function normalizeQuoteHistory(rawHistory) {
                                     index
                             );
                 }
-            }
-        );
+            );
     }
 
 
     const general =
         Array.isArray(
-            rawHistory.opening?.general
+            rawHistory
+                .opening
+                ?.general
         )
             ? rawHistory
                 .opening
@@ -496,7 +1117,9 @@ function normalizeQuoteHistory(rawHistory) {
 
 
     return {
+
         opening: {
+
             character:
                 characterHistory,
 
@@ -512,24 +1135,70 @@ function normalizeQuoteHistory(rawHistory) {
 
 
 /* =========================================================
-   POMOCNÁ VALIDACE
+   POMOCNÁ NORMALIZACE
 ========================================================= */
 
 function normalizeNonNegativeInteger(
     value
 ) {
+
     const number =
-        Number(value);
+        Number(
+            value
+        );
+
 
     if (
-        !Number.isFinite(number)
+        !Number.isFinite(
+            number
+        )
     ) {
+
         return 0;
     }
 
+
     return Math.max(
         0,
-        Math.floor(number)
+        Math.floor(
+            number
+        )
+    );
+}
+
+
+function normalizeOptionalInteger(
+    value
+) {
+
+    if (
+        value === null ||
+        value === undefined ||
+        value === ""
+    ) {
+
+        return null;
+    }
+
+
+    const number =
+        Number(
+            value
+        );
+
+
+    if (
+        !Number.isFinite(
+            number
+        )
+    ) {
+
+        return null;
+    }
+
+
+    return Math.floor(
+        number
     );
 }
 
@@ -537,64 +1206,90 @@ function normalizeNonNegativeInteger(
 function normalizeOptionalString(
     value
 ) {
+
     if (
-        typeof value !== "string"
+        typeof value !==
+            "string"
     ) {
+
         return null;
     }
+
 
     const trimmed =
         value.trim();
 
-    return trimmed || null;
+
+    return trimmed ||
+        null;
 }
 
 
 function normalizeCardColor(
     value
 ) {
-    const allowed = new Set([
-        CARD_COLORS.RED,
-        CARD_COLORS.YELLOW,
-        CARD_COLORS.GREEN,
-        CARD_COLORS.BLUE
-    ]);
 
-    return allowed.has(value)
+    const allowed =
+        new Set([
+            CARD_COLORS.RED,
+            CARD_COLORS.YELLOW,
+            CARD_COLORS.GREEN,
+            CARD_COLORS.BLUE
+        ]);
+
+
+    return allowed.has(
+        value
+    )
         ? value
         : null;
 }
 
 
 /* =========================================================
-   NAČTENÍ VŠECH SLOTŮ
+   LOAD SLOTŮ
 ========================================================= */
 
 function loadSaveSlots() {
+
     const rawSlots =
         readJsonFromStorage(
-            GAME_CONFIG.storage.slotsKey,
+            GAME_CONFIG
+                .storage
+                .slotsKey,
             null
         );
 
 
-    if (!Array.isArray(rawSlots)) {
+    if (
+        !Array.isArray(
+            rawSlots
+        )
+    ) {
+
         const defaults =
             createDefaultSaveSlots();
 
-        saveAllSlots(defaults);
+
+        saveAllSlots(
+            defaults
+        );
+
 
         return defaults;
     }
 
 
-    const slots = [];
+    const slots =
+        [];
+
 
     for (
         let index = 0;
         index < GAME_CONFIG.saveSlotCount;
         index += 1
     ) {
+
         slots.push(
             normalizeSaveSlot(
                 rawSlots[index],
@@ -609,28 +1304,38 @@ function loadSaveSlots() {
 
 
 /* =========================================================
-   ULOŽENÍ VŠECH SLOTŮ
+   SAVE VŠECH SLOTŮ
 ========================================================= */
 
-function saveAllSlots(slots) {
-    const normalized = [];
+function saveAllSlots(
+    slots
+) {
+
+    const normalized =
+        [];
+
 
     for (
         let index = 0;
         index < GAME_CONFIG.saveSlotCount;
         index += 1
     ) {
+
         normalized.push(
             serializeSaveSlot(
                 slots[index] ||
-                createEmptySaveSlot(index)
+                createEmptySaveSlot(
+                    index
+                )
             )
         );
     }
 
 
     return writeJsonToStorage(
-        GAME_CONFIG.storage.slotsKey,
+        GAME_CONFIG
+            .storage
+            .slotsKey,
         normalized
     );
 }
@@ -640,8 +1345,12 @@ function saveAllSlots(slots) {
    SERIALIZACE SLOTU
 ========================================================= */
 
-function serializeSaveSlot(slot) {
+function serializeSaveSlot(
+    slot
+) {
+
     return {
+
         slotIndex:
             slot.slotIndex,
 
@@ -682,104 +1391,159 @@ function serializeSaveSlot(slot) {
 
 
 /* =========================================================
-   SERIALIZACE ROZEHRANÉ PARTIE
+   SERIALIZACE HRY
 ========================================================= */
 
-function serializeSavedGame(game) {
+function serializeSavedGame(
+    game
+) {
+
     if (!game) {
+
         return null;
     }
 
 
+    const history =
+        normalizeGameHistory(
+            game.history
+        );
+
+
     return {
+
         version:
-            GAME_CONFIG.storageVersion,
+            GAME_CONFIG
+                .storageVersion,
+
 
         status:
             game.status ||
             "playing",
 
+
         turn:
-            game.turn === "luky"
+            game.turn ===
+                "luky"
                 ? "luky"
                 : "player",
+
 
         playerHand:
             serializeCardArray(
                 game.playerHand
             ),
 
+
         lukyHand:
             serializeCardArray(
                 game.lukyHand
             ),
+
 
         drawPile:
             serializeCardArray(
                 game.drawPile
             ),
 
+
         discardPile:
             serializeCardArray(
                 game.discardPile
             ),
 
+
         currentColor:
             game.currentColor,
+
 
         drawPenalty:
             normalizeNonNegativeInteger(
                 game.drawPenalty
             ),
 
+
         topPenaltyType:
             game.topPenaltyType ||
             null,
+
 
         skipChainCount:
             normalizeNonNegativeInteger(
                 game.skipChainCount
             ),
 
+
         pendingPlayerUno:
             Boolean(
                 game.pendingPlayerUno
             ),
+
 
         pendingLukyUno:
             Boolean(
                 game.pendingLukyUno
             ),
 
+
         lukyForgotUno:
             Boolean(
                 game.lukyForgotUno
             ),
+
+
+        lukyUnoSaid:
+            Boolean(
+                game.lukyUnoSaid
+            ),
+
+
+        playerUnoDeferred:
+            Boolean(
+                game.playerUnoDeferred
+            ),
+
 
         yellowEventEligible:
             Boolean(
                 game.yellowEventEligible
             ),
 
+
         yellowEventAvailable:
             Boolean(
                 game.yellowEventAvailable
             ),
+
 
         yellowEventUsed:
             Boolean(
                 game.yellowEventUsed
             ),
 
+
         playerForcedDrawStreak:
             normalizeNonNegativeInteger(
                 game.playerForcedDrawStreak
             ),
 
+
         turnCount:
             normalizeNonNegativeInteger(
                 game.turnCount
             ),
+
+
+        history,
+
+
+        lastAction:
+            normalizeHistoryEntry(
+                game.lastAction
+            ) ||
+            history[0] ||
+            null,
+
 
         gameNumber:
             Math.max(
@@ -789,9 +1553,11 @@ function serializeSavedGame(game) {
                 )
             ),
 
+
         startedAt:
             game.startedAt ||
             null,
+
 
         updatedAt:
             getSaveTimestamp()
@@ -799,10 +1565,19 @@ function serializeSavedGame(game) {
 }
 
 
-function serializeCardArray(cards) {
-    if (!Array.isArray(cards)) {
+function serializeCardArray(
+    cards
+) {
+
+    if (
+        !Array.isArray(
+            cards
+        )
+    ) {
+
         return [];
     }
+
 
     return cards.map(
         serializeCard
@@ -811,15 +1586,21 @@ function serializeCardArray(cards) {
 
 
 /* =========================================================
-   ZÍSKÁNÍ SLOTU
+   GET SLOT
 ========================================================= */
 
-function getSaveSlot(slotIndex) {
+function getSaveSlot(
+    slotIndex
+) {
+
     const slots =
         loadSaveSlots();
 
+
     return (
-        slots[slotIndex] ||
+        slots[
+            slotIndex
+        ] ||
         null
     );
 }
@@ -829,7 +1610,10 @@ function getSaveSlot(slotIndex) {
    JE SLOT PRÁZDNÝ?
 ========================================================= */
 
-function isSaveSlotEmpty(slot) {
+function isSaveSlotEmpty(
+    slot
+) {
+
     return (
         !slot ||
         !slot.characterId
@@ -838,19 +1622,23 @@ function isSaveSlotEmpty(slot) {
 
 
 /* =========================================================
-   MÁ SLOT ROZEHRANOU PARTII?
+   MÁ ROZEHRANOU PARTII?
 ========================================================= */
 
-function hasActiveGame(slot) {
+function hasActiveGame(
+    slot
+) {
+
     return Boolean(
         slot?.currentGame &&
-        slot.currentGame.status !== "finished"
+        slot.currentGame.status !==
+            "finished"
     );
 }
 
 
 /* =========================================================
-   VYTVOŘENÍ NOVÉHO SLOTU S POSTAVOU
+   NOVÝ SLOT
 ========================================================= */
 
 function createNewCharacterSlot(
@@ -858,6 +1646,7 @@ function createNewCharacterSlot(
     characterId,
     skinId = null
 ) {
+
     const character =
         getCharacterConfig(
             characterId
@@ -865,6 +1654,7 @@ function createNewCharacterSlot(
 
 
     if (!character) {
+
         throw new Error(
             `Neznámá postava: ${characterId}`
         );
@@ -884,6 +1674,7 @@ function createNewCharacterSlot(
 
 
     return {
+
         slotIndex,
 
         characterId,
@@ -891,11 +1682,14 @@ function createNewCharacterSlot(
         skinId:
             resolvedSkinId,
 
-        wins: 0,
+        wins:
+            0,
 
-        losses: 0,
+        losses:
+            0,
 
-        currentGame: null,
+        currentGame:
+            null,
 
         quoteHistory:
             createEmptyQuoteHistory(),
@@ -910,13 +1704,14 @@ function createNewCharacterSlot(
 
 
 /* =========================================================
-   ULOŽENÍ JEDNOHO SLOTU
+   SAVE JEDNOHO SLOTU
 ========================================================= */
 
 function saveSlot(
     slotIndex,
     slotData
 ) {
+
     const slots =
         loadSaveSlots();
 
@@ -935,11 +1730,15 @@ function saveSlot(
         );
 
 
-    slots[slotIndex] =
+    slots[
+        slotIndex
+    ] =
         normalized;
 
 
-    saveAllSlots(slots);
+    saveAllSlots(
+        slots
+    );
 
 
     return normalized;
@@ -947,7 +1746,7 @@ function saveSlot(
 
 
 /* =========================================================
-   ZALOŽENÍ POSTAVY V PRÁZDNÉM SLOTU
+   INICIALIZACE SLOTU
 ========================================================= */
 
 function initializeSlot(
@@ -955,6 +1754,7 @@ function initializeSlot(
     characterId,
     skinId = null
 ) {
+
     const slots =
         loadSaveSlots();
 
@@ -967,11 +1767,15 @@ function initializeSlot(
         );
 
 
-    slots[slotIndex] =
+    slots[
+        slotIndex
+    ] =
         slot;
 
 
-    saveAllSlots(slots);
+    saveAllSlots(
+        slots
+    );
 
 
     return slot;
@@ -979,24 +1783,31 @@ function initializeSlot(
 
 
 /* =========================================================
-   ZMĚNA SKINU SLOTU
+   ZMĚNA SKINU
 ========================================================= */
 
 function setSlotSkin(
     slotIndex,
     skinId
 ) {
+
     const slots =
         loadSaveSlots();
 
+
     const slot =
-        slots[slotIndex];
+        slots[
+            slotIndex
+        ];
 
 
     if (
         !slot ||
-        isSaveSlotEmpty(slot)
+        isSaveSlotEmpty(
+            slot
+        )
     ) {
+
         throw new Error(
             "Nelze změnit skin prázdného slotu."
         );
@@ -1011,6 +1822,7 @@ function setSlotSkin(
 
 
     if (!skin) {
+
         throw new Error(
             `Neznámý skin: ${skinId}`
         );
@@ -1020,11 +1832,14 @@ function setSlotSkin(
     slot.skinId =
         skin.id;
 
+
     slot.updatedAt =
         getSaveTimestamp();
 
 
-    saveAllSlots(slots);
+    saveAllSlots(
+        slots
+    );
 
 
     return slot;
@@ -1032,14 +1847,18 @@ function setSlotSkin(
 
 
 /* =========================================================
-   ZÍSKÁNÍ VYBRANÉHO SKINU SLOTU
+   SKIN SLOTU
 ========================================================= */
 
-function getSlotSkin(slot) {
+function getSlotSkin(
+    slot
+) {
+
     if (
         !slot ||
         !slot.characterId
     ) {
+
         return null;
     }
 
@@ -1064,15 +1883,23 @@ function getSlotSkin(slot) {
 
 
 /* =========================================================
-   OBRÁZEK POSTAVY SLOTU
+   OBRÁZEK SLOTU
 ========================================================= */
 
-function getSlotCharacterImage(slot) {
+function getSlotCharacterImage(
+    slot
+) {
+
     const skin =
-        getSlotSkin(slot);
+        getSlotSkin(
+            slot
+        );
 
 
-    if (skin?.image) {
+    if (
+        skin?.image
+    ) {
+
         return skin.image;
     }
 
@@ -1094,6 +1921,7 @@ function getSlotCharacterImage(slot) {
 function resetSaveSlot(
     slotIndex
 ) {
+
     const slots =
         loadSaveSlots();
 
@@ -1104,11 +1932,15 @@ function resetSaveSlot(
         );
 
 
-    slots[slotIndex] =
+    slots[
+        slotIndex
+    ] =
         emptySlot;
 
 
-    saveAllSlots(slots);
+    saveAllSlots(
+        slots
+    );
 
 
     return emptySlot;
@@ -1116,24 +1948,31 @@ function resetSaveSlot(
 
 
 /* =========================================================
-   ULOŽENÍ ROZEHRANÉ PARTIE
+   SAVE PARTIE
 ========================================================= */
 
 function saveCurrentGame(
     slotIndex,
     gameState
 ) {
+
     const slots =
         loadSaveSlots();
 
+
     const slot =
-        slots[slotIndex];
+        slots[
+            slotIndex
+        ];
 
 
     if (
         !slot ||
-        isSaveSlotEmpty(slot)
+        isSaveSlotEmpty(
+            slot
+        )
     ) {
+
         throw new Error(
             "Nelze uložit partii do prázdného slotu."
         );
@@ -1150,7 +1989,9 @@ function saveCurrentGame(
         getSaveTimestamp();
 
 
-    saveAllSlots(slots);
+    saveAllSlots(
+        slots
+    );
 
 
     return slot.currentGame;
@@ -1164,25 +2005,34 @@ function saveCurrentGame(
 function clearCurrentGame(
     slotIndex
 ) {
+
     const slots =
         loadSaveSlots();
 
+
     const slot =
-        slots[slotIndex];
+        slots[
+            slotIndex
+        ];
 
 
     if (!slot) {
+
         return null;
     }
 
 
-    slot.currentGame = null;
+    slot.currentGame =
+        null;
+
 
     slot.updatedAt =
         getSaveTimestamp();
 
 
-    saveAllSlots(slots);
+    saveAllSlots(
+        slots
+    );
 
 
     return slot;
@@ -1190,12 +2040,13 @@ function clearCurrentGame(
 
 
 /* =========================================================
-   NAČTENÍ ROZEHRANÉ PARTIE
+   LOAD PARTIE
 ========================================================= */
 
 function loadCurrentGame(
     slotIndex
 ) {
+
     const slot =
         getSaveSlot(
             slotIndex
@@ -1217,30 +2068,43 @@ function loadCurrentGame(
 function registerPlayerWin(
     slotIndex
 ) {
+
     const slots =
         loadSaveSlots();
 
+
     const slot =
-        slots[slotIndex];
+        slots[
+            slotIndex
+        ];
 
 
     if (
         !slot ||
-        isSaveSlotEmpty(slot)
+        isSaveSlotEmpty(
+            slot
+        )
     ) {
+
         return null;
     }
 
 
-    slot.wins += 1;
+    slot.wins +=
+        1;
 
-    slot.currentGame = null;
+
+    slot.currentGame =
+        null;
+
 
     slot.updatedAt =
         getSaveTimestamp();
 
 
-    saveAllSlots(slots);
+    saveAllSlots(
+        slots
+    );
 
 
     return slot;
@@ -1254,30 +2118,43 @@ function registerPlayerWin(
 function registerLukyWin(
     slotIndex
 ) {
+
     const slots =
         loadSaveSlots();
 
+
     const slot =
-        slots[slotIndex];
+        slots[
+            slotIndex
+        ];
 
 
     if (
         !slot ||
-        isSaveSlotEmpty(slot)
+        isSaveSlotEmpty(
+            slot
+        )
     ) {
+
         return null;
     }
 
 
-    slot.losses += 1;
+    slot.losses +=
+        1;
 
-    slot.currentGame = null;
+
+    slot.currentGame =
+        null;
+
 
     slot.updatedAt =
         getSaveTimestamp();
 
 
-    saveAllSlots(slots);
+    saveAllSlots(
+        slots
+    );
 
 
     return slot;
@@ -1288,8 +2165,12 @@ function registerLukyWin(
    W / L TEXT
 ========================================================= */
 
-function getSlotRecordText(slot) {
+function getSlotRecordText(
+    slot
+) {
+
     if (!slot) {
+
         return "0 W / 0 L";
     }
 
@@ -1302,11 +2183,15 @@ function getSlotRecordText(slot) {
 
 
 /* =========================================================
-   POČET ODEHRANÝCH HER SLOTU
+   POČET ODEHRANÝCH HER
 ========================================================= */
 
-function getSlotGamesPlayed(slot) {
+function getSlotGamesPlayed(
+    slot
+) {
+
     if (!slot) {
+
         return 0;
     }
 
@@ -1323,12 +2208,13 @@ function getSlotGamesPlayed(slot) {
 
 
 /* =========================================================
-   POŘADOVÉ ČÍSLO DALŠÍ PARTIE SLOTU
+   ČÍSLO DALŠÍ PARTIE
 ========================================================= */
 
 function getNextGameNumber(
     slotIndex
 ) {
+
     const slot =
         getSaveSlot(
             slotIndex
@@ -1336,19 +2222,22 @@ function getNextGameNumber(
 
 
     return (
-        getSlotGamesPlayed(slot) +
+        getSlotGamesPlayed(
+            slot
+        ) +
         1
     );
 }
 
 
 /* =========================================================
-   HISTORIE HLÁŠEK SLOTU
+   HISTORIE OPENING HLÁŠEK
 ========================================================= */
 
 function getSlotQuoteHistory(
     slotIndex
 ) {
+
     const slot =
         getSaveSlot(
             slotIndex
@@ -1362,25 +2251,28 @@ function getSlotQuoteHistory(
 }
 
 
-/* =========================================================
-   ULOŽENÍ HISTORIE HLÁŠEK SLOTU
-========================================================= */
-
 function saveSlotQuoteHistory(
     slotIndex,
     quoteHistory
 ) {
+
     const slots =
         loadSaveSlots();
 
+
     const slot =
-        slots[slotIndex];
+        slots[
+            slotIndex
+        ];
 
 
     if (
         !slot ||
-        isSaveSlotEmpty(slot)
+        isSaveSlotEmpty(
+            slot
+        )
     ) {
+
         return null;
     }
 
@@ -1395,7 +2287,9 @@ function saveSlotQuoteHistory(
         getSaveTimestamp();
 
 
-    saveAllSlots(slots);
+    saveAllSlots(
+        slots
+    );
 
 
     return slot.quoteHistory;
@@ -1403,52 +2297,68 @@ function saveSlotQuoteHistory(
 
 
 /* =========================================================
-   GLOBÁLNÍ STATISTIKY PRO HLAVNÍ MENU
+   SOUHRNNÉ STATISTIKY SLOTŮ
 ========================================================= */
 
 function getCombinedSlotStats() {
+
     const slots =
         loadSaveSlots();
 
 
     return slots.reduce(
-        (stats, slot) => {
+        (
+            stats,
+            slot
+        ) => {
 
             stats.playerWins +=
                 normalizeNonNegativeInteger(
                     slot.wins
                 );
 
+
             stats.lukyWins +=
                 normalizeNonNegativeInteger(
                     slot.losses
                 );
+
 
             stats.gamesPlayed +=
                 getSlotGamesPlayed(
                     slot
                 );
 
+
             return stats;
         },
         {
-            playerWins: 0,
-            lukyWins: 0,
-            gamesPlayed: 0
+            playerWins:
+                0,
+
+            lukyWins:
+                0,
+
+            gamesPlayed:
+                0
         }
     );
 }
 
 
 /* =========================================================
-   EXISTUJE UŽ NĚJAKÝ ZALOŽENÝ SLOT?
+   EXISTUJE SLOT?
 ========================================================= */
 
 function hasAnyInitializedSlot() {
-    return loadSaveSlots().some(
-        (slot) =>
-            !isSaveSlotEmpty(slot)
-    );
+
+    return loadSaveSlots()
+        .some(
+            (slot) =>
+                !isSaveSlotEmpty(
+                    slot
+                )
+        );
 }
 
 
@@ -1457,18 +2367,22 @@ function hasAnyInitializedSlot() {
 ========================================================= */
 
 function isFirstCharacterSelection() {
+
     return !hasAnyInitializedSlot();
 }
 
 
 /* =========================================================
-   EXPORT SAVE PRO DEBUG
+   EXPORT DEBUG
 ========================================================= */
 
 function exportSaveData() {
+
     return {
+
         version:
-            GAME_CONFIG.storageVersion,
+            GAME_CONFIG
+                .storageVersion,
 
         slots:
             loadSaveSlots()
@@ -1480,27 +2394,36 @@ function exportSaveData() {
 
 
 /* =========================================================
-   IMPORT SAVE PRO DEBUG
+   IMPORT DEBUG
 ========================================================= */
 
-function importSaveData(data) {
+function importSaveData(
+    data
+) {
+
     if (
         !data ||
-        !Array.isArray(data.slots)
+        !Array.isArray(
+            data.slots
+        )
     ) {
+
         throw new Error(
             "Neplatná save data."
         );
     }
 
 
-    const slots = [];
+    const slots =
+        [];
+
 
     for (
         let index = 0;
         index < GAME_CONFIG.saveSlotCount;
         index += 1
     ) {
+
         slots.push(
             normalizeSaveSlot(
                 data.slots[index],
@@ -1510,7 +2433,9 @@ function importSaveData(data) {
     }
 
 
-    saveAllSlots(slots);
+    saveAllSlots(
+        slots
+    );
 
 
     return slots;
@@ -1518,15 +2443,20 @@ function importSaveData(data) {
 
 
 /* =========================================================
-   KOMPLETNÍ SMAZÁNÍ SLOTŮ PRO DEBUG
+   RESET SLOTŮ PRO DEBUG
+
+   Achievementy ani settings nemaže.
 ========================================================= */
 
 function clearAllSaveSlots() {
+
     const slots =
         createDefaultSaveSlots();
 
 
-    saveAllSlots(slots);
+    saveAllSlots(
+        slots
+    );
 
 
     return slots;
