@@ -4,30 +4,8 @@
 /* =========================================================
    DOTS UNO
    UI VRSTVA
-
-   Řeší:
-   - obrazovky
-   - save sloty
-   - výběr postavy
-   - skiny
-   - achievementy
-   - herní stůl
-   - výběr karet
-   - Kuř!
-   - drag & drop
-   - výběr barvy
-   - sedmičku
-   - Stůj
-   - UNO
-   - hlášky
-   - emoty
-   - game over
 ========================================================= */
 
-
-/* =========================================================
-   UI STATE
-========================================================= */
 
 const UI_STATE = {
 
@@ -52,25 +30,43 @@ const UI_STATE = {
     pendingPlayCardIds:
         null,
 
+    colorChoiceMinimized:
+        false,
+
+    openingSpeechActive:
+        false,
+
+    firstPlayerActionDone:
+        false,
+
     drag: {
 
-        active: false,
+        active:
+            false,
 
-        pointerId: null,
+        pointerId:
+            null,
 
-        cardId: null,
+        cardId:
+            null,
 
-        startX: 0,
+        startX:
+            0,
 
-        startY: 0,
+        startY:
+            0,
 
-        currentX: 0,
+        currentX:
+            0,
 
-        currentY: 0,
+        currentY:
+            0,
 
-        moved: false,
+        moved:
+            false,
 
-        element: null
+        elements:
+            []
     },
 
     lukySpeechTimer:
@@ -89,6 +85,21 @@ const UI_STATE = {
         false,
 
     toastTimer:
+        null,
+
+    historyOpen:
+        false,
+
+    youtubeReady:
+        false,
+
+    youtubePlayer:
+        null,
+
+    musicPlaying:
+        false,
+
+    activeMusicTrack:
         null
 };
 
@@ -117,9 +128,15 @@ function initializeUI() {
 
     setupModalControls();
 
+    setupHistoryControls();
+
+    setupMusicControls();
+
     setupGameEvents();
 
     setupStaticImageFallbacks();
+
+    renderMusicSetting();
 
     renderMainMenuStats();
 
@@ -153,9 +170,21 @@ function showScreen(screenId) {
         screenId;
 
 
+    if (
+        screenId !==
+        "screen-game"
+    ) {
+
+        closeHistory();
+    }
+
+
     window.scrollTo({
-        top: 0,
-        behavior: "auto"
+        top:
+            0,
+
+        behavior:
+            "auto"
     });
 }
 
@@ -166,42 +195,38 @@ function showScreen(screenId) {
 
 function setupNavigation() {
 
-    const openSlots =
-        document.getElementById(
+    document
+        .getElementById(
             "open-slots-button"
+        )
+        ?.addEventListener(
+            "click",
+            () => {
+
+                renderSaveSlots();
+
+                showScreen(
+                    "screen-slots"
+                );
+            }
         );
 
 
-    openSlots?.addEventListener(
-        "click",
-        () => {
-
-            renderSaveSlots();
-
-            showScreen(
-                "screen-slots"
-            );
-        }
-    );
-
-
-    const openAchievements =
-        document.getElementById(
+    document
+        .getElementById(
             "open-achievements-button"
+        )
+        ?.addEventListener(
+            "click",
+            () => {
+
+                renderAchievements();
+
+                showScreen(
+                    "screen-achievements"
+                );
+            }
         );
-
-
-    openAchievements?.addEventListener(
-        "click",
-        () => {
-
-            renderAchievements();
-
-            showScreen(
-                "screen-achievements"
-            );
-        }
-    );
 
 
     document
@@ -229,7 +254,10 @@ function setupNavigation() {
                             target ===
                             "screen-menu"
                         ) {
+
                             renderMainMenuStats();
+
+                            renderMusicSetting();
                         }
 
 
@@ -237,6 +265,7 @@ function setupNavigation() {
                             target ===
                             "screen-slots"
                         ) {
+
                             renderSaveSlots();
                         }
 
@@ -250,66 +279,63 @@ function setupNavigation() {
         );
 
 
-    const characterBack =
-        document.getElementById(
+    document
+        .getElementById(
             "character-select-back"
-        );
+        )
+        ?.addEventListener(
+            "click",
+            () => {
 
-
-    characterBack?.addEventListener(
-        "click",
-        () => {
-
-            clearNewCharacterSelection();
-
-            renderSaveSlots();
-
-            showScreen(
-                "screen-slots"
-            );
-        }
-    );
-
-
-    const skinBack =
-        document.getElementById(
-            "skin-select-back"
-        );
-
-
-    skinBack?.addEventListener(
-        "click",
-        () => {
-
-            const slotIndex =
-                UI_STATE
-                    .selectedSlotIndex;
-
-
-            if (
-                slotIndex === null
-            ) {
+                clearNewCharacterSelection();
 
                 renderSaveSlots();
 
                 showScreen(
                     "screen-slots"
                 );
-
-                return;
             }
+        );
 
 
-            openSlotActions(
-                slotIndex
-            );
-        }
-    );
+    document
+        .getElementById(
+            "skin-select-back"
+        )
+        ?.addEventListener(
+            "click",
+            () => {
+
+                const slotIndex =
+                    UI_STATE
+                        .selectedSlotIndex;
+
+
+                if (
+                    slotIndex ===
+                    null
+                ) {
+
+                    renderSaveSlots();
+
+                    showScreen(
+                        "screen-slots"
+                    );
+
+                    return;
+                }
+
+
+                openSlotActions(
+                    slotIndex
+                );
+            }
+        );
 }
 
 
 /* =========================================================
-   HLAVNÍ MENU – STATISTIKY
+   HLAVNÍ MENU
 ========================================================= */
 
 function renderMainMenuStats() {
@@ -398,7 +424,9 @@ function renderSaveSlots() {
 
 
             number.textContent =
-                String(index + 1);
+                String(
+                    index + 1
+                );
 
 
             if (
@@ -452,10 +480,6 @@ function renderSaveSlots() {
 }
 
 
-/* =========================================================
-   KLIK NA SLOT
-========================================================= */
-
 function handleSlotClick(
     slotIndex
 ) {
@@ -492,7 +516,7 @@ function handleSlotClick(
 
 
 /* =========================================================
-   DETAIL SLOTU
+   SLOT ACTIONS
 ========================================================= */
 
 function openSlotActions(
@@ -558,7 +582,9 @@ function openSlotActions(
 
     setText(
         "slot-summary-status",
-        hasActiveGame(slot)
+        hasActiveGame(
+            slot
+        )
             ? "Rozehraná partie"
             : "Bez rozehrané partie"
     );
@@ -605,126 +631,117 @@ function openSlotActions(
 }
 
 
-/* =========================================================
-   AKCE SLOTU
-========================================================= */
-
 function setupSlotActions() {
 
-    const continueButton =
-        document.getElementById(
+    document
+        .getElementById(
             "continue-game-button"
+        )
+        ?.addEventListener(
+            "click",
+            () => {
+
+                const slotIndex =
+                    UI_STATE
+                        .selectedSlotIndex;
+
+
+                if (
+                    slotIndex ===
+                    null
+                ) {
+                    return;
+                }
+
+
+                startGameUI(
+                    slotIndex,
+                    true
+                );
+            }
         );
 
 
-    continueButton?.addEventListener(
-        "click",
-        () => {
-
-            const slotIndex =
-                UI_STATE
-                    .selectedSlotIndex;
-
-
-            if (
-                slotIndex === null
-            ) {
-                return;
-            }
-
-
-            startGameUI(
-                slotIndex,
-                true
-            );
-        }
-    );
-
-
-    const nextGameButton =
-        document.getElementById(
+    document
+        .getElementById(
             "start-next-game-button"
+        )
+        ?.addEventListener(
+            "click",
+            () => {
+
+                const slotIndex =
+                    UI_STATE
+                        .selectedSlotIndex;
+
+
+                if (
+                    slotIndex ===
+                    null
+                ) {
+                    return;
+                }
+
+
+                clearCurrentGame(
+                    slotIndex
+                );
+
+
+                startGameUI(
+                    slotIndex,
+                    false
+                );
+            }
         );
 
 
-    nextGameButton?.addEventListener(
-        "click",
-        () => {
-
-            const slotIndex =
-                UI_STATE
-                    .selectedSlotIndex;
-
-
-            if (
-                slotIndex === null
-            ) {
-                return;
-            }
-
-
-            clearCurrentGame(
-                slotIndex
-            );
-
-
-            startGameUI(
-                slotIndex,
-                false
-            );
-        }
-    );
-
-
-    const changeSkinButton =
-        document.getElementById(
+    document
+        .getElementById(
             "change-skin-button"
-        );
+        )
+        ?.addEventListener(
+            "click",
+            () => {
+
+                const slotIndex =
+                    UI_STATE
+                        .selectedSlotIndex;
 
 
-    changeSkinButton?.addEventListener(
-        "click",
-        () => {
+                if (
+                    slotIndex ===
+                    null
+                ) {
+                    return;
+                }
 
-            const slotIndex =
-                UI_STATE
-                    .selectedSlotIndex;
 
-
-            if (
-                slotIndex === null
-            ) {
-                return;
+                openExistingSkinSelection(
+                    slotIndex
+                );
             }
-
-
-            openExistingSkinSelection(
-                slotIndex
-            );
-        }
-    );
-
-
-    const resetSlotButton =
-        document.getElementById(
-            "reset-slot-button"
         );
 
 
-    resetSlotButton?.addEventListener(
-        "click",
-        () => {
+    document
+        .getElementById(
+            "reset-slot-button"
+        )
+        ?.addEventListener(
+            "click",
+            () => {
 
-            openModal(
-                "modal-reset-slot"
-            );
-        }
-    );
+                openModal(
+                    "modal-reset-slot"
+                );
+            }
+        );
 }
 
 
 /* =========================================================
-   VÝBĚR POSTAVY
+   POSTAVY
 ========================================================= */
 
 function setupCharacterSelection() {
@@ -750,31 +767,24 @@ function setupCharacterSelection() {
         );
 
 
-    const changeButton =
-        document.getElementById(
+    document
+        .getElementById(
             "change-character-button"
+        )
+        ?.addEventListener(
+            "click",
+            clearNewCharacterSelection
         );
 
 
-    changeButton?.addEventListener(
-        "click",
-        () => {
-
-            clearNewCharacterSelection();
-        }
-    );
-
-
-    const confirmButton =
-        document.getElementById(
+    document
+        .getElementById(
             "confirm-character-button"
+        )
+        ?.addEventListener(
+            "click",
+            confirmNewCharacter
         );
-
-
-    confirmButton?.addEventListener(
-        "click",
-        confirmNewCharacter
-    );
 }
 
 
@@ -788,7 +798,6 @@ function openCharacterSelection(
 
     clearNewCharacterSelection();
 
-
     updateRecommendedCharacter();
 
 
@@ -797,10 +806,6 @@ function openCharacterSelection(
     );
 }
 
-
-/* =========================================================
-   DOPORUČENÁ POSTAVA 96
-========================================================= */
 
 function updateRecommendedCharacter() {
 
@@ -836,10 +841,6 @@ function updateRecommendedCharacter() {
     );
 }
 
-
-/* =========================================================
-   VÝBĚR POSTAVY
-========================================================= */
 
 function selectCharacter(
     characterId
@@ -898,6 +899,7 @@ function selectCharacter(
 
 
     if (section) {
+
         section.hidden =
             false;
     }
@@ -907,15 +909,14 @@ function selectCharacter(
 
 
     section?.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest"
+        behavior:
+            "smooth",
+
+        block:
+            "nearest"
     });
 }
 
-
-/* =========================================================
-   NOVÁ POSTAVA – SKINY
-========================================================= */
 
 function renderNewCharacterSkinGrid() {
 
@@ -948,7 +949,6 @@ function renderNewCharacterSkinGrid() {
 
                 renderNewCharacterSkinGrid();
 
-
                 updateConfirmCharacterButton();
             }
     });
@@ -969,22 +969,14 @@ function updateConfirmCharacterButton() {
 
 
     button.disabled =
-        !UI_STATE
-            .selectedCharacterId ||
-        !UI_STATE
-            .selectedSkinId ||
+        !UI_STATE.selectedCharacterId ||
+        !UI_STATE.selectedSkinId ||
         !isSkinUnlocked(
-            UI_STATE
-                .selectedCharacterId,
-            UI_STATE
-                .selectedSkinId
+            UI_STATE.selectedCharacterId,
+            UI_STATE.selectedSkinId
         );
 }
 
-
-/* =========================================================
-   RESET NOVÉHO VÝBĚRU
-========================================================= */
 
 function clearNewCharacterSelection() {
 
@@ -1017,6 +1009,7 @@ function clearNewCharacterSelection() {
 
 
     if (section) {
+
         section.hidden =
             true;
     }
@@ -1029,6 +1022,7 @@ function clearNewCharacterSelection() {
 
 
     if (grid) {
+
         grid.innerHTML =
             "";
     }
@@ -1037,10 +1031,6 @@ function clearNewCharacterSelection() {
     updateConfirmCharacterButton();
 }
 
-
-/* =========================================================
-   POTVRZENÍ NOVÉ POSTAVY
-========================================================= */
 
 function confirmNewCharacter() {
 
@@ -1060,7 +1050,8 @@ function confirmNewCharacter() {
 
 
     if (
-        slotIndex === null ||
+        slotIndex ===
+            null ||
         !characterId ||
         !skinId
     ) {
@@ -1096,71 +1087,70 @@ function confirmNewCharacter() {
 
 
 /* =========================================================
-   SKINY EXISTUJÍCÍHO SLOTU
+   SKINY
 ========================================================= */
 
 function setupSkinSelection() {
 
-    const saveSkinButton =
-        document.getElementById(
+    document
+        .getElementById(
             "save-skin-button"
-        );
+        )
+        ?.addEventListener(
+            "click",
+            () => {
+
+                const slotIndex =
+                    UI_STATE
+                        .selectedSlotIndex;
 
 
-    saveSkinButton?.addEventListener(
-        "click",
-        () => {
-
-            const slotIndex =
-                UI_STATE
-                    .selectedSlotIndex;
+                const skinId =
+                    UI_STATE
+                        .existingSlotSkinId;
 
 
-            const skinId =
-                UI_STATE
-                    .existingSlotSkinId;
+                if (
+                    slotIndex ===
+                        null ||
+                    !skinId
+                ) {
+                    return;
+                }
 
 
-            if (
-                slotIndex === null ||
-                !skinId
-            ) {
-                return;
-            }
+                const slot =
+                    getSaveSlot(
+                        slotIndex
+                    );
 
 
-            const slot =
-                getSaveSlot(
-                    slotIndex
+                if (!slot) {
+                    return;
+                }
+
+
+                if (
+                    !isSkinUnlocked(
+                        slot.characterId,
+                        skinId
+                    )
+                ) {
+                    return;
+                }
+
+
+                setSlotSkin(
+                    slotIndex,
+                    skinId
                 );
 
 
-            if (!slot) {
-                return;
+                openSlotActions(
+                    slotIndex
+                );
             }
-
-
-            if (
-                !isSkinUnlocked(
-                    slot.characterId,
-                    skinId
-                )
-            ) {
-                return;
-            }
-
-
-            setSlotSkin(
-                slotIndex,
-                skinId
-            );
-
-
-            openSlotActions(
-                slotIndex
-            );
-        }
-    );
+        );
 }
 
 
@@ -1201,7 +1191,6 @@ function openExistingSkinSelection(
 
     renderExistingSkinGrid();
 
-
     updateSaveSkinButton();
 
 
@@ -1219,7 +1208,8 @@ function renderExistingSkinGrid() {
 
 
     if (
-        slotIndex === null
+        slotIndex ===
+        null
     ) {
         return;
     }
@@ -1256,7 +1246,6 @@ function renderExistingSkinGrid() {
 
                 renderExistingSkinGrid();
 
-
                 updateSaveSkinButton();
             }
     });
@@ -1287,7 +1276,8 @@ function updateSaveSkinButton() {
 
 
     if (
-        slotIndex === null ||
+        slotIndex ===
+            null ||
         !skinId
     ) {
 
@@ -1312,10 +1302,6 @@ function updateSaveSkinButton() {
         );
 }
 
-
-/* =========================================================
-   GENERICKÝ SKIN GRID
-========================================================= */
 
 function renderSkinGrid({
     characterId,
@@ -1430,7 +1416,7 @@ function renderSkinGrid({
             card.classList.toggle(
                 "is-selected",
                 selectedSkinId ===
-                skin.id
+                    skin.id
             );
 
 
@@ -1448,7 +1434,7 @@ function renderSkinGrid({
 
                 status.textContent =
                     selectedSkinId ===
-                    skin.id
+                        skin.id
                         ? "Vybráno"
                         : "Odemčeno";
 
@@ -1541,6 +1527,24 @@ function renderAchievements() {
                 );
 
 
+            const icon =
+                fragment.querySelector(
+                    ".achievement-icon"
+                );
+
+
+            const image =
+                fragment.querySelector(
+                    ".achievement-image"
+                );
+
+
+            const cardPreview =
+                fragment.querySelector(
+                    ".achievement-card-preview"
+                );
+
+
             const title =
                 fragment.querySelector(
                     ".achievement-title"
@@ -1585,8 +1589,70 @@ function renderAchievements() {
             );
 
 
+            card.classList.toggle(
+                "is-locked",
+                !achievement.unlocked
+            );
+
+
             if (
-                achievement.target > 1
+                achievement.image
+            ) {
+
+                icon.hidden =
+                    true;
+
+
+                image.hidden =
+                    false;
+
+
+                image.src =
+                    achievement.image;
+
+
+                image.alt =
+                    achievement.title;
+
+            } else if (
+                achievement.cardPreview
+            ) {
+
+                icon.hidden =
+                    true;
+
+
+                cardPreview.hidden =
+                    false;
+
+
+                cardPreview.innerHTML =
+                    "";
+
+
+                const preview =
+                    createAchievementCardPreview(
+                        achievement.cardPreview
+                    );
+
+
+                if (preview) {
+
+                    cardPreview.appendChild(
+                        preview
+                    );
+                }
+
+            } else {
+
+                icon.hidden =
+                    false;
+            }
+
+
+            if (
+                achievement.target >
+                1
             ) {
 
                 progress.hidden =
@@ -1599,7 +1665,8 @@ function renderAchievements() {
                         (
                             achievement.current /
                             achievement.target
-                        ) * 100
+                        ) *
+                        100
                     );
 
 
@@ -1625,8 +1692,112 @@ function renderAchievements() {
 }
 
 
+function createAchievementCardPreview(
+    preview
+) {
+
+    const element =
+        document.createElement(
+            "div"
+        );
+
+
+    element.className =
+        "game-card";
+
+
+    element.dataset.color =
+        preview.color ||
+        "yellow";
+
+
+    const cornerTop =
+        document.createElement(
+            "span"
+        );
+
+
+    cornerTop.className =
+        "card-corner card-corner-top";
+
+
+    const cornerTopValue =
+        document.createElement(
+            "span"
+        );
+
+
+    cornerTopValue.className =
+        "card-corner-value";
+
+
+    cornerTopValue.textContent =
+        String(
+            preview.value ??
+            ""
+        );
+
+
+    cornerTop.appendChild(
+        cornerTopValue
+    );
+
+
+    const center =
+        document.createElement(
+            "span"
+        );
+
+
+    center.className =
+        "card-center";
+
+
+    const centerValue =
+        document.createElement(
+            "span"
+        );
+
+
+    centerValue.className =
+        "card-center-value";
+
+
+    centerValue.textContent =
+        String(
+            preview.value ??
+            ""
+        );
+
+
+    center.appendChild(
+        centerValue
+    );
+
+
+    const cornerBottom =
+        cornerTop.cloneNode(
+            true
+        );
+
+
+    cornerBottom.className =
+        "card-corner card-corner-bottom";
+
+
+    element.append(
+        cornerTop,
+        center,
+        cornerBottom
+    );
+
+
+    return element;
+}
+
+
 /* =========================================================
-   SPUŠTĚNÍ HRY
+   GAME START
 ========================================================= */
 
 function startGameUI(
@@ -1640,14 +1811,22 @@ function startGameUI(
 
     UI_STATE.selectedCardIds.clear();
 
-
     UI_STATE.pendingPlayCardIds =
         null;
 
+    UI_STATE.colorChoiceMinimized =
+        false;
+
+    UI_STATE.firstPlayerActionDone =
+        false;
 
     resetSpeechUI();
 
     resetEmoteUI();
+
+    closeHistory();
+
+    closeModal();
 
 
     showScreen(
@@ -1696,227 +1875,258 @@ function startGameUI(
 
 
     renderGame();
+
+
+    startMusicForGame();
 }
 
 
 /* =========================================================
-   HERNÍ OVLÁDÁNÍ
+   GAME CONTROLS
 ========================================================= */
 
 function setupGameControls() {
 
-    const drawPile =
-        document.getElementById(
+    document
+        .getElementById(
             "draw-pile"
+        )
+        ?.addEventListener(
+            "click",
+            () => {
+
+                markFirstPlayerAction();
+
+
+                const state =
+                    getGameState();
+
+
+                if (
+                    state?.skipChainCount >
+                        0 &&
+                    state.turn ===
+                        "player"
+                ) {
+
+                    showToast(
+                        "Stůj",
+                        "Musíš přehodit Stůj, nebo zvolit „Stojím“."
+                    );
+
+
+                    return;
+                }
+
+
+                playerDraw();
+            }
         );
 
 
-    drawPile?.addEventListener(
-        "click",
-        () => {
+    document
+        .getElementById(
+            "discard-zone"
+        )
+        ?.addEventListener(
+            "click",
+            () => {
 
-            const state =
-                getGameState();
+                if (
+                    UI_STATE
+                        .selectedCardIds
+                        .size >
+                    0
+                ) {
+
+                    markFirstPlayerAction();
+
+                    attemptSelectedCardPlay();
+
+                    return;
+                }
 
 
-            if (
-                state?.skipChainCount > 0 &&
-                state.turn === "player"
-            ) {
-
-                showToast(
-                    "Stůj",
-                    "Musíš přehodit Stůj, nebo zvolit „Stojím“."
-                );
-
-
-                return;
+                openHistory();
             }
+        );
 
 
-            playerDraw();
-        }
-    );
-
-
-    const unoButton =
-        document.getElementById(
+    document
+        .getElementById(
             "uno-button"
-        );
+        )
+        ?.addEventListener(
+            "click",
+            () => {
 
+                markFirstPlayerAction();
 
-    unoButton?.addEventListener(
-        "click",
-        playerCallUno
-    );
-
-
-    const catchUnoButton =
-        document.getElementById(
-            "catch-uno-button"
-        );
-
-
-    catchUnoButton?.addEventListener(
-        "click",
-        playerCatchLukyUno
-    );
-
-
-    const acceptSkipButton =
-        document.getElementById(
-            "accept-skip-button"
-        );
-
-
-    acceptSkipButton?.addEventListener(
-        "click",
-        () => {
-
-            UI_STATE
-                .selectedCardIds
-                .clear();
-
-
-            playerAcceptSkip();
-        }
-    );
-
-
-    const yellowButton =
-        document.getElementById(
-            "ask-yellow-button"
-        );
-
-
-    yellowButton?.addEventListener(
-        "click",
-        askLukyAboutYellow
-    );
-
-
-    const gameMenuButton =
-        document.getElementById(
-            "game-menu-button"
-        );
-
-
-    gameMenuButton?.addEventListener(
-        "click",
-        () => {
-
-            pauseGame();
-
-
-            openModal(
-                "modal-game-menu"
-            );
-        }
-    );
-
-
-    const resumeButton =
-        document.getElementById(
-            "resume-game-button"
-        );
-
-
-    resumeButton?.addEventListener(
-        "click",
-        () => {
-
-            closeModal();
-
-            resumeGame();
-        }
-    );
-
-
-    const saveAndMenu =
-        document.getElementById(
-            "save-and-menu-button"
-        );
-
-
-    saveAndMenu?.addEventListener(
-        "click",
-        () => {
-
-            saveAndLeaveGame();
-
-
-            closeModal();
-
-
-            renderMainMenuStats();
-
-
-            showScreen(
-                "screen-menu"
-            );
-        }
-    );
-
-
-    const playAgain =
-        document.getElementById(
-            "play-again-button"
-        );
-
-
-    playAgain?.addEventListener(
-        "click",
-        () => {
-
-            const slotIndex =
-                UI_STATE
-                    .selectedSlotIndex;
-
-
-            closeModal();
-
-
-            if (
-                slotIndex === null
-            ) {
-                return;
+                playerCallUno();
             }
-
-
-            startGameUI(
-                slotIndex,
-                false
-            );
-        }
-    );
-
-
-    const gameOverMenu =
-        document.getElementById(
-            "game-over-menu-button"
         );
 
 
-    gameOverMenu?.addEventListener(
-        "click",
-        () => {
+    document
+        .getElementById(
+            "catch-uno-button"
+        )
+        ?.addEventListener(
+            "click",
+            () => {
 
-            closeModal();
+                playerCatchLukyUno();
+            }
+        );
 
 
-            renderMainMenuStats();
+    document
+        .getElementById(
+            "accept-skip-button"
+        )
+        ?.addEventListener(
+            "click",
+            () => {
+
+                markFirstPlayerAction();
 
 
-            showScreen(
-                "screen-menu"
-            );
-        }
-    );
+                UI_STATE
+                    .selectedCardIds
+                    .clear();
+
+
+                playerAcceptSkip();
+            }
+        );
+
+
+    document
+        .getElementById(
+            "ask-yellow-button"
+        )
+        ?.addEventListener(
+            "click",
+            askLukyAboutYellow
+        );
+
+
+    document
+        .getElementById(
+            "game-menu-button"
+        )
+        ?.addEventListener(
+            "click",
+            () => {
+
+                pauseGame();
+
+
+                openModal(
+                    "modal-game-menu"
+                );
+            }
+        );
+
+
+    document
+        .getElementById(
+            "resume-game-button"
+        )
+        ?.addEventListener(
+            "click",
+            () => {
+
+                closeModal();
+
+                resumeGame();
+            }
+        );
+
+
+    document
+        .getElementById(
+            "save-and-menu-button"
+        )
+        ?.addEventListener(
+            "click",
+            () => {
+
+                saveAndLeaveGame();
+
+                stopMusic();
+
+                closeModal();
+
+                renderMainMenuStats();
+
+                renderMusicSetting();
+
+                showScreen(
+                    "screen-menu"
+                );
+            }
+        );
+
+
+    document
+        .getElementById(
+            "play-again-button"
+        )
+        ?.addEventListener(
+            "click",
+            () => {
+
+                const slotIndex =
+                    UI_STATE
+                        .selectedSlotIndex;
+
+
+                closeModal();
+
+
+                if (
+                    slotIndex ===
+                    null
+                ) {
+                    return;
+                }
+
+
+                startGameUI(
+                    slotIndex,
+                    false
+                );
+            }
+        );
+
+
+    document
+        .getElementById(
+            "game-over-menu-button"
+        )
+        ?.addEventListener(
+            "click",
+            () => {
+
+                stopMusic();
+
+                closeModal();
+
+                renderMainMenuStats();
+
+                renderMusicSetting();
+
+                showScreen(
+                    "screen-menu"
+                );
+            }
+        );
 }
 
 
 /* =========================================================
-   VYKRESLENÍ HRY
+   GAME RENDER
 ========================================================= */
 
 function renderGame() {
@@ -1931,7 +2141,8 @@ function renderGame() {
 
     if (
         !state ||
-        slotIndex === null
+        slotIndex ===
+            null
     ) {
         return;
     }
@@ -1947,10 +2158,6 @@ function renderGame() {
         return;
     }
 
-
-    /*
-        Výběr může po změně ruky obsahovat už neexistující ID.
-    */
 
     sanitizeSelectedCards(
         state.playerHand
@@ -1996,6 +2203,21 @@ function renderGame() {
     renderGameStatus(
         state
     );
+
+
+    renderLastAction(
+        state
+    );
+
+
+    renderHistory(
+        state
+    );
+
+
+    updateDiscardPlayTarget();
+
+    updateMusicButton();
 }
 
 
@@ -2033,12 +2255,6 @@ function renderGameProfiles(
         getSlotRecordText(
             slot
         )
-    );
-
-
-    setText(
-        "game-luky-score",
-        slot.losses
     );
 
 
@@ -2109,7 +2325,7 @@ function renderGameProfiles(
 
 
 /* =========================================================
-   OVLÁDÁNÍ PODLE STAVU
+   GAME CONTROLS STATE
 ========================================================= */
 
 function renderGameControls(
@@ -2150,7 +2366,9 @@ function renderGameControls(
             state.turn !==
                 "player" ||
             state.skipChainCount >
-                0;
+                0 ||
+            UI_STATE.pendingPlayCardIds !==
+                null;
 
 
         drawPile.setAttribute(
@@ -2164,7 +2382,7 @@ function renderGameControls(
 
 
 /* =========================================================
-   HRÁČOVA RUKA
+   PLAYER HAND
 ========================================================= */
 
 function renderPlayerHand(
@@ -2192,6 +2410,20 @@ function renderPlayerHand(
         );
 
 
+    const interactive =
+        state.status ===
+            "playing" &&
+        state.turn ===
+            "player" &&
+        !GAME_RUNTIME.paused;
+
+
+    container.classList.toggle(
+        "is-disabled",
+        !interactive
+    );
+
+
     hand.forEach(
         (card) => {
 
@@ -2216,7 +2448,7 @@ function renderPlayerHand(
 
 
             element.classList.toggle(
-                "is-match-highlight",
+                "is-same-card-option",
                 shouldHighlightIdenticalCard(
                     card,
                     hand
@@ -2225,21 +2457,8 @@ function renderPlayerHand(
             );
 
 
-            const interactive =
-                state.status ===
-                    "playing" &&
-                state.turn ===
-                    "player";
-
-
             element.disabled =
                 !interactive;
-
-
-            element.classList.toggle(
-                "is-disabled",
-                !interactive
-            );
 
 
             element.addEventListener(
@@ -2259,8 +2478,7 @@ function renderPlayerHand(
 
                     beginCardDrag(
                         event,
-                        card,
-                        element
+                        card
                     );
                 }
             );
@@ -2275,7 +2493,7 @@ function renderPlayerHand(
 
 
 /* =========================================================
-   LUKYHO KARTY
+   LUKY HAND
 ========================================================= */
 
 function renderLukyHand(
@@ -2323,7 +2541,7 @@ function renderLukyHand(
 
 
 /* =========================================================
-   ODHOD
+   DISCARD
 ========================================================= */
 
 function renderDiscardPile(
@@ -2347,7 +2565,8 @@ function renderDiscardPile(
 
     const card =
         state.discardPile[
-            state.discardPile.length - 1
+            state.discardPile.length -
+            1
         ];
 
 
@@ -2366,11 +2585,6 @@ function renderDiscardPile(
         true;
 
 
-    element.classList.add(
-        "is-disabled"
-    );
-
-
     container.appendChild(
         element
     );
@@ -2378,10 +2592,12 @@ function renderDiscardPile(
 
 
 /* =========================================================
-   VYTVOŘENÍ KARTY
+   CARD ELEMENT
 ========================================================= */
 
-function createCardElement(card) {
+function createCardElement(
+    card
+) {
 
     const template =
         document.getElementById(
@@ -2438,6 +2654,18 @@ function createCardElement(card) {
         card.type;
 
 
+    if (
+        isWildCard(
+            card
+        )
+    ) {
+
+        element.classList.add(
+            "is-wild"
+        );
+    }
+
+
     element.setAttribute(
         "aria-label",
         getCardDescription(
@@ -2464,22 +2692,12 @@ function createCardElement(card) {
 
 
 /* =========================================================
-   VÝBĚR KARET
+   CARD SELECT
 ========================================================= */
 
-function handleCardClick(card) {
-
-    if (
-        UI_STATE.drag.moved
-    ) {
-
-        UI_STATE.drag.moved =
-            false;
-
-
-        return;
-    }
-
+function handleCardClick(
+    card
+) {
 
     const state =
         getGameState();
@@ -2517,12 +2735,15 @@ function handleCardClick(card) {
         );
 
 
+        updateDiscardPlayTarget();
+
         return;
     }
 
 
     if (
-        selected.size === 0
+        selected.size ===
+        0
     ) {
 
         selected.add(
@@ -2534,6 +2755,8 @@ function handleCardClick(card) {
             state
         );
 
+
+        updateDiscardPlayTarget();
 
         return;
     }
@@ -2567,7 +2790,6 @@ function handleCardClick(card) {
 
         selected.clear();
 
-
         selected.add(
             card.id
         );
@@ -2577,11 +2799,14 @@ function handleCardClick(card) {
     renderPlayerHand(
         state
     );
+
+
+    updateDiscardPlayTarget();
 }
 
 
 /* =========================================================
-   HIGHLIGHT PRO KUŘ!
+   KUŘ! HIGHLIGHT
 ========================================================= */
 
 function shouldHighlightIdenticalCard(
@@ -2595,7 +2820,8 @@ function shouldHighlightIdenticalCard(
 
 
     if (
-        selected.size === 0 ||
+        selected.size ===
+            0 ||
         selected.has(
             card.id
         )
@@ -2626,11 +2852,9 @@ function shouldHighlightIdenticalCard(
 }
 
 
-/* =========================================================
-   ČIŠTĚNÍ VÝBĚRU
-========================================================= */
-
-function sanitizeSelectedCards(hand) {
+function sanitizeSelectedCards(
+    hand
+) {
 
     const validIds =
         new Set(
@@ -2665,19 +2889,46 @@ function sanitizeSelectedCards(hand) {
 
 
 /* =========================================================
-   DRAG START
+   DISCARD TARGET
+========================================================= */
+
+function updateDiscardPlayTarget() {
+
+    const zone =
+        document.getElementById(
+            "discard-zone"
+        );
+
+
+    if (!zone) {
+        return;
+    }
+
+
+    zone.classList.toggle(
+        "is-play-target",
+        UI_STATE
+            .selectedCardIds
+            .size >
+        0
+    );
+}
+
+
+/* =========================================================
+   DRAG
 ========================================================= */
 
 function beginCardDrag(
     event,
-    card,
-    element
+    card
 ) {
 
     if (
         event.button !==
             undefined &&
-        event.button !== 0
+        event.button !==
+            0
     ) {
         return;
     }
@@ -2697,11 +2948,6 @@ function beginCardDrag(
         return;
     }
 
-
-    /*
-        Kartu, kterou táhneme, vždy zahrneme do výběru.
-        Pokud je vybraná jiná skupina, výběr se změní.
-    */
 
     if (
         !UI_STATE
@@ -2758,23 +3004,29 @@ function beginCardDrag(
         renderPlayerHand(
             state
         );
-
-
-        element =
-            document.querySelector(
-                `[data-card-id="${CSS.escape(card.id)}"]`
-            );
-
-
-        if (!element) {
-            return;
-        }
     }
+
+
+    const selectedElements =
+        [
+            ...UI_STATE
+                .selectedCardIds
+        ]
+            .map(
+                (id) =>
+                    document.querySelector(
+                        `[data-card-id="${CSS.escape(id)}"]`
+                    )
+            )
+            .filter(
+                Boolean
+            );
 
 
     UI_STATE.drag = {
 
-        active: true,
+        active:
+            true,
 
         pointerId:
             event.pointerId,
@@ -2794,20 +3046,28 @@ function beginCardDrag(
         currentY:
             event.clientY,
 
-        moved: false,
+        moved:
+            false,
 
-        element
+        elements:
+            selectedElements
     };
 
 
-    element.setPointerCapture?.(
-        event.pointerId
+    selectedElements.forEach(
+        (element) => {
+
+            element.classList.add(
+                "is-dragging"
+            );
+        }
     );
 
 
-    element.classList.add(
-        "is-dragging"
-    );
+    event.currentTarget
+        ?.setPointerCapture?.(
+            event.pointerId
+        );
 
 
     window.addEventListener(
@@ -2820,7 +3080,8 @@ function beginCardDrag(
         "pointerup",
         endCardDrag,
         {
-            once: true
+            once:
+                true
         }
     );
 
@@ -2829,17 +3090,16 @@ function beginCardDrag(
         "pointercancel",
         cancelCardDrag,
         {
-            once: true
+            once:
+                true
         }
     );
 }
 
 
-/* =========================================================
-   DRAG MOVE
-========================================================= */
-
-function handleCardDragMove(event) {
+function handleCardDragMove(
+    event
+) {
 
     const drag =
         UI_STATE.drag;
@@ -2891,13 +3151,13 @@ function handleCardDragMove(event) {
     }
 
 
-    if (
-        drag.element
-    ) {
+    drag.elements.forEach(
+        (element) => {
 
-        drag.element.style.transform =
-            `translate(${deltaX}px, ${deltaY}px) scale(1.06)`;
-    }
+            element.style.transform =
+                `translate(${deltaX}px, ${deltaY}px) scale(1.05)`;
+        }
+    );
 
 
     updateDropZoneState(
@@ -2907,11 +3167,9 @@ function handleCardDragMove(event) {
 }
 
 
-/* =========================================================
-   DRAG END
-========================================================= */
-
-function endCardDrag(event) {
+function endCardDrag(
+    event
+) {
 
     const drag =
         UI_STATE.drag;
@@ -2958,14 +3216,12 @@ function endCardDrag(event) {
 
     if (shouldPlay) {
 
+        markFirstPlayerAction();
+
         attemptSelectedCardPlay();
     }
 }
 
-
-/* =========================================================
-   DRAG CANCEL / CLEANUP
-========================================================= */
 
 function cancelCardDrag() {
 
@@ -2975,31 +3231,18 @@ function cancelCardDrag() {
 
 function cleanupCardDrag() {
 
-    const drag =
-        UI_STATE.drag;
+    UI_STATE.drag.elements
+        .forEach(
+            (element) => {
+
+                element.classList.remove(
+                    "is-dragging"
+                );
 
 
-    if (
-        drag.element
-    ) {
-
-        drag.element.classList.remove(
-            "is-dragging"
-        );
-
-
-        drag.element.style.transform =
-            "";
-    }
-
-
-    document
-        .getElementById(
-            "discard-zone"
-        )
-        ?.classList
-        .remove(
-            "is-drop-target"
+                element.style.transform =
+                    "";
+            }
         );
 
 
@@ -3017,14 +3260,10 @@ function cleanupCardDrag() {
         null;
 
 
-    UI_STATE.drag.element =
-        null;
+    UI_STATE.drag.elements =
+        [];
 }
 
-
-/* =========================================================
-   DROP ZONE
-========================================================= */
 
 function isPointInsideDropZone(
     x,
@@ -3072,7 +3311,7 @@ function updateDropZoneState(
 
 
     zone.classList.toggle(
-        "is-drop-target",
+        "is-play-target",
         isPointInsideDropZone(
             x,
             y
@@ -3082,7 +3321,7 @@ function updateDropZoneState(
 
 
 /* =========================================================
-   ZAHRÁNÍ VYBRANÝCH KARET
+   PLAY SELECTED
 ========================================================= */
 
 async function attemptSelectedCardPlay() {
@@ -3095,7 +3334,8 @@ async function attemptSelectedCardPlay() {
 
 
     if (
-        ids.length === 0
+        ids.length ===
+        0
     ) {
         return;
     }
@@ -3130,10 +3370,7 @@ async function attemptSelectedCardPlay() {
             ids;
 
 
-        openModal(
-            "modal-color"
-        );
-
+        openColorChoice();
 
         return;
     }
@@ -3169,9 +3406,21 @@ function renderGameIndicators(
 
     if (penalty) {
 
+        /*
+            Penalizaci ukazujeme hlavně tehdy,
+            když ji řeší hráč.
+
+            Když hráč sám právě poslal +X Lukymu,
+            nebude to působit jako akční tlačítko.
+        */
+
         penalty.hidden =
-            state.drawPenalty <=
-            0;
+            !(
+                state.drawPenalty >
+                    0 &&
+                state.turn ===
+                    "player"
+            );
     }
 
 
@@ -3181,32 +3430,48 @@ function renderGameIndicators(
     );
 
 
-    setText(
-        "current-color-label",
-        CARD_COLOR_LABELS[
-            state.currentColor
-        ] ||
-        "—"
-    );
-
-
-    const currentColor =
+    const colorLabel =
         document.getElementById(
-            "current-color-indicator"
+            "current-color-label"
         );
 
 
-    if (currentColor) {
+    if (colorLabel) {
 
-        currentColor.dataset.color =
+        colorLabel.textContent =
+            CARD_COLOR_LABELS[
+                state.currentColor
+            ] ||
+            "—";
+
+
+        colorLabel.dataset.color =
             state.currentColor ||
             "";
+
+
+        colorLabel.classList.remove(
+            "current-color-red",
+            "current-color-yellow",
+            "current-color-green",
+            "current-color-blue"
+        );
+
+
+        if (
+            state.currentColor
+        ) {
+
+            colorLabel.classList.add(
+                `current-color-${state.currentColor}`
+            );
+        }
     }
 }
 
 
 /* =========================================================
-   ŽLUTÝ EVENT
+   YELLOW EVENT
 ========================================================= */
 
 function renderYellowEvent(
@@ -3231,7 +3496,7 @@ function renderYellowEvent(
 
 
 /* =========================================================
-   STATUS HRY
+   STATUS
 ========================================================= */
 
 function renderGameStatus(
@@ -3265,17 +3530,19 @@ function renderGameStatus(
             "Řekni UNO!";
 
     } else if (
-        state.drawPenalty > 0
+        state.drawPenalty >
+        0
     ) {
 
         text =
             state.turn ===
                 "player"
                 ? `Přehraj penalizaci +${state.drawPenalty}, nebo si vezmi karty.`
-                : `Luky řeší penalizaci +${state.drawPenalty}.`;
+                : "Luky řeší penalizaci.";
 
     } else if (
-        state.skipChainCount > 0
+        state.skipChainCount >
+        0
     ) {
 
         text =
@@ -3306,8 +3573,41 @@ function renderGameStatus(
 }
 
 
+function renderLastAction(
+    state
+) {
+
+    const element =
+        document.getElementById(
+            "last-action-text"
+        );
+
+
+    if (!element) {
+        return;
+    }
+
+
+    const last =
+        state.lastAction;
+
+
+    if (!last?.text) {
+
+        element.textContent =
+            "";
+
+        return;
+    }
+
+
+    element.textContent =
+        last.text;
+}
+
+
 /* =========================================================
-   MODALY
+   MODALS
 ========================================================= */
 
 function setupModalControls() {
@@ -3347,12 +3647,16 @@ function setupModalControls() {
                             null;
 
 
+                        UI_STATE.colorChoiceMinimized =
+                            false;
+
+
                         UI_STATE
                             .selectedCardIds
                             .clear();
 
 
-                        closeModal();
+                        closeColorChoice();
 
 
                         await playerPlayCards(
@@ -3365,6 +3669,26 @@ function setupModalControls() {
                     }
                 );
             }
+        );
+
+
+    document
+        .getElementById(
+            "hide-color-choice-button"
+        )
+        ?.addEventListener(
+            "click",
+            minimizeColorChoice
+        );
+
+
+    document
+        .getElementById(
+            "restore-color-choice-button"
+        )
+        ?.addEventListener(
+            "click",
+            restoreColorChoice
         );
 
 
@@ -3418,7 +3742,8 @@ function setupModalControls() {
 
 
                 if (
-                    slotIndex === null
+                    slotIndex ===
+                    null
                 ) {
                     return;
                 }
@@ -3450,11 +3775,9 @@ function setupModalControls() {
 }
 
 
-/* =========================================================
-   OPEN / CLOSE MODAL
-========================================================= */
-
-function openModal(modalId) {
+function openModal(
+    modalId
+) {
 
     const overlay =
         document.getElementById(
@@ -3518,6 +3841,671 @@ function closeModal() {
 
 
 /* =========================================================
+   COLOR CHOICE
+========================================================= */
+
+function openColorChoice() {
+
+    UI_STATE.colorChoiceMinimized =
+        false;
+
+
+    document
+        .getElementById(
+            "restore-color-choice-button"
+        )
+        ?.setAttribute(
+            "hidden",
+            ""
+        );
+
+
+    openModal(
+        "modal-color"
+    );
+}
+
+
+function minimizeColorChoice() {
+
+    if (
+        !UI_STATE
+            .pendingPlayCardIds
+    ) {
+        return;
+    }
+
+
+    UI_STATE.colorChoiceMinimized =
+        true;
+
+
+    const overlay =
+        document.getElementById(
+            "modal-overlay"
+        );
+
+
+    if (overlay) {
+
+        overlay.hidden =
+            true;
+    }
+
+
+    const restore =
+        document.getElementById(
+            "restore-color-choice-button"
+        );
+
+
+    if (restore) {
+
+        restore.hidden =
+            false;
+    }
+}
+
+
+function restoreColorChoice() {
+
+    if (
+        !UI_STATE
+            .pendingPlayCardIds
+    ) {
+        return;
+    }
+
+
+    UI_STATE.colorChoiceMinimized =
+        false;
+
+
+    const restore =
+        document.getElementById(
+            "restore-color-choice-button"
+        );
+
+
+    if (restore) {
+
+        restore.hidden =
+            true;
+    }
+
+
+    openModal(
+        "modal-color"
+    );
+}
+
+
+function closeColorChoice() {
+
+    UI_STATE.colorChoiceMinimized =
+        false;
+
+
+    const restore =
+        document.getElementById(
+            "restore-color-choice-button"
+        );
+
+
+    if (restore) {
+
+        restore.hidden =
+            true;
+    }
+
+
+    closeModal();
+}
+
+
+/* =========================================================
+   HISTORY
+========================================================= */
+
+function setupHistoryControls() {
+
+    document
+        .getElementById(
+            "history-button"
+        )
+        ?.addEventListener(
+            "click",
+            () => {
+
+                if (
+                    UI_STATE.historyOpen
+                ) {
+
+                    closeHistory();
+
+                } else {
+
+                    openHistory();
+                }
+            }
+        );
+
+
+    document
+        .getElementById(
+            "history-close-button"
+        )
+        ?.addEventListener(
+            "click",
+            closeHistory
+        );
+
+
+    document
+        .getElementById(
+            "history-backdrop"
+        )
+        ?.addEventListener(
+            "click",
+            closeHistory
+        );
+}
+
+
+function openHistory() {
+
+    const panel =
+        document.getElementById(
+            "history-panel"
+        );
+
+
+    const backdrop =
+        document.getElementById(
+            "history-backdrop"
+        );
+
+
+    const button =
+        document.getElementById(
+            "history-button"
+        );
+
+
+    if (!panel) {
+        return;
+    }
+
+
+    UI_STATE.historyOpen =
+        true;
+
+
+    panel.classList.add(
+        "is-open"
+    );
+
+
+    panel.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+
+
+    if (backdrop) {
+
+        backdrop.hidden =
+            false;
+    }
+
+
+    button?.setAttribute(
+        "aria-expanded",
+        "true"
+    );
+
+
+    renderHistory(
+        getGameState()
+    );
+}
+
+
+function closeHistory() {
+
+    const panel =
+        document.getElementById(
+            "history-panel"
+        );
+
+
+    const backdrop =
+        document.getElementById(
+            "history-backdrop"
+        );
+
+
+    const button =
+        document.getElementById(
+            "history-button"
+        );
+
+
+    UI_STATE.historyOpen =
+        false;
+
+
+    panel?.classList.remove(
+        "is-open"
+    );
+
+
+    panel?.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+
+
+    if (backdrop) {
+
+        backdrop.hidden =
+            true;
+    }
+
+
+    button?.setAttribute(
+        "aria-expanded",
+        "false"
+    );
+}
+
+
+function renderHistory(
+    state
+) {
+
+    const container =
+        document.getElementById(
+            "history-list"
+        );
+
+
+    const template =
+        document.getElementById(
+            "history-entry-template"
+        );
+
+
+    if (
+        !container ||
+        !template
+    ) {
+        return;
+    }
+
+
+    const history =
+        state?.history ||
+        [];
+
+
+    container.innerHTML =
+        "";
+
+
+    if (
+        history.length ===
+        0
+    ) {
+
+        const empty =
+            document.createElement(
+                "div"
+            );
+
+
+        empty.className =
+            "history-empty";
+
+
+        empty.textContent =
+            "Zatím se nic nestalo.";
+
+
+        container.appendChild(
+            empty
+        );
+
+
+        return;
+    }
+
+
+    const slot =
+        getActiveSlotIndex() ===
+            null
+            ? null
+            : getSaveSlot(
+                getActiveSlotIndex()
+            );
+
+
+    history.forEach(
+        (entry) => {
+
+            const fragment =
+                template.content
+                    .cloneNode(true);
+
+
+            const image =
+                fragment.querySelector(
+                    ".history-entry-avatar"
+                );
+
+
+            const fallback =
+                fragment.querySelector(
+                    ".history-entry-avatar-fallback"
+                );
+
+
+            const name =
+                fragment.querySelector(
+                    ".history-entry-name"
+                );
+
+
+            const time =
+                fragment.querySelector(
+                    ".history-entry-time"
+                );
+
+
+            const text =
+                fragment.querySelector(
+                    ".history-entry-text"
+                );
+
+
+            const cards =
+                fragment.querySelector(
+                    ".history-entry-cards"
+                );
+
+
+            const actorInfo =
+                getHistoryActorInfo(
+                    entry.actor,
+                    slot
+                );
+
+
+            name.textContent =
+                actorInfo.name;
+
+
+            text.textContent =
+                entry.text ||
+                "";
+
+
+            time.textContent =
+                formatHistoryTime(
+                    entry.timestamp
+                );
+
+
+            if (
+                actorInfo.image
+            ) {
+
+                image.src =
+                    actorInfo.image;
+
+
+                image.alt =
+                    actorInfo.name;
+
+
+                image.hidden =
+                    false;
+
+
+                fallback.hidden =
+                    true;
+
+
+                image.onerror =
+                    () => {
+
+                        image.hidden =
+                            true;
+
+
+                        fallback.hidden =
+                            false;
+
+
+                        fallback.textContent =
+                            actorInfo.fallback;
+                    };
+
+            } else {
+
+                image.hidden =
+                    true;
+
+
+                fallback.hidden =
+                    false;
+
+
+                fallback.textContent =
+                    actorInfo.fallback;
+            }
+
+
+            if (
+                Array.isArray(
+                    entry.cards
+                ) &&
+                entry.cards.length >
+                    0
+            ) {
+
+                cards.hidden =
+                    false;
+
+
+                entry.cards.forEach(
+                    (card) => {
+
+                        const preview =
+                            createHistoryCardElement(
+                                card
+                            );
+
+
+                        if (preview) {
+
+                            cards.appendChild(
+                                preview
+                            );
+                        }
+                    }
+                );
+
+            } else {
+
+                cards.hidden =
+                    true;
+            }
+
+
+            container.appendChild(
+                fragment
+            );
+        }
+    );
+}
+
+
+function getHistoryActorInfo(
+    actor,
+    slot
+) {
+
+    if (
+        actor ===
+        "luky"
+    ) {
+
+        return {
+
+            name:
+                "Luky",
+
+            image:
+                GAME_CONFIG
+                    .opponent
+                    .defaultImage,
+
+            fallback:
+                "L"
+        };
+    }
+
+
+    if (
+        actor ===
+        "player"
+    ) {
+
+        return {
+
+            name:
+                getCharacterName(
+                    slot?.characterId
+                ) ||
+                "Hráč",
+
+            image:
+                slot
+                    ? getSlotCharacterImage(
+                        slot
+                    )
+                    : null,
+
+            fallback:
+                getCharacterConfig(
+                    slot?.characterId
+                )?.fallback ||
+                "H"
+        };
+    }
+
+
+    return {
+
+        name:
+            "Hra",
+
+        image:
+            null,
+
+        fallback:
+            "•"
+    };
+}
+
+
+function createHistoryCardElement(
+    card
+) {
+
+    if (!card) {
+        return null;
+    }
+
+
+    const fakeCard = {
+
+        id:
+            `history-${Math.random()}`,
+
+        type:
+            card.type,
+
+        color:
+            card.color,
+
+        value:
+            card.value
+    };
+
+
+    try {
+
+        const element =
+            createCardElement(
+                fakeCard
+            );
+
+
+        element.disabled =
+            true;
+
+
+        return element;
+
+    } catch {
+
+        return null;
+    }
+}
+
+
+function formatHistoryTime(
+    timestamp
+) {
+
+    if (!timestamp) {
+        return "";
+    }
+
+
+    const date =
+        new Date(
+            timestamp
+        );
+
+
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+        return "";
+    }
+
+
+    return new Intl.DateTimeFormat(
+        "cs-CZ",
+        {
+            hour:
+                "2-digit",
+
+            minute:
+                "2-digit"
+        }
+    ).format(
+        date
+    );
+}
+
+
+/* =========================================================
    GAME EVENTS
 ========================================================= */
 
@@ -3532,7 +4520,8 @@ function setupGameEvents() {
         "hands-swapped",
         "draw-stack-changed",
         "skip-chain-changed",
-        "yellow-event-available"
+        "yellow-event-available",
+        "history-changed"
     ];
 
 
@@ -3701,7 +4690,7 @@ function setupGameEvents() {
         (event) => {
 
             showToast(
-                "UNO!",
+                "Neřekl jsi UNO!",
                 `Bereš ${event.detail?.penalty ?? 2} karty.`
             );
         }
@@ -3712,16 +4701,25 @@ function setupGameEvents() {
         "dotsuno:game-over",
         (event) => {
 
+            stopMusic();
+
+
             showGameOver(
                 event.detail
             );
         }
     );
+
+
+    window.addEventListener(
+        "dotsuno:game-left",
+        stopMusic
+    );
 }
 
 
 /* =========================================================
-   OPENING HLÁŠKY
+   OPENING SPEECH
 ========================================================= */
 
 async function playOpeningQuote(
@@ -3744,6 +4742,10 @@ async function playOpeningQuote(
             .speechSequenceToken;
 
 
+    UI_STATE.openingSpeechActive =
+        true;
+
+
     if (
         normalized.type ===
         "single"
@@ -3753,7 +4755,7 @@ async function playOpeningQuote(
             normalized.text,
             GAME_CONFIG
                 .speech
-                .defaultDurationMs
+                .openingDurationMs
         );
 
 
@@ -3769,8 +4771,11 @@ async function playOpeningQuote(
         if (
             token !==
             UI_STATE
-                .speechSequenceToken
+                .speechSequenceToken ||
+            !UI_STATE
+                .openingSpeechActive
         ) {
+
             return;
         }
 
@@ -3779,24 +4784,50 @@ async function playOpeningQuote(
             line,
             GAME_CONFIG
                 .speech
-                .defaultDurationMs
+                .openingDurationMs
         );
 
 
         await uiSleep(
-            GAME_CONFIG
-                .speech
-                .defaultDurationMs +
-            GAME_CONFIG
-                .speech
-                .sequencePauseMs
+            Math.min(
+                3200,
+                GAME_CONFIG
+                    .speech
+                    .openingDurationMs
+            )
         );
     }
 }
 
 
+function markFirstPlayerAction() {
+
+    if (
+        UI_STATE
+            .firstPlayerActionDone
+    ) {
+        return;
+    }
+
+
+    UI_STATE.firstPlayerActionDone =
+        true;
+
+
+    UI_STATE.openingSpeechActive =
+        false;
+
+
+    UI_STATE.speechSequenceToken +=
+        1;
+
+
+    hideLukySpeech();
+}
+
+
 /* =========================================================
-   HLÁŠKY LUKYHO
+   SPEECH
 ========================================================= */
 
 function showLukySpeech(
@@ -3853,7 +4884,8 @@ function showLukySpeech(
 
 
     if (
-        duration > 0
+        duration >
+        0
     ) {
 
         UI_STATE.lukySpeechTimer =
@@ -3884,10 +4916,6 @@ function hideLukySpeech() {
         null;
 }
 
-
-/* =========================================================
-   HLÁŠKY HRÁČE
-========================================================= */
 
 function showPlayerSpeech(
     text,
@@ -3943,7 +4971,8 @@ function showPlayerSpeech(
 
 
     if (
-        duration > 0
+        duration >
+        0
     ) {
 
         UI_STATE.playerSpeechTimer =
@@ -3975,15 +5004,15 @@ function hidePlayerSpeech() {
 }
 
 
-/* =========================================================
-   RESET SPEECH
-========================================================= */
-
 function resetSpeechUI() {
 
     UI_STATE
         .speechSequenceToken +=
         1;
+
+
+    UI_STATE.openingSpeechActive =
+        false;
 
 
     if (
@@ -4017,10 +5046,12 @@ function resetSpeechUI() {
 
 
 /* =========================================================
-   EMOTY
+   EMOTES
 ========================================================= */
 
-function startUIEmote(detail) {
+function startUIEmote(
+    detail
+) {
 
     if (
         !detail?.actor ||
@@ -4056,16 +5087,6 @@ function startUIEmote(detail) {
         }
 
 
-        document
-            .querySelector(
-                ".opponent-photo-wrap"
-            )
-            ?.classList
-            .add(
-                "is-emote"
-            );
-
-
         return;
     }
 
@@ -4094,63 +5115,36 @@ function startUIEmote(detail) {
             image.src =
                 detail.image;
         }
-
-
-        document
-            .querySelector(
-                ".player-avatar-wrap"
-            )
-            ?.classList
-            .add(
-                "is-emote"
-            );
     }
 }
 
 
-function endUIEmote(actor) {
+function endUIEmote(
+    actor
+) {
 
     if (
-        actor === "luky"
+        actor ===
+        "luky"
     ) {
 
         UI_STATE.activeLukyEmote =
             false;
 
 
-        document
-            .querySelector(
-                ".opponent-photo-wrap"
-            )
-            ?.classList
-            .remove(
-                "is-emote"
-            );
-
-
         restoreLukyImage();
-
 
         return;
     }
 
 
     if (
-        actor === "player"
+        actor ===
+        "player"
     ) {
 
         UI_STATE.activePlayerEmote =
             false;
-
-
-        document
-            .querySelector(
-                ".player-avatar-wrap"
-            )
-            ?.classList
-            .remove(
-                "is-emote"
-            );
 
 
         restorePlayerImage();
@@ -4187,7 +5181,8 @@ function restorePlayerImage() {
 
 
     if (
-        slotIndex === null
+        slotIndex ===
+        null
     ) {
         return;
     }
@@ -4233,26 +5228,6 @@ function resetEmoteUI() {
 
     UI_STATE.activePlayerEmote =
         false;
-
-
-    document
-        .querySelector(
-            ".opponent-photo-wrap"
-        )
-        ?.classList
-        .remove(
-            "is-emote"
-        );
-
-
-    document
-        .querySelector(
-            ".player-avatar-wrap"
-        )
-        ?.classList
-        .remove(
-            "is-emote"
-        );
 }
 
 
@@ -4260,7 +5235,9 @@ function resetEmoteUI() {
    GAME OVER
 ========================================================= */
 
-function showGameOver(detail) {
+function showGameOver(
+    detail
+) {
 
     if (!detail) {
         return;
@@ -4343,65 +5320,361 @@ function showGameOver(detail) {
 
 
 /* =========================================================
-   TOAST
+   MUSIC SETTINGS
 ========================================================= */
 
-function showToast(
-    title,
-    text,
-    duration = 3000
-) {
+function setupMusicControls() {
 
-    const toast =
+    const checkbox =
         document.getElementById(
-            "toast"
+            "music-enabled-checkbox"
         );
 
 
-    if (!toast) {
+    checkbox?.addEventListener(
+        "change",
+        () => {
+
+            setMusicEnabled(
+                checkbox.checked
+            );
+        }
+    );
+
+
+    document
+        .getElementById(
+            "music-toggle-button"
+        )
+        ?.addEventListener(
+            "click",
+            () => {
+
+                const enabled =
+                    toggleMusicEnabled();
+
+
+                if (enabled) {
+
+                    startMusicForGame();
+
+                } else {
+
+                    stopMusic();
+                }
+
+
+                renderMusicSetting();
+
+                updateMusicButton();
+            }
+        );
+
+
+    window.addEventListener(
+        "dotsuno:music-setting-changed",
+        (event) => {
+
+            const enabled =
+                Boolean(
+                    event.detail
+                        ?.enabled
+                );
+
+
+            if (!enabled) {
+
+                stopMusic();
+
+            } else if (
+                UI_STATE.currentScreen ===
+                "screen-game"
+            ) {
+
+                startMusicForGame();
+            }
+
+
+            renderMusicSetting();
+
+            updateMusicButton();
+        }
+    );
+}
+
+
+function renderMusicSetting() {
+
+    const checkbox =
+        document.getElementById(
+            "music-enabled-checkbox"
+        );
+
+
+    if (checkbox) {
+
+        checkbox.checked =
+            isMusicEnabled();
+    }
+}
+
+
+function updateMusicButton() {
+
+    const button =
+        document.getElementById(
+            "music-toggle-button"
+        );
+
+
+    const icon =
+        document.getElementById(
+            "music-toggle-icon"
+        );
+
+
+    if (
+        !button ||
+        !icon
+    ) {
+        return;
+    }
+
+
+    const enabled =
+        isMusicEnabled();
+
+
+    button.setAttribute(
+        "aria-pressed",
+        String(
+            enabled
+        )
+    );
+
+
+    button.setAttribute(
+        "aria-label",
+        enabled
+            ? "Vypnout hudbu"
+            : "Zapnout hudbu"
+    );
+
+
+    icon.textContent =
+        enabled
+            ? "🔊"
+            : "🔇";
+}
+
+
+/* =========================================================
+   YOUTUBE
+========================================================= */
+
+window.onYouTubeIframeAPIReady =
+    function onYouTubeIframeAPIReady() {
+
+        const target =
+            GAME_CONFIG
+                .music
+                .youtube
+                .playerElementId;
+
+
+        if (
+            !window.YT ||
+            !YT.Player
+        ) {
+            return;
+        }
+
+
+        UI_STATE.youtubePlayer =
+            new YT.Player(
+                target,
+                {
+                    height:
+                        "1",
+
+                    width:
+                        "1",
+
+                    videoId:
+                        GAME_CONFIG
+                            .music
+                            .youtube
+                            .videoId,
+
+                    playerVars: {
+                        autoplay:
+                            0,
+
+                        controls:
+                            0,
+
+                        disablekb:
+                            1,
+
+                        fs:
+                            0,
+
+                        modestbranding:
+                            1,
+
+                        playsinline:
+                            1,
+
+                        rel:
+                            0
+                    },
+
+                    events: {
+
+                        onReady:
+                            () => {
+
+                                UI_STATE.youtubeReady =
+                                    true;
+
+
+                                try {
+
+                                    UI_STATE
+                                        .youtubePlayer
+                                        .setVolume(
+                                            GAME_CONFIG
+                                                .music
+                                                .volume
+                                        );
+
+                                } catch {
+                                    // ignore
+                                }
+
+
+                                if (
+                                    UI_STATE.currentScreen ===
+                                        "screen-game" &&
+                                    isMusicEnabled()
+                                ) {
+
+                                    startMusicForGame();
+                                }
+                            }
+                    }
+                }
+            );
+    };
+
+
+function startMusicForGame() {
+
+    if (
+        !isMusicEnabled() ||
+        UI_STATE.currentScreen !==
+            "screen-game"
+    ) {
         return;
     }
 
 
     if (
-        UI_STATE.toastTimer
+        !UI_STATE.youtubeReady ||
+        !UI_STATE.youtubePlayer
     ) {
-
-        clearTimeout(
-            UI_STATE.toastTimer
-        );
+        return;
     }
 
 
-    setText(
-        "toast-title",
-        title
-    );
+    /*
+        Pokud už hudba v aktuální partii hraje,
+        znovu nevybíráme jinou skladbu.
+    */
+
+    if (
+        UI_STATE.musicPlaying
+    ) {
+        return;
+    }
 
 
-    setText(
-        "toast-text",
-        text
-    );
+    const track =
+        getRandomMusicTrack();
 
 
-    toast.hidden =
+    UI_STATE.activeMusicTrack =
+        track;
+
+
+    try {
+
+        UI_STATE
+            .youtubePlayer
+            .loadVideoById({
+                videoId:
+                    GAME_CONFIG
+                        .music
+                        .youtube
+                        .videoId,
+
+                startSeconds:
+                    track.startSeconds ||
+                    0
+            });
+
+
+        UI_STATE
+            .youtubePlayer
+            .setVolume(
+                GAME_CONFIG
+                    .music
+                    .volume
+            );
+
+
+        UI_STATE
+            .youtubePlayer
+            .playVideo();
+
+
+        UI_STATE.musicPlaying =
+            true;
+
+    } catch (error) {
+
+        console.warn(
+            "Hudbu se nepodařilo spustit.",
+            error
+        );
+    }
+}
+
+
+function stopMusic() {
+
+    if (
+        UI_STATE.youtubePlayer
+    ) {
+
+        try {
+
+            UI_STATE
+                .youtubePlayer
+                .stopVideo();
+
+        } catch {
+            // ignore
+        }
+    }
+
+
+    UI_STATE.musicPlaying =
         false;
 
 
-    UI_STATE.toastTimer =
-        setTimeout(
-            () => {
-
-                toast.hidden =
-                    true;
-
-
-                UI_STATE.toastTimer =
-                    null;
-            },
-            duration
-        );
+    UI_STATE.activeMusicTrack =
+        null;
 }
 
 
@@ -4448,10 +5721,6 @@ function setupStaticImageFallbacks() {
         );
 }
 
-
-/* =========================================================
-   SET IMAGE
-========================================================= */
 
 function setImageWithFallback({
     imageId,
@@ -4523,13 +5792,79 @@ function setImageWithFallback({
 
 
 /* =========================================================
-   POČET KARET
+   TOAST
 ========================================================= */
 
-function formatCardCount(count) {
+function showToast(
+    title,
+    text,
+    duration = 3000
+) {
+
+    const toast =
+        document.getElementById(
+            "toast"
+        );
+
+
+    if (!toast) {
+        return;
+    }
+
 
     if (
-        count === 1
+        UI_STATE.toastTimer
+    ) {
+
+        clearTimeout(
+            UI_STATE.toastTimer
+        );
+    }
+
+
+    setText(
+        "toast-title",
+        title
+    );
+
+
+    setText(
+        "toast-text",
+        text
+    );
+
+
+    toast.hidden =
+        false;
+
+
+    UI_STATE.toastTimer =
+        setTimeout(
+            () => {
+
+                toast.hidden =
+                    true;
+
+
+                UI_STATE.toastTimer =
+                    null;
+            },
+            duration
+        );
+}
+
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function formatCardCount(
+    count
+) {
+
+    if (
+        count ===
+        1
     ) {
         return "1 karta";
     }
@@ -4546,10 +5881,6 @@ function formatCardCount(count) {
     return `${count} karet`;
 }
 
-
-/* =========================================================
-   SET TEXT
-========================================================= */
 
 function setText(
     elementId,
@@ -4575,11 +5906,9 @@ function setText(
 }
 
 
-/* =========================================================
-   SLEEP
-========================================================= */
-
-function uiSleep(milliseconds) {
+function uiSleep(
+    milliseconds
+) {
 
     return new Promise(
         (resolve) => {
