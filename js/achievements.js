@@ -4,170 +4,308 @@
 /* =========================================================
    DOTS UNO
    ACHIEVEMENTY + SKINY
-
-   Achievementy jsou globální.
-   Reset save slotu je nemaže.
 ========================================================= */
 
 
 /* =========================================================
-   SKINY
-========================================================= */
+   DEFINICE ACHIEVEMENTŮ
 
-const CHARACTER_SKINS = {
-
-    dany: [
-        {
-            id: "default",
-            name: "Výchozí",
-            image: "assets/images/Dany_default.jpg",
-            unlockedByDefault: true
-        },
-        {
-            id: "skin1",
-            name: "Skin 1",
-            image: "assets/images/Dany_skin1.jpg",
-            unlockedByAchievement: "dany_new_skin"
-        }
-    ],
-
-    filip: [
-        {
-            id: "default",
-            name: "Výchozí",
-            image: "assets/images/Fila_default.jpg",
-            unlockedByDefault: true
-        },
-        {
-            id: "skin1",
-            name: "Skin 1",
-            image: "assets/images/Fila_skin1.jpg",
-            unlockedByAchievement: "fila_new_skin"
-        }
-    ],
-
-    "96": [
-        {
-            id: "default",
-            name: "Výchozí",
-            image: "assets/images/Pavel_default.png",
-            unlockedByDefault: true
-        },
-        {
-            id: "skin1",
-            name: "Skin 1",
-            image: "assets/images/Pavel_skin1.jpg",
-            unlockedByAchievement: "96_new_skin"
-        }
-    ]
-};
-
-
-/* =========================================================
-   ACHIEVEMENTY
+   Pořadí:
+   1) skiny
+   2) Hat-trick
+   3) výhry 10–50
+   4) speciální achievementy
 ========================================================= */
 
 const ACHIEVEMENT_DEFINITIONS = [
 
-    {
-        id: "hat_trick",
-        title: "Hat-trick",
-        description: "Vyhraj 3 hry v řadě.",
-        type: "win_streak",
-        target: 3
-    },
+    /* =====================================================
+       SKINY
+    ===================================================== */
 
     {
-        id: "caught_luky_uno",
-        title: "Neřekl jsi UNO!",
-        description: "Nachytej Lukyho, když zapomene říct UNO.",
-        type: "special",
-        specialKey: "caughtLukyUno"
-    },
+        id:
+            "dany_new_skin",
 
-    {
-        id: "luky_has_yellow",
-        title: "Má někdo žlutou?",
-        description: "Přiměj Lukyho říct, že má žlutou.",
-        type: "special",
-        specialKey: "lukySaidHeHasYellow"
-    },
+        title:
+            "Nový skin - Dvojka",
 
-    {
-        id: "advanced",
-        title: "Pokročilý",
-        description: "Vyhraj 10 her.",
-        type: "total_wins",
-        target: 10
-    },
+        description:
+            "Vyhraj 5 her za Danyho.",
 
-    {
-        id: "pro",
-        title: "Profík",
-        description: "Vyhraj 20 her.",
-        type: "total_wins",
-        target: 20
-    },
+        type:
+            "character_wins",
 
-    {
-        id: "monster",
-        title: "Monstrum",
-        description: "Vyhraj 30 her.",
-        type: "total_wins",
-        target: 30
-    },
+        characterId:
+            "dany",
 
-    {
-        id: "no_life",
-        title: "No Life",
-        description: "Vyhraj 50 her.",
-        type: "total_wins",
-        target: 50
-    },
+        target:
+            GAME_CONFIG
+                .achievements
+                .skinWinsTarget,
 
-    {
-        id: "dany_new_skin",
-        title: "Dany - nový skin",
-        description: "Vyhraj 5 her za Danyho.",
-        type: "character_wins",
-        characterId: "dany",
-        target: 5,
+        image:
+            "assets/images/Dany_skin1.jpg",
+
+        imageType:
+            "reward",
 
         reward: {
-            type: "skin",
-            characterId: "dany",
-            skinId: "skin1"
+
+            type:
+                "skin",
+
+            characterId:
+                "dany",
+
+            skinId:
+                "skin1"
         }
     },
 
+
     {
-        id: "fila_new_skin",
-        title: "Fila - nový skin",
-        description: "Vyhraj 5 her za Filipa.",
-        type: "character_wins",
-        characterId: "filip",
-        target: 5,
+        id:
+            "fila_new_skin",
+
+        title:
+            "Nový skin - Gazelka",
+
+        description:
+            "Vyhraj 5 her za Filipa.",
+
+        type:
+            "character_wins",
+
+        characterId:
+            "filip",
+
+        target:
+            GAME_CONFIG
+                .achievements
+                .skinWinsTarget,
+
+        image:
+            "assets/images/Fila_skin1.jpg",
+
+        imageType:
+            "reward",
 
         reward: {
-            type: "skin",
-            characterId: "filip",
-            skinId: "skin1"
+
+            type:
+                "skin",
+
+            characterId:
+                "filip",
+
+            skinId:
+                "skin1"
         }
     },
 
+
     {
-        id: "96_new_skin",
-        title: "96 - nový skin",
-        description: "Vyhraj 5 her za 96.",
-        type: "character_wins",
-        characterId: "96",
-        target: 5,
+        id:
+            "96_new_skin",
+
+        title:
+            "Nový skin - Osvícený",
+
+        description:
+            "Vyhraj 5 her za 96.",
+
+        type:
+            "character_wins",
+
+        characterId:
+            "96",
+
+        target:
+            GAME_CONFIG
+                .achievements
+                .skinWinsTarget,
+
+        image:
+            "assets/images/Pavel_skin1.jpg",
+
+        imageType:
+            "reward",
 
         reward: {
-            type: "skin",
-            characterId: "96",
-            skinId: "skin1"
+
+            type:
+                "skin",
+
+            characterId:
+                "96",
+
+            skinId:
+                "skin1"
         }
+    },
+
+
+    /* =====================================================
+       HAT-TRICK
+    ===================================================== */
+
+    {
+        id:
+            "hat_trick",
+
+        title:
+            "Hat-trick",
+
+        description:
+            "Vyhraj 3 hry v řadě.",
+
+        type:
+            "win_streak",
+
+        target:
+            GAME_CONFIG
+                .achievements
+                .winStreakTarget
+    },
+
+
+    /* =====================================================
+       VÝHRY
+    ===================================================== */
+
+    {
+        id:
+            "advanced",
+
+        title:
+            "Pokročilý",
+
+        description:
+            "Vyhraj 10 her.",
+
+        type:
+            "total_wins",
+
+        target:
+            GAME_CONFIG
+                .achievements
+                .advancedWinsTarget
+    },
+
+
+    {
+        id:
+            "pro",
+
+        title:
+            "Profík",
+
+        description:
+            "Vyhraj 20 her.",
+
+        type:
+            "total_wins",
+
+        target:
+            GAME_CONFIG
+                .achievements
+                .proWinsTarget
+    },
+
+
+    {
+        id:
+            "monster",
+
+        title:
+            "Monstrum",
+
+        description:
+            "Vyhraj 30 her.",
+
+        type:
+            "total_wins",
+
+        target:
+            GAME_CONFIG
+                .achievements
+                .monsterWinsTarget
+    },
+
+
+    {
+        id:
+            "no_life",
+
+        title:
+            "No Life",
+
+        description:
+            "Vyhraj 50 her.",
+
+        type:
+            "total_wins",
+
+        target:
+            GAME_CONFIG
+                .achievements
+                .noLifeWinsTarget
+    },
+
+
+    /* =====================================================
+       SPECIÁLNÍ
+    ===================================================== */
+
+    {
+        id:
+            "luky_has_yellow",
+
+        title:
+            "Má někdo žlutou?",
+
+        description:
+            "Přiměj Lukyho říct, že má žlutou.",
+
+        type:
+            "special",
+
+        specialKey:
+            "lukySaidHeHasYellow",
+
+        imageType:
+            "card",
+
+        cardPreview: {
+
+            color:
+                "yellow",
+
+            type:
+                "number",
+
+            value:
+                7
+        }
+    },
+
+
+    {
+        id:
+            "caught_luky_uno",
+
+        title:
+            "Neřekl jsi UNO!",
+
+        description:
+            "Nachytej Lukyho, když zapomene říct UNO.",
+
+        type:
+            "special",
+
+        specialKey:
+            "caughtLukyUno"
     }
 ];
 
@@ -181,38 +319,62 @@ function createDefaultAchievementData() {
     return {
 
         version:
-            GAME_CONFIG.storageVersion,
+            GAME_CONFIG
+                .storageVersion,
 
-        gamesPlayed: 0,
+        gamesPlayed:
+            0,
 
-        totalWins: 0,
+        totalWins:
+            0,
 
-        totalLosses: 0,
+        totalLosses:
+            0,
 
-        currentWinStreak: 0,
+        currentWinStreak:
+            0,
 
-        bestWinStreak: 0,
+        bestWinStreak:
+            0,
 
         winsByCharacter: {
-            dany: 0,
-            filip: 0,
-            "96": 0
+
+            dany:
+                0,
+
+            filip:
+                0,
+
+            "96":
+                0
         },
 
         special: {
-            caughtLukyUno: false,
-            lukySaidHeHasYellow: false
+
+            caughtLukyUno:
+                false,
+
+            lukySaidHeHasYellow:
+                false
         },
 
-        unlocked: [],
+        unlocked:
+            [],
 
         unlockedSkins: {
-            dany: [],
-            filip: [],
-            "96": []
+
+            dany:
+                [],
+
+            filip:
+                [],
+
+            "96":
+                []
         },
 
-        updatedAt: null
+        updatedAt:
+            null
     };
 }
 
@@ -221,7 +383,9 @@ function createDefaultAchievementData() {
    NORMALIZACE
 ========================================================= */
 
-function normalizeAchievementData(rawData) {
+function normalizeAchievementData(
+    rawData
+) {
 
     const fallback =
         createDefaultAchievementData();
@@ -229,8 +393,10 @@ function normalizeAchievementData(rawData) {
 
     if (
         !rawData ||
-        typeof rawData !== "object"
+        typeof rawData !==
+            "object"
     ) {
+
         return fallback;
     }
 
@@ -241,7 +407,8 @@ function normalizeAchievementData(rawData) {
             normalizeNonNegativeInteger(
                 rawData.version
             ) ||
-            GAME_CONFIG.storageVersion,
+            GAME_CONFIG
+                .storageVersion,
 
 
         gamesPlayed:
@@ -356,11 +523,18 @@ function normalizeAchievementData(rawData) {
 }
 
 
-function normalizeUniqueStringArray(value) {
+/* =========================================================
+   UNIKÁTNÍ STRING ARRAY
+========================================================= */
+
+function normalizeUniqueStringArray(
+    value
+) {
 
     if (
         !Array.isArray(value)
     ) {
+
         return [];
     }
 
@@ -369,8 +543,10 @@ function normalizeUniqueStringArray(value) {
         ...new Set(
             value.filter(
                 (item) =>
-                    typeof item === "string" &&
-                    item.length > 0
+                    typeof item ===
+                        "string" &&
+                    item.length >
+                        0
             )
         )
     ];
@@ -378,7 +554,7 @@ function normalizeUniqueStringArray(value) {
 
 
 /* =========================================================
-   LOAD / SAVE
+   LOAD
 ========================================================= */
 
 function loadAchievementData() {
@@ -399,21 +575,44 @@ function loadAchievementData() {
 
 
     /*
-        Pokud jsme mezitím přidali achievement,
-        zkontrolujeme stará data znovu.
+        Starší uložená data mohou už podmínku
+        novějšího achievementu splňovat.
     */
 
-    evaluateAchievements(
-        data,
-        false
-    );
+    const newlyUnlocked =
+        evaluateAchievements(
+            data,
+            false
+        );
+
+
+    /*
+        evaluateAchievements může doplnit skin,
+        který ve starém save chyběl.
+    */
+
+    if (
+        newlyUnlocked.length >
+        0
+    ) {
+
+        saveAchievementData(
+            data
+        );
+    }
 
 
     return data;
 }
 
 
-function saveAchievementData(data) {
+/* =========================================================
+   SAVE
+========================================================= */
+
+function saveAchievementData(
+    data
+) {
 
     const normalized =
         normalizeAchievementData(
@@ -438,7 +637,7 @@ function saveAchievementData(data) {
 
 
 /* =========================================================
-   DEFINICE ACHIEVEMENTU
+   DEFINICE PODLE ID
 ========================================================= */
 
 function getAchievementDefinition(
@@ -457,7 +656,7 @@ function getAchievementDefinition(
 
 
 /* =========================================================
-   ODEMČENÍ ACHIEVEMENTU
+   JE ACHIEVEMENT ODEMČENÝ?
 ========================================================= */
 
 function isAchievementUnlocked(
@@ -470,9 +669,11 @@ function isAchievementUnlocked(
         loadAchievementData();
 
 
-    return data.unlocked.includes(
-        achievementId
-    );
+    return data
+        .unlocked
+        .includes(
+            achievementId
+        );
 }
 
 
@@ -491,9 +692,15 @@ function getAchievementProgress(
     ) {
 
         return {
-            current: 0,
-            target: 1,
-            completed: false
+
+            current:
+                0,
+
+            target:
+                1,
+
+            completed:
+                false
         };
     }
 
@@ -556,7 +763,8 @@ function getAchievementProgress(
                 data
                     .winsByCharacter
                     ?.[
-                        definition.characterId
+                        definition
+                            .characterId
                     ] ||
                 0;
 
@@ -586,7 +794,8 @@ function getAchievementProgress(
                     data
                         .special
                         ?.[
-                            definition.specialKey
+                            definition
+                                .specialKey
                         ]
                 );
 
@@ -598,7 +807,8 @@ function getAchievementProgress(
                         ? 1
                         : 0,
 
-                target: 1,
+                target:
+                    1,
 
                 completed
             };
@@ -608,16 +818,22 @@ function getAchievementProgress(
         default:
 
             return {
-                current: 0,
-                target: 1,
-                completed: false
+
+                current:
+                    0,
+
+                target:
+                    1,
+
+                completed:
+                    false
             };
     }
 }
 
 
 /* =========================================================
-   VYHODNOCENÍ ACHIEVEMENTŮ
+   VYHODNOCENÍ
 ========================================================= */
 
 function evaluateAchievements(
@@ -629,58 +845,63 @@ function evaluateAchievements(
         [];
 
 
-    ACHIEVEMENT_DEFINITIONS.forEach(
-        (definition) => {
+    ACHIEVEMENT_DEFINITIONS
+        .forEach(
+            (definition) => {
 
-            const progress =
-                getAchievementProgress(
-                    definition,
+                const progress =
+                    getAchievementProgress(
+                        definition,
+                        data
+                    );
+
+
+                if (
+                    !progress.completed
+                ) {
+
+                    return;
+                }
+
+
+                const alreadyUnlocked =
                     data
-                );
+                        .unlocked
+                        .includes(
+                            definition.id
+                        );
 
 
-            if (
-                !progress.completed
-            ) {
-                return;
-            }
+                if (
+                    !alreadyUnlocked
+                ) {
+
+                    data.unlocked.push(
+                        definition.id
+                    );
 
 
-            if (
-                data.unlocked.includes(
-                    definition.id
-                )
-            ) {
+                    if (announce) {
+
+                        newlyUnlocked.push(
+                            definition
+                        );
+                    }
+                }
+
+
+                /*
+                    Reward aplikujeme vždy.
+                    To opraví i starší uložená data,
+                    kde achievement existoval, ale skin ne.
+                */
 
                 applyAchievementReward(
                     definition,
                     data
                 );
-
-
-                return;
             }
-
-
-            data.unlocked.push(
-                definition.id
-            );
-
-
-            applyAchievementReward(
-                definition,
-                data
-            );
-
-
-            if (announce) {
-
-                newlyUnlocked.push(
-                    definition
-                );
-            }
-        }
-    );
+        );
 
 
     return newlyUnlocked;
@@ -688,7 +909,7 @@ function evaluateAchievements(
 
 
 /* =========================================================
-   ODMĚNY
+   ODMĚNA
 ========================================================= */
 
 function applyAchievementReward(
@@ -720,7 +941,7 @@ function applyAchievementReward(
 
 
 /* =========================================================
-   ODEMKNUTÍ SKINU
+   ODEMKNOUT SKIN
 ========================================================= */
 
 function unlockSkinInData(
@@ -736,16 +957,18 @@ function unlockSkinInData(
             ]
     ) {
 
-        data.unlockedSkins[
-            characterId
-        ] = [];
+        data
+            .unlockedSkins[
+                characterId
+            ] = [];
     }
 
 
     const skins =
-        data.unlockedSkins[
-            characterId
-        ];
+        data
+            .unlockedSkins[
+                characterId
+            ];
 
 
     if (
@@ -771,9 +994,15 @@ function isSkinUnlocked(
     achievementData = null
 ) {
 
+    /*
+        Default skin je vždy dostupný.
+    */
+
     if (
-        skinId === "default"
+        skinId ===
+        "default"
     ) {
+
         return true;
     }
 
@@ -796,6 +1025,8 @@ function isSkinUnlocked(
 
 /* =========================================================
    SKINY POSTAVY
+
+   Zdroj skinů je nyní pouze config.js.
 ========================================================= */
 
 function getCharacterSkin(
@@ -803,24 +1034,10 @@ function getCharacterSkin(
     skinId
 ) {
 
-    const skins =
-        CHARACTER_SKINS[
-            characterId
-        ];
-
-
-    if (
-        !Array.isArray(skins)
-    ) {
-        return null;
-    }
-
-
     return (
-        skins.find(
-            (skin) =>
-                skin.id ===
-                skinId
+        getConfiguredCharacterSkin(
+            characterId,
+            skinId
         ) ||
         null
     );
@@ -831,14 +1048,9 @@ function getCharacterSkins(
     characterId
 ) {
 
-    return [
-        ...(
-            CHARACTER_SKINS[
-                characterId
-            ] ||
-            []
-        )
-    ];
+    return getConfiguredCharacterSkins(
+        characterId
+    );
 }
 
 
@@ -860,6 +1072,7 @@ function getSkinUnlockInfo(
 
 
     if (!skin) {
+
         return null;
     }
 
@@ -874,20 +1087,28 @@ function getSkinUnlockInfo(
     ) {
 
         return {
-            unlocked: true,
-            achievement: null
+
+            unlocked:
+                true,
+
+            achievement:
+                null
         };
     }
 
 
     const achievement =
         getAchievementDefinition(
-            skin.unlockedByAchievement
+            skin
+                .unlockedByAchievement
         );
 
 
     return {
-        unlocked: false,
+
+        unlocked:
+            false,
+
         achievement
     };
 }
@@ -911,7 +1132,8 @@ function registerFinishedGameForAchievements({
 
 
     if (
-        winner === "player"
+        winner ===
+        "player"
     ) {
 
         data.totalWins +=
@@ -933,20 +1155,23 @@ function registerFinishedGameForAchievements({
             Object.prototype
                 .hasOwnProperty
                 .call(
-                    data.winsByCharacter,
+                    data
+                        .winsByCharacter,
                     characterId
                 )
         ) {
 
-            data.winsByCharacter[
-                characterId
-            ] += 1;
+            data
+                .winsByCharacter[
+                    characterId
+                ] += 1;
         }
     }
 
 
     if (
-        winner === "luky"
+        winner ===
+        "luky"
     ) {
 
         data.totalLosses +=
@@ -972,7 +1197,10 @@ function registerFinishedGameForAchievements({
 
 
     return {
-        data: savedData,
+
+        data:
+            savedData,
+
         newlyUnlocked
     };
 }
@@ -988,7 +1216,9 @@ function registerCaughtLukyUnoAchievement() {
         loadAchievementData();
 
 
-    data.special.caughtLukyUno =
+    data
+        .special
+        .caughtLukyUno =
         true;
 
 
@@ -1006,7 +1236,10 @@ function registerCaughtLukyUnoAchievement() {
 
 
     return {
-        data: savedData,
+
+        data:
+            savedData,
+
         newlyUnlocked
     };
 }
@@ -1022,7 +1255,8 @@ function registerLukyYellowAchievement() {
         loadAchievementData();
 
 
-    data.special
+    data
+        .special
         .lukySaidHeHasYellow =
         true;
 
@@ -1041,14 +1275,17 @@ function registerLukyYellowAchievement() {
 
 
     return {
-        data: savedData,
+
+        data:
+            savedData,
+
         newlyUnlocked
     };
 }
 
 
 /* =========================================================
-   DATA PRO ACHIEVEMENT UI
+   DATA PRO UI
 ========================================================= */
 
 function getAchievementViewData() {
@@ -1057,41 +1294,44 @@ function getAchievementViewData() {
         loadAchievementData();
 
 
-    return ACHIEVEMENT_DEFINITIONS.map(
-        (definition) => {
+    return ACHIEVEMENT_DEFINITIONS
+        .map(
+            (definition) => {
 
-            const progress =
-                getAchievementProgress(
-                    definition,
-                    data
-                );
+                const progress =
+                    getAchievementProgress(
+                        definition,
+                        data
+                    );
 
 
-            return {
+                return {
 
-                ...definition,
+                    ...definition,
 
-                unlocked:
-                    data.unlocked.includes(
-                        definition.id
-                    ),
+                    unlocked:
+                        data
+                            .unlocked
+                            .includes(
+                                definition.id
+                            ),
 
-                current:
-                    progress.current,
+                    current:
+                        progress.current,
 
-                target:
-                    progress.target,
+                    target:
+                        progress.target,
 
-                completed:
-                    progress.completed
-            };
-        }
-    );
+                    completed:
+                        progress.completed
+                };
+            }
+        );
 }
 
 
 /* =========================================================
-   POČET ODEMČENÝCH ACHIEVEMENTŮ
+   POČET ODEMČENÝCH
 ========================================================= */
 
 function getUnlockedAchievementCount() {
@@ -1100,7 +1340,9 @@ function getUnlockedAchievementCount() {
         loadAchievementData();
 
 
-    return data.unlocked.length;
+    return data
+        .unlocked
+        .length;
 }
 
 
@@ -1132,22 +1374,24 @@ function getAchievementStats() {
             data.bestWinStreak,
 
         winsByCharacter: {
-            ...data.winsByCharacter
+            ...data
+                .winsByCharacter
         },
 
         unlockedCount:
-            data.unlocked.length,
+            data
+                .unlocked
+                .length,
 
         totalAchievements:
-            ACHIEVEMENT_DEFINITIONS.length
+            ACHIEVEMENT_DEFINITIONS
+                .length
     };
 }
 
 
 /* =========================================================
    DEBUG RESET
-
-   Sloty nemaže.
 ========================================================= */
 
 function clearAchievementData() {
