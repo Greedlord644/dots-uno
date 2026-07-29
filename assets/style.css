@@ -1,0 +1,2438 @@
+:root {
+    --bg: #090a0d;
+    --bg-soft: #101217;
+    --panel: #151821;
+    --panel-soft: #1a1e28;
+    --panel-hover: #202531;
+
+    --table: #0f3d2f;
+    --table-dark: #09271f;
+    --table-light: #165440;
+
+    --text: #f5f4ef;
+    --text-soft: #c8c6bd;
+    --text-muted: #84877f;
+
+    --gold: #d7a744;
+    --gold-soft: #efc768;
+    --gold-dark: #8d6724;
+
+    --red: #e5484d;
+    --yellow: #f0c846;
+    --green: #38a867;
+    --blue: #367ee8;
+
+    --danger: #e86565;
+    --danger-soft: rgba(232, 101, 101, 0.12);
+
+    --border: rgba(255, 255, 255, 0.09);
+    --border-strong: rgba(255, 255, 255, 0.16);
+    --border-gold: rgba(215, 167, 68, 0.34);
+
+    --shadow:
+        0 24px 60px rgba(0, 0, 0, 0.34);
+
+    --shadow-soft:
+        0 12px 30px rgba(0, 0, 0, 0.24);
+
+    --radius-xl: 24px;
+    --radius-lg: 18px;
+    --radius-md: 13px;
+    --radius-sm: 9px;
+
+    --content-width: 1180px;
+}
+
+
+/* =========================================
+   ZÁKLAD
+========================================= */
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    min-height: 100%;
+    color-scheme: dark;
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+
+    background:
+        radial-gradient(
+            circle at top center,
+            rgba(215, 167, 68, 0.08),
+            transparent 34rem
+        ),
+        var(--bg);
+
+    color: var(--text);
+
+    font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+    line-height: 1.5;
+
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+button,
+input {
+    font: inherit;
+}
+
+button {
+    color: inherit;
+}
+
+button,
+.game-card {
+    -webkit-tap-highlight-color: transparent;
+}
+
+img {
+    display: block;
+    max-width: 100%;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+.app {
+    min-height: 100vh;
+}
+
+
+/* =========================================
+   OBRAZOVKY
+========================================= */
+
+.screen {
+    min-height: 100vh;
+    padding:
+        max(24px, env(safe-area-inset-top))
+        max(20px, env(safe-area-inset-right))
+        max(24px, env(safe-area-inset-bottom))
+        max(20px, env(safe-area-inset-left));
+}
+
+.screen-menu {
+    display: grid;
+    place-items: center;
+}
+
+.menu-shell,
+.panel-shell {
+    width: min(100%, var(--content-width));
+    margin: 0 auto;
+}
+
+.menu-shell {
+    width: min(100%, 560px);
+
+    padding: 38px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(215, 167, 68, 0.07),
+            transparent 42%
+        ),
+        var(--bg-soft);
+
+    border: 1px solid var(--border-gold);
+    border-radius: var(--radius-xl);
+
+    box-shadow: var(--shadow);
+}
+
+.panel-shell {
+    padding: 28px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.018),
+            transparent 38%
+        ),
+        var(--bg-soft);
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+
+    box-shadow: var(--shadow);
+}
+
+.compact-panel {
+    width: min(100%, 620px);
+}
+
+
+/* =========================================
+   LOGO / HLAVNÍ MENU
+========================================= */
+
+.game-logo {
+    text-align: center;
+}
+
+.game-logo-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 84px;
+    min-height: 34px;
+
+    padding: 6px 14px;
+
+    color: #111;
+
+    background: var(--gold-soft);
+
+    border-radius: 999px;
+
+    font-size: 0.78rem;
+    font-weight: 900;
+
+    letter-spacing: 0.18em;
+}
+
+.game-logo h1 {
+    margin: 12px 0 0;
+
+    font-size: clamp(3.4rem, 12vw, 6.4rem);
+    line-height: 0.95;
+
+    letter-spacing: -0.075em;
+}
+
+.game-logo p {
+    margin: 14px 0 0;
+
+    color: var(--gold-soft);
+
+    font-size: 0.95rem;
+    font-weight: 700;
+
+    letter-spacing: 0.08em;
+}
+
+.menu-actions {
+    display: grid;
+    gap: 10px;
+
+    margin-top: 34px;
+}
+
+.menu-button,
+.modal-button,
+.secondary-action-button {
+    appearance: none;
+
+    min-height: 48px;
+
+    padding: 12px 18px;
+
+    border: 1px solid var(--border);
+    border-radius: 12px;
+
+    background: var(--panel);
+
+    color: var(--text);
+
+    font-weight: 750;
+
+    cursor: pointer;
+
+    transition:
+        transform 150ms ease,
+        background 150ms ease,
+        border-color 150ms ease,
+        color 150ms ease;
+}
+
+.menu-button:hover,
+.modal-button:hover,
+.secondary-action-button:hover {
+    background: var(--panel-hover);
+    border-color: rgba(215, 167, 68, 0.28);
+}
+
+.menu-button:active,
+.modal-button:active,
+.secondary-action-button:active {
+    transform: translateY(1px);
+}
+
+.menu-button:focus-visible,
+.modal-button:focus-visible,
+.secondary-action-button:focus-visible,
+.icon-button:focus-visible,
+.character-card:focus-visible,
+.save-slot:focus-visible,
+.game-card:focus-visible,
+.uno-button:focus-visible,
+.catch-uno-button:focus-visible,
+.draw-pile:focus-visible,
+.color-choice:focus-visible {
+    outline: 3px solid rgba(239, 199, 104, 0.55);
+    outline-offset: 3px;
+}
+
+.menu-button-primary,
+.modal-button-primary {
+    color: #17130b;
+
+    background:
+        linear-gradient(
+            180deg,
+            var(--gold-soft),
+            var(--gold)
+        );
+
+    border-color: transparent;
+}
+
+.menu-button-primary:hover,
+.modal-button-primary:hover {
+    background:
+        linear-gradient(
+            180deg,
+            #f6d27d,
+            var(--gold-soft)
+        );
+}
+
+.menu-button-danger,
+.modal-button-danger {
+    color: #f5b0b0;
+
+    background: var(--danger-soft);
+
+    border-color: rgba(232, 101, 101, 0.3);
+}
+
+.global-score {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 18px;
+
+    margin-top: 28px;
+    padding-top: 18px;
+
+    border-top: 1px solid var(--border);
+}
+
+.global-score-label {
+    color: var(--text-muted);
+
+    font-size: 0.75rem;
+    font-weight: 800;
+
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+}
+
+.global-score-values {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 14px;
+
+    color: var(--text-soft);
+
+    font-size: 0.9rem;
+}
+
+.global-score-values strong {
+    color: var(--gold-soft);
+}
+
+
+/* =========================================
+   HLAVIČKA PANELU
+========================================= */
+
+.panel-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    margin-bottom: 28px;
+}
+
+.panel-kicker {
+    display: block;
+
+    margin-bottom: 3px;
+
+    color: var(--gold);
+
+    font-size: 0.72rem;
+    font-weight: 850;
+
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+}
+
+.panel-header h2 {
+    margin: 0;
+
+    font-size: clamp(1.7rem, 5vw, 2.5rem);
+    line-height: 1.1;
+
+    letter-spacing: -0.035em;
+}
+
+.icon-button {
+    appearance: none;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 44px;
+    height: 44px;
+
+    flex-shrink: 0;
+
+    padding: 0;
+
+    color: var(--text-soft);
+
+    background: var(--panel);
+
+    border: 1px solid var(--border);
+    border-radius: 12px;
+
+    font-size: 1.25rem;
+    font-weight: 800;
+
+    cursor: pointer;
+
+    transition:
+        background 150ms ease,
+        border-color 150ms ease,
+        color 150ms ease;
+}
+
+.icon-button:hover {
+    color: var(--gold-soft);
+
+    background: var(--panel-hover);
+
+    border-color: rgba(215, 167, 68, 0.32);
+}
+
+
+/* =========================================
+   SAVE SLOTY
+========================================= */
+
+.save-slots {
+    display: grid;
+    gap: 13px;
+}
+
+.save-slot {
+    appearance: none;
+
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 18px;
+
+    width: 100%;
+
+    padding: 19px 20px;
+
+    text-align: left;
+
+    background: var(--panel);
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+
+    cursor: pointer;
+
+    transition:
+        transform 160ms ease,
+        background 160ms ease,
+        border-color 160ms ease;
+}
+
+.save-slot:hover {
+    transform: translateY(-1px);
+
+    background: var(--panel-hover);
+
+    border-color: rgba(215, 167, 68, 0.32);
+}
+
+.save-slot-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 42px;
+    height: 42px;
+
+    color: var(--gold-soft);
+
+    background: rgba(215, 167, 68, 0.07);
+
+    border: 1px solid rgba(215, 167, 68, 0.2);
+    border-radius: 50%;
+
+    font-size: 0.9rem;
+    font-weight: 850;
+}
+
+.save-slot-main {
+    display: flex;
+    flex-direction: column;
+
+    min-width: 0;
+}
+
+.save-slot-title {
+    font-size: 1.05rem;
+}
+
+.save-slot-record {
+    margin-top: 3px;
+
+    color: var(--text-muted);
+
+    font-size: 0.84rem;
+}
+
+.save-slot-arrow {
+    color: var(--gold);
+
+    font-size: 1.8rem;
+    line-height: 1;
+}
+
+
+/* =========================================
+   VÝBĚR POSTAVY
+========================================= */
+
+.character-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.character-card {
+    appearance: none;
+
+    position: relative;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+
+    min-width: 0;
+
+    padding: 20px;
+
+    background: var(--panel);
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+
+    cursor: pointer;
+
+    transition:
+        transform 160ms ease,
+        background 160ms ease,
+        border-color 160ms ease,
+        box-shadow 160ms ease;
+}
+
+.character-card:hover {
+    transform: translateY(-3px);
+
+    background: var(--panel-hover);
+
+    border-color: rgba(215, 167, 68, 0.32);
+
+    box-shadow: var(--shadow-soft);
+}
+
+.character-card-recommended {
+    border-color: var(--border-gold);
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(215, 167, 68, 0.075),
+            transparent 48%
+        ),
+        var(--panel);
+}
+
+.recommended-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+
+    padding: 5px 8px;
+
+    color: #161108;
+
+    background: var(--gold-soft);
+
+    border-radius: 999px;
+
+    font-size: 0.62rem;
+    font-weight: 900;
+
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+}
+
+.character-image-wrap {
+    position: relative;
+
+    width: min(100%, 190px);
+    aspect-ratio: 1 / 1;
+
+    overflow: hidden;
+
+    background: #0b0d11;
+
+    border: 1px solid var(--border);
+    border-radius: 50%;
+}
+
+.character-image {
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+}
+
+.character-image-fallback {
+    position: absolute;
+    inset: 0;
+
+    display: grid;
+    place-items: center;
+
+    color: var(--gold-soft);
+
+    background:
+        radial-gradient(
+            circle at 35% 25%,
+            rgba(215, 167, 68, 0.18),
+            transparent 50%
+        ),
+        #0e1015;
+
+    font-size: 2.4rem;
+    font-weight: 900;
+}
+
+.character-name {
+    font-size: 1.15rem;
+    font-weight: 850;
+}
+
+
+/* =========================================
+   DETAIL SLOTU
+========================================= */
+
+.slot-summary {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+
+    padding: 18px;
+
+    background: var(--panel);
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+}
+
+.slot-summary-avatar {
+    display: grid;
+    place-items: center;
+
+    width: 68px;
+    height: 68px;
+
+    flex-shrink: 0;
+
+    color: var(--gold-soft);
+
+    background:
+        rgba(215, 167, 68, 0.07);
+
+    border: 1px solid var(--border-gold);
+    border-radius: 50%;
+
+    font-size: 1.4rem;
+    font-weight: 900;
+}
+
+.slot-summary-data {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+#slot-summary-record {
+    font-weight: 850;
+}
+
+.slot-summary-status {
+    color: var(--text-muted);
+
+    font-size: 0.88rem;
+}
+
+
+/* =========================================
+   ACHIEVEMENTY
+========================================= */
+
+.achievements-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 13px;
+}
+
+.achievement-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+
+    padding: 17px;
+
+    background: var(--panel);
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+}
+
+.achievement-card.is-unlocked {
+    border-color: rgba(215, 167, 68, 0.32);
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(215, 167, 68, 0.055),
+            transparent 55%
+        ),
+        var(--panel);
+}
+
+.achievement-icon {
+    display: grid;
+    place-items: center;
+
+    width: 42px;
+    height: 42px;
+
+    flex-shrink: 0;
+
+    color: var(--text-muted);
+
+    background: rgba(255, 255, 255, 0.03);
+
+    border: 1px solid var(--border);
+    border-radius: 50%;
+}
+
+.achievement-card.is-unlocked .achievement-icon {
+    color: var(--gold-soft);
+
+    border-color: var(--border-gold);
+
+    background: rgba(215, 167, 68, 0.07);
+}
+
+.achievement-content {
+    min-width: 0;
+}
+
+.achievement-title {
+    margin: 0;
+
+    font-size: 1rem;
+}
+
+.achievement-description {
+    margin: 5px 0 0;
+
+    color: var(--text-muted);
+
+    font-size: 0.86rem;
+}
+
+.achievement-progress {
+    margin-top: 12px;
+}
+
+.achievement-progress-track {
+    height: 6px;
+
+    overflow: hidden;
+
+    background: rgba(255, 255, 255, 0.06);
+
+    border-radius: 999px;
+}
+
+.achievement-progress-value {
+    width: 0;
+    height: 100%;
+
+    background: var(--gold);
+
+    border-radius: inherit;
+}
+
+.achievement-progress-text {
+    display: block;
+
+    margin-top: 5px;
+
+    color: var(--text-muted);
+
+    font-size: 0.72rem;
+}
+
+
+/* =========================================
+   HERNÍ OBRAZOVKA
+========================================= */
+
+.screen-game {
+    padding: 0;
+
+    overflow: hidden;
+}
+
+.game-table {
+    position: relative;
+
+    display: grid;
+    grid-template-rows:
+        auto
+        minmax(145px, auto)
+        minmax(210px, 1fr)
+        auto
+        auto
+        minmax(180px, auto)
+        auto;
+
+    min-height: 100vh;
+
+    padding:
+        max(14px, env(safe-area-inset-top))
+        max(18px, env(safe-area-inset-right))
+        max(14px, env(safe-area-inset-bottom))
+        max(18px, env(safe-area-inset-left));
+
+    background:
+        radial-gradient(
+            circle at center,
+            rgba(255, 255, 255, 0.035),
+            transparent 35%
+        ),
+        radial-gradient(
+            circle at 50% 35%,
+            var(--table-light),
+            transparent 60%
+        ),
+        var(--table-dark);
+}
+
+.game-table::before {
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    pointer-events: none;
+
+    opacity: 0.35;
+
+    background-image:
+        linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0.014) 1px,
+            transparent 1px
+        ),
+        linear-gradient(
+            rgba(255, 255, 255, 0.014) 1px,
+            transparent 1px
+        );
+
+    background-size: 38px 38px;
+}
+
+
+/* =========================================
+   HORNÍ LIŠTA HRY
+========================================= */
+
+.game-topbar {
+    position: relative;
+    z-index: 5;
+
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 14px;
+
+    width: min(100%, var(--content-width));
+    margin: 0 auto;
+
+    padding: 10px 12px;
+
+    background: rgba(7, 15, 13, 0.72);
+
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+
+    backdrop-filter: blur(12px);
+}
+
+.game-slot-info {
+    display: flex;
+    flex-direction: column;
+}
+
+#game-character-name {
+    font-weight: 850;
+}
+
+#game-slot-score {
+    color: var(--text-muted);
+
+    font-size: 0.78rem;
+}
+
+.game-opponent-score {
+    color: var(--text-soft);
+
+    font-size: 0.84rem;
+}
+
+.game-opponent-score strong {
+    color: var(--gold-soft);
+}
+
+
+/* =========================================
+   LUKY
+========================================= */
+
+.opponent-area,
+.player-area {
+    position: relative;
+    z-index: 2;
+
+    width: min(100%, var(--content-width));
+    margin: 0 auto;
+}
+
+.opponent-area {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+        "profile speech"
+        "hand hand";
+    align-items: center;
+    gap: 8px 18px;
+
+    padding-top: 13px;
+}
+
+.opponent-profile {
+    grid-area: profile;
+
+    display: flex;
+    align-items: center;
+    gap: 11px;
+}
+
+.opponent-photo-wrap,
+.player-avatar-wrap {
+    position: relative;
+
+    width: 64px;
+    height: 64px;
+
+    flex-shrink: 0;
+
+    overflow: hidden;
+
+    background: #0b0d11;
+
+    border: 2px solid rgba(215, 167, 68, 0.42);
+    border-radius: 50%;
+
+    box-shadow: var(--shadow-soft);
+}
+
+.opponent-photo,
+.player-avatar {
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+}
+
+.opponent-photo-fallback,
+.player-avatar-fallback {
+    position: absolute;
+    inset: 0;
+
+    display: grid;
+    place-items: center;
+
+    color: var(--gold-soft);
+
+    background: #11151a;
+
+    font-size: 1.3rem;
+    font-weight: 900;
+}
+
+.opponent-info h2,
+.player-info h2 {
+    margin: 0;
+
+    font-size: 1.05rem;
+}
+
+.opponent-info span,
+.player-info span {
+    color: var(--text-soft);
+
+    font-size: 0.78rem;
+}
+
+.luky-hand {
+    grid-area: hand;
+
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+
+    min-height: 74px;
+
+    padding: 2px 12px 0;
+
+    overflow: hidden;
+}
+
+
+/* =========================================
+   HLÁŠKY
+========================================= */
+
+.speech-bubble {
+    position: relative;
+
+    justify-self: start;
+
+    max-width: min(480px, 70vw);
+
+    padding: 10px 14px;
+
+    color: var(--text);
+
+    background: rgba(12, 14, 17, 0.92);
+
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+
+    box-shadow: var(--shadow-soft);
+
+    font-size: 0.92rem;
+    font-weight: 650;
+}
+
+.speech-bubble::before {
+    content: "";
+
+    position: absolute;
+    left: -7px;
+    top: 50%;
+
+    width: 12px;
+    height: 12px;
+
+    background: rgba(12, 14, 17, 0.92);
+
+    border-left: 1px solid rgba(255, 255, 255, 0.12);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+
+    transform:
+        translateY(-50%)
+        rotate(45deg);
+}
+
+.player-speech {
+    align-self: center;
+}
+
+.player-speech::before {
+    left: auto;
+    right: -7px;
+
+    border-left: none;
+    border-bottom: none;
+    border-right: 1px solid rgba(255, 255, 255, 0.12);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+
+/* =========================================
+   STŘED STOLU
+========================================= */
+
+.table-center {
+    position: relative;
+    z-index: 2;
+
+    display: grid;
+    grid-template-columns: 1fr auto auto 1fr;
+    align-items: center;
+    justify-items: center;
+    gap: 22px;
+
+    width: min(100%, 780px);
+    margin: 0 auto;
+
+    padding: 20px 0;
+}
+
+.draw-pile {
+    appearance: none;
+
+    position: relative;
+
+    padding: 0;
+
+    background: transparent;
+
+    border: 0;
+
+    cursor: pointer;
+
+    transition:
+        transform 150ms ease,
+        filter 150ms ease;
+}
+
+.draw-pile:hover {
+    transform:
+        translateY(-3px)
+        rotate(-1deg);
+
+    filter: brightness(1.07);
+}
+
+.draw-pile::before,
+.draw-pile::after {
+    content: "";
+
+    position: absolute;
+
+    width: 92px;
+    height: 132px;
+
+    background: #17191f;
+
+    border: 2px solid rgba(255, 255, 255, 0.65);
+    border-radius: 11px;
+
+    pointer-events: none;
+}
+
+.draw-pile::before {
+    left: 5px;
+    top: 4px;
+
+    transform: rotate(2deg);
+}
+
+.draw-pile::after {
+    left: 2px;
+    top: 2px;
+
+    transform: rotate(-1deg);
+}
+
+.card-back {
+    position: relative;
+    z-index: 2;
+
+    display: grid;
+    place-items: center;
+
+    width: 92px;
+    height: 132px;
+
+    overflow: hidden;
+
+    background:
+        radial-gradient(
+            ellipse at center,
+            rgba(215, 167, 68, 0.36),
+            transparent 34%
+        ),
+        linear-gradient(
+            145deg,
+            #191b22,
+            #090a0c
+        );
+
+    border: 2px solid rgba(255, 255, 255, 0.82);
+    border-radius: 11px;
+
+    box-shadow:
+        0 12px 26px rgba(0, 0, 0, 0.35);
+}
+
+.card-back::before {
+    content: "";
+
+    position: absolute;
+
+    width: 115%;
+    height: 48%;
+
+    background: var(--gold);
+
+    border-radius: 50%;
+
+    transform: rotate(-28deg);
+
+    opacity: 0.88;
+}
+
+.card-back span {
+    position: relative;
+    z-index: 2;
+
+    color: #111;
+
+    font-size: 0.8rem;
+    font-weight: 950;
+
+    letter-spacing: 0.12em;
+}
+
+.discard-zone {
+    position: relative;
+
+    display: grid;
+    place-items: center;
+
+    width: 132px;
+    height: 166px;
+
+    border: 2px dashed rgba(255, 255, 255, 0.14);
+    border-radius: 18px;
+
+    transition:
+        background 150ms ease,
+        border-color 150ms ease,
+        transform 150ms ease;
+}
+
+.discard-zone.is-drop-target {
+    background: rgba(215, 167, 68, 0.09);
+
+    border-color: var(--gold-soft);
+
+    transform: scale(1.035);
+}
+
+.discard-pile {
+    display: grid;
+    place-items: center;
+}
+
+.discard-zone-label {
+    position: absolute;
+    bottom: 5px;
+
+    color: rgba(255, 255, 255, 0.38);
+
+    font-size: 0.65rem;
+    font-weight: 850;
+
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.current-color-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+
+    min-width: 104px;
+
+    padding: 10px 12px;
+
+    background: rgba(7, 15, 13, 0.58);
+
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+
+    backdrop-filter: blur(8px);
+}
+
+.current-color-indicator span {
+    color: var(--text-muted);
+
+    font-size: 0.64rem;
+    font-weight: 850;
+
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+}
+
+.current-color-indicator strong {
+    margin-top: 1px;
+
+    color: var(--gold-soft);
+
+    font-size: 0.9rem;
+}
+
+.draw-penalty-indicator {
+    justify-self: end;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    min-width: 80px;
+
+    padding: 9px 12px;
+
+    color: #ffc2c2;
+
+    background: rgba(110, 20, 20, 0.42);
+
+    border: 1px solid rgba(232, 101, 101, 0.38);
+    border-radius: 12px;
+
+    font-size: 0.68rem;
+    font-weight: 800;
+
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+
+    backdrop-filter: blur(8px);
+}
+
+.draw-penalty-indicator strong {
+    font-size: 1.3rem;
+}
+
+
+/* =========================================
+   SPECIÁLNÍ EVENT
+========================================= */
+
+.yellow-event {
+    position: relative;
+    z-index: 4;
+
+    display: flex;
+    justify-content: center;
+
+    padding: 4px 0;
+}
+
+.secondary-action-button {
+    min-height: 40px;
+
+    padding: 8px 13px;
+
+    color: #f9e7a7;
+
+    background: rgba(240, 200, 70, 0.09);
+
+    border-color: rgba(240, 200, 70, 0.25);
+
+    font-size: 0.8rem;
+}
+
+
+/* =========================================
+   OVLÁDÁNÍ HRY
+========================================= */
+
+.game-controls {
+    position: relative;
+    z-index: 4;
+
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+
+    padding: 5px 0 8px;
+}
+
+.uno-button,
+.catch-uno-button {
+    appearance: none;
+
+    min-height: 44px;
+
+    padding: 10px 16px;
+
+    border-radius: 999px;
+
+    font-weight: 900;
+
+    cursor: pointer;
+
+    transition:
+        transform 150ms ease,
+        filter 150ms ease,
+        box-shadow 150ms ease;
+}
+
+.uno-button {
+    color: #161008;
+
+    background:
+        linear-gradient(
+            180deg,
+            var(--gold-soft),
+            var(--gold)
+        );
+
+    border: 1px solid transparent;
+
+    box-shadow:
+        0 10px 24px rgba(215, 167, 68, 0.18);
+}
+
+.uno-button:hover {
+    transform: translateY(-2px);
+
+    filter: brightness(1.06);
+}
+
+.catch-uno-button {
+    color: var(--text-soft);
+
+    background: rgba(10, 13, 16, 0.7);
+
+    border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.catch-uno-button:hover {
+    transform: translateY(-2px);
+
+    color: var(--gold-soft);
+
+    border-color: rgba(215, 167, 68, 0.3);
+}
+
+
+/* =========================================
+   HRÁČ
+========================================= */
+
+.player-area {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+        "hand hand"
+        "speech profile";
+    align-items: center;
+    gap: 8px 18px;
+}
+
+.player-profile {
+    grid-area: profile;
+
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 11px;
+
+    text-align: right;
+}
+
+.player-speech {
+    grid-area: speech;
+
+    justify-self: end;
+}
+
+.player-hand {
+    grid-area: hand;
+
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+
+    min-height: 150px;
+
+    padding: 12px 22px 2px;
+
+    overflow-x: auto;
+    overflow-y: visible;
+
+    scrollbar-width: thin;
+    scrollbar-color:
+        rgba(215, 167, 68, 0.32)
+        transparent;
+
+    touch-action: pan-x;
+}
+
+
+/* =========================================
+   KARTY
+========================================= */
+
+.game-card {
+    appearance: none;
+
+    position: relative;
+
+    display: block;
+
+    width: 92px;
+    height: 132px;
+
+    flex: 0 0 auto;
+
+    overflow: hidden;
+
+    padding: 0;
+
+    color: #fff;
+
+    background: #222;
+
+    border: 3px solid rgba(255, 255, 255, 0.92);
+    border-radius: 11px;
+
+    box-shadow:
+        0 9px 20px rgba(0, 0, 0, 0.32);
+
+    cursor: grab;
+
+    user-select: none;
+
+    transition:
+        transform 150ms ease,
+        filter 150ms ease,
+        box-shadow 150ms ease,
+        opacity 150ms ease;
+}
+
+.player-hand .game-card {
+    margin-left: -30px;
+}
+
+.player-hand .game-card:first-child {
+    margin-left: 0;
+}
+
+.player-hand .game-card:hover {
+    transform: translateY(-10px);
+
+    z-index: 10;
+}
+
+.game-card.is-selected {
+    transform: translateY(-18px);
+
+    z-index: 20;
+
+    box-shadow:
+        0 0 0 3px var(--gold-soft),
+        0 16px 30px rgba(0, 0, 0, 0.4);
+}
+
+.game-card.is-match-highlight {
+    filter: brightness(1.14);
+
+    box-shadow:
+        0 0 0 2px rgba(239, 199, 104, 0.8),
+        0 12px 26px rgba(0, 0, 0, 0.35);
+}
+
+.game-card.is-disabled {
+    opacity: 0.48;
+    cursor: default;
+}
+
+.game-card.is-dragging {
+    opacity: 0.86;
+
+    transform:
+        scale(1.06)
+        rotate(-2deg);
+
+    cursor: grabbing;
+
+    z-index: 100;
+}
+
+.game-card[data-color="red"] {
+    background:
+        linear-gradient(
+            145deg,
+            #f04f54,
+            #bd2228
+        );
+}
+
+.game-card[data-color="yellow"] {
+    color: #16130a;
+
+    background:
+        linear-gradient(
+            145deg,
+            #f7d85f,
+            #d5a915
+        );
+}
+
+.game-card[data-color="green"] {
+    background:
+        linear-gradient(
+            145deg,
+            #49bb77,
+            #167f45
+        );
+}
+
+.game-card[data-color="blue"] {
+    background:
+        linear-gradient(
+            145deg,
+            #4d8ff2,
+            #205cbe
+        );
+}
+
+.game-card[data-color="wild"],
+.game-card[data-color="black"] {
+    background:
+        conic-gradient(
+            from 45deg,
+            var(--red) 0deg 90deg,
+            var(--yellow) 90deg 180deg,
+            var(--green) 180deg 270deg,
+            var(--blue) 270deg 360deg
+        );
+}
+
+.game-card::before {
+    content: "";
+
+    position: absolute;
+    left: 50%;
+    top: 50%;
+
+    width: 74%;
+    height: 78%;
+
+    background:
+        rgba(255, 255, 255, 0.94);
+
+    border-radius: 50%;
+
+    transform:
+        translate(-50%, -50%)
+        rotate(-28deg);
+}
+
+.game-card[data-color="yellow"]::before {
+    background:
+        rgba(255, 255, 255, 0.92);
+}
+
+.card-corner {
+    position: absolute;
+    z-index: 3;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 20px;
+
+    font-size: 0.86rem;
+    font-weight: 950;
+
+    line-height: 1;
+}
+
+.card-corner-top {
+    left: 7px;
+    top: 7px;
+}
+
+.card-corner-bottom {
+    right: 7px;
+    bottom: 7px;
+
+    transform: rotate(180deg);
+}
+
+.card-center {
+    position: absolute;
+    z-index: 3;
+
+    inset: 0;
+
+    display: grid;
+    place-items: center;
+}
+
+.card-center-value {
+    color: #111;
+
+    font-size: 2.45rem;
+    font-weight: 950;
+
+    line-height: 1;
+
+    text-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.game-card[data-color="yellow"] .card-corner {
+    color: #111;
+}
+
+.game-card[data-color="wild"] .card-corner,
+.game-card[data-color="black"] .card-corner {
+    color: #fff;
+
+    text-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.game-card-back {
+    display: grid;
+    place-items: center;
+
+    background:
+        linear-gradient(
+            145deg,
+            #191b22,
+            #090a0c
+        );
+
+    cursor: default;
+}
+
+.game-card-back::before {
+    width: 112%;
+    height: 48%;
+
+    background: var(--gold);
+
+    opacity: 0.9;
+}
+
+.card-back-inner {
+    position: relative;
+    z-index: 2;
+
+    color: #111;
+
+    font-size: 0.78rem;
+    font-weight: 950;
+
+    letter-spacing: 0.12em;
+}
+
+.luky-hand .game-card {
+    width: 62px;
+    height: 89px;
+
+    margin-left: -38px;
+
+    border-width: 2px;
+
+    border-radius: 8px;
+}
+
+.luky-hand .game-card:first-child {
+    margin-left: 0;
+}
+
+
+/* =========================================
+   STAV HRY
+========================================= */
+
+.game-status {
+    position: relative;
+    z-index: 4;
+
+    width: min(100%, 520px);
+    margin: 6px auto 0;
+
+    padding: 7px 12px;
+
+    color: rgba(255, 255, 255, 0.62);
+
+    background: rgba(5, 12, 10, 0.54);
+
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 999px;
+
+    text-align: center;
+
+    font-size: 0.76rem;
+
+    backdrop-filter: blur(8px);
+}
+
+
+/* =========================================
+   MODÁLNÍ OKNA
+========================================= */
+
+.modal-overlay {
+    position: fixed;
+    z-index: 1000;
+
+    inset: 0;
+
+    display: grid;
+    place-items: center;
+
+    padding: 20px;
+
+    background: rgba(3, 4, 6, 0.76);
+
+    backdrop-filter: blur(8px);
+}
+
+.modal {
+    width: min(100%, 440px);
+
+    padding: 24px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(215, 167, 68, 0.045),
+            transparent 46%
+        ),
+        #11141a;
+
+    border: 1px solid var(--border-gold);
+    border-radius: var(--radius-lg);
+
+    box-shadow: var(--shadow);
+
+    text-align: center;
+}
+
+.modal h2 {
+    margin: 0;
+
+    font-size: 1.5rem;
+
+    letter-spacing: -0.025em;
+}
+
+.modal p {
+    margin: 12px 0 0;
+
+    color: var(--text-soft);
+
+    font-size: 0.92rem;
+}
+
+.modal-note {
+    color: var(--text-muted) !important;
+
+    font-size: 0.8rem !important;
+}
+
+.modal-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+
+    margin-top: 22px;
+}
+
+.modal-actions-vertical {
+    grid-template-columns: 1fr;
+}
+
+.color-choice-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+
+    margin-top: 22px;
+}
+
+.color-choice {
+    appearance: none;
+
+    aspect-ratio: 1 / 1;
+
+    border: 3px solid rgba(255, 255, 255, 0.84);
+    border-radius: 50%;
+
+    cursor: pointer;
+
+    transition:
+        transform 150ms ease,
+        filter 150ms ease;
+}
+
+.color-choice:hover {
+    transform: scale(1.08);
+
+    filter: brightness(1.08);
+}
+
+.color-red {
+    background: var(--red);
+}
+
+.color-yellow {
+    background: var(--yellow);
+}
+
+.color-green {
+    background: var(--green);
+}
+
+.color-blue {
+    background: var(--blue);
+}
+
+.game-over-kicker {
+    color: var(--gold);
+
+    font-size: 0.7rem;
+    font-weight: 850;
+
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+}
+
+.game-over-modal h2 {
+    margin-top: 5px;
+}
+
+.game-over-score {
+    margin-top: 12px;
+
+    color: var(--gold-soft);
+
+    font-size: 1.1rem;
+    font-weight: 850;
+}
+
+
+/* =========================================
+   TOAST
+========================================= */
+
+.toast {
+    position: fixed;
+    z-index: 1200;
+
+    left: 50%;
+    bottom:
+        max(
+            22px,
+            env(safe-area-inset-bottom)
+        );
+
+    display: flex;
+    flex-direction: column;
+
+    width: min(calc(100% - 32px), 420px);
+
+    padding: 13px 16px;
+
+    background: rgba(16, 18, 23, 0.96);
+
+    border: 1px solid var(--border-gold);
+    border-radius: 13px;
+
+    box-shadow: var(--shadow);
+
+    transform: translateX(-50%);
+}
+
+.toast-title {
+    color: var(--gold-soft);
+
+    font-size: 0.78rem;
+    font-weight: 850;
+
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.toast-text {
+    margin-top: 2px;
+
+    color: var(--text);
+
+    font-size: 0.9rem;
+}
+
+
+/* =========================================
+   TABLET
+========================================= */
+
+@media (max-width: 900px) {
+
+    .character-grid {
+        gap: 12px;
+    }
+
+    .achievements-list {
+        grid-template-columns: 1fr;
+    }
+
+    .table-center {
+        gap: 14px;
+    }
+
+    .player-hand .game-card {
+        margin-left: -36px;
+    }
+
+    .player-hand .game-card:first-child {
+        margin-left: 0;
+    }
+}
+
+
+/* =========================================
+   MOBIL
+========================================= */
+
+@media (max-width: 680px) {
+
+    .screen {
+        padding:
+            max(14px, env(safe-area-inset-top))
+            max(12px, env(safe-area-inset-right))
+            max(14px, env(safe-area-inset-bottom))
+            max(12px, env(safe-area-inset-left));
+    }
+
+    .menu-shell,
+    .panel-shell {
+        padding: 20px;
+
+        border-radius: 18px;
+    }
+
+    .game-logo h1 {
+        font-size: 4.2rem;
+    }
+
+    .global-score {
+        align-items: flex-start;
+    }
+
+    .global-score-values {
+        flex-direction: column;
+        gap: 2px;
+
+        text-align: right;
+    }
+
+    .character-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .character-card {
+        flex-direction: row;
+
+        justify-content: flex-start;
+
+        padding: 14px 16px;
+    }
+
+    .character-image-wrap {
+        width: 78px;
+    }
+
+    .recommended-badge {
+        top: 10px;
+        right: 10px;
+    }
+
+    .game-table {
+        grid-template-rows:
+            auto
+            minmax(126px, auto)
+            minmax(190px, 1fr)
+            auto
+            auto
+            minmax(158px, auto)
+            auto;
+
+        padding:
+            max(8px, env(safe-area-inset-top))
+            max(8px, env(safe-area-inset-right))
+            max(8px, env(safe-area-inset-bottom))
+            max(8px, env(safe-area-inset-left));
+    }
+
+    .game-topbar {
+        gap: 9px;
+
+        padding: 7px 8px;
+    }
+
+    .game-topbar .icon-button {
+        width: 38px;
+        height: 38px;
+    }
+
+    .game-opponent-score {
+        font-size: 0.76rem;
+    }
+
+    .opponent-photo-wrap,
+    .player-avatar-wrap {
+        width: 50px;
+        height: 50px;
+    }
+
+    .opponent-info h2,
+    .player-info h2 {
+        font-size: 0.95rem;
+    }
+
+    .opponent-area {
+        gap: 6px 12px;
+
+        padding-top: 8px;
+    }
+
+    .speech-bubble {
+        max-width: 66vw;
+
+        padding: 8px 11px;
+
+        font-size: 0.8rem;
+    }
+
+    .luky-hand {
+        min-height: 62px;
+
+        padding-top: 0;
+    }
+
+    .luky-hand .game-card {
+        width: 48px;
+        height: 69px;
+
+        margin-left: -31px;
+    }
+
+    .table-center {
+        grid-template-columns:
+            minmax(58px, 1fr)
+            auto
+            auto
+            minmax(58px, 1fr);
+
+        gap: 8px;
+
+        padding: 10px 0;
+    }
+
+    .draw-pile::before,
+    .draw-pile::after,
+    .card-back {
+        width: 70px;
+        height: 101px;
+    }
+
+    .discard-zone {
+        width: 96px;
+        height: 124px;
+
+        border-radius: 14px;
+    }
+
+    .draw-penalty-indicator,
+    .current-color-indicator {
+        min-width: 0;
+
+        padding: 7px;
+    }
+
+    .draw-penalty-indicator {
+        font-size: 0.55rem;
+    }
+
+    .draw-penalty-indicator strong {
+        font-size: 1.05rem;
+    }
+
+    .current-color-indicator span {
+        font-size: 0.55rem;
+    }
+
+    .current-color-indicator strong {
+        font-size: 0.72rem;
+    }
+
+    .game-controls {
+        gap: 7px;
+
+        padding-bottom: 5px;
+    }
+
+    .uno-button,
+    .catch-uno-button {
+        min-height: 40px;
+
+        padding: 8px 12px;
+
+        font-size: 0.78rem;
+    }
+
+    .player-hand {
+        justify-content: flex-start;
+
+        min-height: 126px;
+
+        padding:
+            10px
+            10px
+            2px;
+    }
+
+    .game-card {
+        width: 76px;
+        height: 109px;
+
+        border-width: 2px;
+    }
+
+    .player-hand .game-card {
+        margin-left: -30px;
+    }
+
+    .player-hand .game-card:first-child {
+        margin-left: 0;
+    }
+
+    .card-center-value {
+        font-size: 2rem;
+    }
+
+    .card-corner {
+        font-size: 0.72rem;
+    }
+
+    .game-status {
+        max-width: calc(100% - 10px);
+
+        margin-top: 3px;
+
+        padding: 6px 10px;
+
+        font-size: 0.68rem;
+    }
+
+    .modal {
+        padding: 20px;
+    }
+}
+
+
+/* =========================================
+   MALÝ MOBIL
+========================================= */
+
+@media (max-width: 430px) {
+
+    .panel-header {
+        gap: 11px;
+
+        margin-bottom: 20px;
+    }
+
+    .panel-header .icon-button {
+        width: 40px;
+        height: 40px;
+    }
+
+    .save-slot {
+        gap: 12px;
+
+        padding: 15px;
+    }
+
+    .save-slot-number {
+        width: 36px;
+        height: 36px;
+    }
+
+    .slot-summary-avatar {
+        width: 56px;
+        height: 56px;
+    }
+
+    .table-center {
+        grid-template-columns:
+            52px
+            auto
+            auto
+            52px;
+    }
+
+    .draw-pile::before,
+    .draw-pile::after,
+    .card-back {
+        width: 64px;
+        height: 92px;
+    }
+
+    .discard-zone {
+        width: 86px;
+        height: 112px;
+    }
+
+    .current-color-indicator {
+        font-size: 0.66rem;
+    }
+
+    .game-controls {
+        display: grid;
+        grid-template-columns: auto auto;
+    }
+
+    .uno-button,
+    .catch-uno-button {
+        white-space: nowrap;
+    }
+
+    .player-profile {
+        gap: 7px;
+    }
+
+    .player-hand .game-card {
+        margin-left: -34px;
+    }
+
+    .player-hand .game-card:first-child {
+        margin-left: 0;
+    }
+
+    .color-choice-grid {
+        gap: 8px;
+    }
+}
+
+
+/* =========================================
+   VELMI MALÁ VÝŠKA DISPLEJE
+========================================= */
+
+@media (max-height: 720px) and (min-width: 681px) {
+
+    .game-table {
+        grid-template-rows:
+            auto
+            120px
+            minmax(170px, 1fr)
+            auto
+            auto
+            150px
+            auto;
+    }
+
+    .opponent-photo-wrap,
+    .player-avatar-wrap {
+        width: 52px;
+        height: 52px;
+    }
+
+    .game-card {
+        width: 78px;
+        height: 112px;
+    }
+
+    .luky-hand .game-card {
+        width: 50px;
+        height: 72px;
+    }
+
+    .draw-pile::before,
+    .draw-pile::after,
+    .card-back {
+        width: 76px;
+        height: 109px;
+    }
+
+    .discard-zone {
+        width: 108px;
+        height: 136px;
+    }
+}
+
+
+/* =========================================
+   OMEZENÍ ANIMACÍ
+========================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+}
