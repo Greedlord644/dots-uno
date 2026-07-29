@@ -5,45 +5,23 @@
    DOTS UNO
    LUKYHO AI
 
-   Cíl AI:
-   - nehrát dokonale
-   - působit jako člověk
-   - vždy mít prodlevu 2–4 sekundy
-   - občas zobrazit "..."
-   - rozumně pracovat s:
-       +2
-       +4
-       Stůj
-       Kuř!
-       sedmičkou
-       nulou
-       změnou barvy
-
-   AI NEMÁ pamatovat přesný obsah staré ruky hráče
-   po výměně rukou přes 0 nebo 7.
+   Cíl:
+   - rozumný, ale ne dokonalý soupeř
+   - lidské prodlevy
+   - občas delší přemýšlení
+   - s velkou rukou trochu rychlejší tah
+   - žádné vlastní generované hlášky
 ========================================================= */
 
 
 /* =========================================================
    HLAVNÍ ROZHODNUTÍ AI
-
-   Vrací objekt typu:
-
-   {
-       action: "play",
-       cards: [...],
-       chosenColor: "red"
-   }
-
-   nebo:
-
-   {
-       action: "draw"
-   }
 ========================================================= */
 
 function getLukyDecision(gameState) {
+
     if (!gameState) {
+
         return {
             action: "draw"
         };
@@ -51,47 +29,56 @@ function getLukyDecision(gameState) {
 
 
     const hand =
-        Array.isArray(gameState.lukyHand)
+        Array.isArray(
+            gameState.lukyHand
+        )
             ? gameState.lukyHand
             : [];
 
 
-    if (hand.length === 0) {
+    if (
+        hand.length === 0
+    ) {
+
         return {
             action: "none"
         };
     }
 
 
-    /*
-        Nejdřív řešíme aktivní +2/+4 řetězec.
-    */
+    /* =====================================================
+       +2 / +4 ŘETĚZEC
+    ===================================================== */
 
     if (
         gameState.drawPenalty > 0 &&
         gameState.topPenaltyType
     ) {
-        const drawCounter =
+
+        const counter =
             chooseDrawStackCounter(
                 hand,
                 gameState.topPenaltyType
             );
 
 
-        if (drawCounter) {
+        if (counter) {
+
             return {
-                action: "play",
+
+                action:
+                    "play",
 
                 cards:
-                    drawCounter,
+                    counter,
 
                 chosenColor:
                     needsColorChoice(
-                        drawCounter
+                        counter
                     )
                         ? chooseLukyColorAfterPlay(
                             hand,
-                            drawCounter
+                            counter
                         )
                         : null
             };
@@ -104,27 +91,33 @@ function getLukyDecision(gameState) {
     }
 
 
-    /*
-        Aktivní Stůj řetězec.
-    */
+    /* =====================================================
+       STŮJ ŘETĚZEC
+    ===================================================== */
 
     if (
-        gameState.skipChainCount > 0
+        gameState.skipChainCount >
+        0
     ) {
-        const skipCounter =
+
+        const counter =
             chooseSkipCounter(
                 hand
             );
 
 
-        if (skipCounter) {
+        if (counter) {
+
             return {
-                action: "play",
+
+                action:
+                    "play",
 
                 cards:
-                    skipCounter,
+                    counter,
 
-                chosenColor: null
+                chosenColor:
+                    null
             };
         }
 
@@ -135,9 +128,9 @@ function getLukyDecision(gameState) {
     }
 
 
-    /*
-        Běžný tah.
-    */
+    /* =====================================================
+       BĚŽNÝ TAH
+    ===================================================== */
 
     const playableGroups =
         getPlayableGroups(
@@ -147,8 +140,10 @@ function getLukyDecision(gameState) {
 
 
     if (
-        playableGroups.length === 0
+        playableGroups.length ===
+        0
     ) {
+
         return {
             action: "draw"
         };
@@ -164,6 +159,7 @@ function getLukyDecision(gameState) {
 
 
     if (!chosenGroup) {
+
         return {
             action: "draw"
         };
@@ -171,7 +167,9 @@ function getLukyDecision(gameState) {
 
 
     return {
-        action: "play",
+
+        action:
+            "play",
 
         cards:
             chosenGroup,
@@ -190,19 +188,38 @@ function getLukyDecision(gameState) {
 
 
 /* =========================================================
-   PRODLEVA AI
+   PŘEMÝŠLENÍ LUKYHO
 
-   UI / game.js může zavolat tuto funkci před samotným tahem.
+   Standard:
+   2–4 s
+
+   Občas:
+   6–8 s
+
+   Hodně karet:
+   1,5–3 s
 ========================================================= */
 
 async function waitForLukyThinking(
     {
+        gameState = null,
         onThinkingStart = null,
         onThinkingEnd = null
     } = {}
 ) {
+
+    const handCount =
+        Array.isArray(
+            gameState?.lukyHand
+        )
+            ? gameState.lukyHand.length
+            : null;
+
+
     const totalDelay =
-        getRandomAiThinkingTime();
+        getRandomAiThinkingTime(
+            handCount
+        );
 
 
     const showDots =
@@ -215,20 +232,31 @@ async function waitForLukyThinking(
 
     if (
         showDots &&
-        typeof onThinkingStart === "function"
+        typeof onThinkingStart ===
+            "function"
     ) {
+
         onThinkingStart(
             getThinkingQuote()
         );
     }
 
 
+    /*
+        Pokud ukazujeme "...", necháme je viditelné
+        aspoň minimální dobu.
+
+        Při dlouhém tahu ale zůstávají klidně déle.
+    */
+
     if (showDots) {
+
         const minimumDotsTime =
             Math.min(
                 GAME_CONFIG
                     .aiThinking
                     .thinkingDotsMinMs,
+
                 totalDelay
             );
 
@@ -243,12 +271,17 @@ async function waitForLukyThinking(
             minimumDotsTime;
 
 
-        if (remaining > 0) {
+        if (
+            remaining > 0
+        ) {
+
             await sleep(
                 remaining
             );
         }
+
     } else {
+
         await sleep(
             totalDelay
         );
@@ -256,8 +289,10 @@ async function waitForLukyThinking(
 
 
     if (
-        typeof onThinkingEnd === "function"
+        typeof onThinkingEnd ===
+            "function"
     ) {
+
         onThinkingEnd();
     }
 }
@@ -267,9 +302,13 @@ async function waitForLukyThinking(
    SLEEP
 ========================================================= */
 
-function sleep(milliseconds) {
+function sleep(
+    milliseconds
+) {
+
     return new Promise(
         (resolve) => {
+
             setTimeout(
                 resolve,
                 milliseconds
@@ -280,76 +319,58 @@ function sleep(milliseconds) {
 
 
 /* =========================================================
-   PLAYABLE SKUPINY
+   HRATELNÉ SKUPINY
 
-   Každá skupina = jedna karta nebo více identických karet
-   pro Kuř!.
+   Jedna karta nebo více identických karet přes Kuř!.
 ========================================================= */
 
 function getPlayableGroups(
     hand,
     gameState
 ) {
-    const groups = [];
+
+    const groups =
+        [];
+
 
     const visitedIds =
         new Set();
 
 
-    hand.forEach((card) => {
+    hand.forEach(
+        (card) => {
 
-        if (
-            visitedIds.has(
-                card.id
-            )
-        ) {
-            return;
-        }
+            if (
+                visitedIds.has(
+                    card.id
+                )
+            ) {
 
-
-        const identical =
-            findIdenticalCards(
-                hand,
-                card
-            );
-
-
-        identical.forEach(
-            (item) => {
-                visitedIds.add(
-                    item.id
-                );
+                return;
             }
-        );
 
 
-        /*
-            Jedna karta.
-        */
+            const identical =
+                findIdenticalCards(
+                    hand,
+                    card
+                );
 
-        if (
-            isCardNormallyPlayable(
-                card,
-                getTopDiscardCard(
-                    gameState
-                ),
-                gameState.currentColor
-            )
-        ) {
-            groups.push(
-                [card]
+
+            identical.forEach(
+                (item) => {
+
+                    visitedIds.add(
+                        item.id
+                    );
+                }
             );
-        }
 
 
-        /*
-            Kuř! skupina.
-        */
+            /*
+                Jedna karta.
+            */
 
-        if (
-            identical.length >=
-            GAME_CONFIG.kur.minimumCards
-        ) {
             if (
                 isCardNormallyPlayable(
                     card,
@@ -359,12 +380,42 @@ function getPlayableGroups(
                     gameState.currentColor
                 )
             ) {
+
                 groups.push(
-                    [...identical]
+                    [card]
+                );
+            }
+
+
+            /*
+                Kuř!
+            */
+
+            if (
+                GAME_CONFIG
+                    .kur
+                    .enabled &&
+                identical.length >=
+                    GAME_CONFIG
+                        .kur
+                        .minimumCards &&
+                isCardNormallyPlayable(
+                    card,
+                    getTopDiscardCard(
+                        gameState
+                    ),
+                    gameState.currentColor
+                )
+            ) {
+
+                groups.push(
+                    [
+                        ...identical
+                    ]
                 );
             }
         }
-    });
+    );
 
 
     return groups;
@@ -372,13 +423,17 @@ function getPlayableGroups(
 
 
 /* =========================================================
-   HORNÍ ODHOD
+   VRCHNÍ KARTA
 ========================================================= */
 
-function getTopDiscardCard(gameState) {
+function getTopDiscardCard(
+    gameState
+) {
+
     const pile =
         Array.isArray(
-            gameState?.discardPile
+            gameState
+                ?.discardPile
         )
             ? gameState.discardPile
             : [];
@@ -387,6 +442,7 @@ function getTopDiscardCard(gameState) {
     if (
         pile.length === 0
     ) {
+
         return null;
     }
 
@@ -398,15 +454,7 @@ function getTopDiscardCard(gameState) {
 
 
 /* =========================================================
-   VÝBĚR NEJLEPŠÍ SKUPINY
-
-   AI není dokonalá.
-
-   Preferuje:
-   - Kuř! když může odhodit víc karet
-   - čísla před divokými kartami
-   - silnější karty občas
-   - nulu / sedmičku podle situace
+   VÝBĚR TAHU
 ========================================================= */
 
 function chooseBestPlayableGroup(
@@ -414,10 +462,15 @@ function chooseBestPlayableGroup(
     hand,
     gameState
 ) {
+
     if (
-        !Array.isArray(groups) ||
-        groups.length === 0
+        !Array.isArray(
+            groups
+        ) ||
+        groups.length ===
+            0
     ) {
+
         return null;
     }
 
@@ -425,6 +478,7 @@ function chooseBestPlayableGroup(
     const scored =
         groups.map(
             (cards) => ({
+
                 cards,
 
                 score:
@@ -438,27 +492,36 @@ function chooseBestPlayableGroup(
 
 
     scored.sort(
-        (a, b) =>
-            b.score -
-            a.score
+        (
+            first,
+            second
+        ) =>
+            second.score -
+            first.score
     );
 
 
     /*
-        Aby AI nebyla úplně deterministická:
-        většinou vezme nejlepší možnost,
-        občas druhou nejlepší.
+        AI není perfektní.
+
+        Občas vybere druhou nejlepší možnost.
     */
 
     if (
-        scored.length > 1 &&
-        randomChance(0.18)
+        scored.length >
+            1 &&
+        randomChance(
+            0.18
+        )
     ) {
-        return scored[1].cards;
+
+        return scored[1]
+            .cards;
     }
 
 
-    return scored[0].cards;
+    return scored[0]
+        .cards;
 }
 
 
@@ -471,10 +534,15 @@ function scorePlayableGroup(
     hand,
     gameState
 ) {
+
     if (
-        !cards ||
-        cards.length === 0
+        !Array.isArray(
+            cards
+        ) ||
+        cards.length ===
+            0
     ) {
+
         return -9999;
     }
 
@@ -483,43 +551,52 @@ function scorePlayableGroup(
         cards[0];
 
 
-    let score = 0;
+    let score =
+        0;
 
 
-    /*
-        Kuř! je výhodné.
-    */
+    /* =====================================================
+       KUŘ!
+    ===================================================== */
 
     if (
-        cards.length > 1
+        cards.length >
+        1
     ) {
+
         score +=
-            cards.length * 16;
+            cards.length *
+            16;
     }
 
 
     /*
-        Čím víc karet AI odhodí, tím lépe.
+        Odhodit více karet je výhodné.
     */
 
     score +=
-        cards.length * 10;
+        cards.length *
+        10;
 
 
-    /*
-        Číselné karty jsou levné.
-    */
+    /* =====================================================
+       ČÍSLO
+    ===================================================== */
 
     if (
         first.type ===
         CARD_TYPES.NUMBER
     ) {
-        score += 15;
+
+        score +=
+            15;
 
 
         if (
-            first.value === 0
+            first.value ===
+            0
         ) {
+
             score +=
                 scoreZeroPlay(
                     hand,
@@ -529,8 +606,10 @@ function scorePlayableGroup(
 
 
         if (
-            first.value === 7
+            first.value ===
+            7
         ) {
+
             score +=
                 scoreSevenPlay(
                     hand,
@@ -540,59 +619,91 @@ function scorePlayableGroup(
     }
 
 
-    /*
-        Stůj.
-    */
+    /* =====================================================
+       STŮJ
+    ===================================================== */
 
     if (
         first.type ===
         CARD_TYPES.SKIP
     ) {
-        score += 24;
+
+        score +=
+            24;
+
+
+        /*
+            Když má soupeř málo karet,
+            Stůj je ještě hodnotnější.
+        */
+
+        if (
+            gameState
+                ?.playerHand
+                ?.length <=
+            3
+        ) {
+
+            score +=
+                14;
+        }
     }
 
 
-    /*
-        Změna směru nemá v 1v1 efekt,
-        takže nižší priorita.
-    */
+    /* =====================================================
+       REVERSE
+
+       V 1v1 bez speciálního efektu.
+    ===================================================== */
 
     if (
         first.type ===
         CARD_TYPES.REVERSE
     ) {
-        score += 7;
+
+        score +=
+            7;
     }
 
 
-    /*
-        +2 je silná karta.
-    */
+    /* =====================================================
+       +2
+    ===================================================== */
 
     if (
         first.type ===
         CARD_TYPES.DRAW_TWO
     ) {
-        score += 36;
+
+        score +=
+            36;
+
 
         score +=
             getDrawPenaltyForCards(
                 cards
-            ) * 3;
+            ) *
+            3;
     }
 
 
-    /*
-        Změnu barvy si spíš šetří,
-        pokud není potřeba.
-    */
+    /* =====================================================
+       WILD
+    ===================================================== */
 
     if (
         first.type ===
         CARD_TYPES.WILD
     ) {
-        score += 6;
 
+        score +=
+            6;
+
+
+        /*
+            Pokud nemá jinou normálně hratelnou kartu,
+            Wild je výrazně atraktivnější.
+        */
 
         if (
             countNormalPlayableCards(
@@ -600,43 +711,70 @@ function scorePlayableGroup(
                 gameState
             ) === 0
         ) {
-            score += 35;
+
+            score +=
+                35;
         }
     }
 
 
-    /*
-        +4 je silná, ale AI ji nemusí vždy pálit hned.
-    */
+    /* =====================================================
+       +4
+    ===================================================== */
 
     if (
         first.type ===
         CARD_TYPES.WILD_DRAW_FOUR
     ) {
-        score += 42;
+
+        score +=
+            42;
+
 
         score +=
             getDrawPenaltyForCards(
                 cards
-            ) * 3;
+            ) *
+            3;
+
+
+        /*
+            Pokud má hráč málo karet,
+            Luky rád zatlačí.
+        */
+
+        if (
+            gameState
+                ?.playerHand
+                ?.length <=
+            3
+        ) {
+
+            score +=
+                14;
+        }
     }
 
 
-    /*
-        Když Lukymu zbývá málo karet,
-        víc preferuje rychlé odhazování.
-    */
+    /* =====================================================
+       LUKY MÁ MÁLO KARET
+
+       Preferuje rychlé odhazování.
+    ===================================================== */
 
     if (
-        hand.length <= 3
+        hand.length <=
+        3
     ) {
+
         score +=
-            cards.length * 12;
+            cards.length *
+            12;
     }
 
 
     /*
-        Trocha náhody.
+        Malá náhoda, aby tahy nebyly pokaždé stejné.
     */
 
     score +=
@@ -651,13 +789,14 @@ function scorePlayableGroup(
 
 
 /* =========================================================
-   POČET BĚŽNĚ HRATELNÝCH KARET
+   BĚŽNĚ HRATELNÉ KARTY
 ========================================================= */
 
 function countNormalPlayableCards(
     hand,
     gameState
 ) {
+
     const topCard =
         getTopDiscardCard(
             gameState
@@ -667,16 +806,28 @@ function countNormalPlayableCards(
     return hand.filter(
         (card) => {
 
+            /*
+                Tady chceme zjistit množství "normálních"
+                možností, abychom věděli, zda si má Luky
+                šetřit Wild.
+            */
+
             if (
-                isWildCard(card)
+                isWildCard(
+                    card
+                )
             ) {
+
                 return false;
             }
 
 
             if (
-                isDrawTwo(card)
+                isDrawTwo(
+                    card
+                )
             ) {
+
                 return false;
             }
 
@@ -692,21 +843,21 @@ function countNormalPlayableCards(
 
 
 /* =========================================================
-   NULA – ROZHODOVÁNÍ
+   NULA
 
-   Když má Luky výrazně víc karet než hráč,
-   výměna je atraktivní.
-
-   Když má méně karet, nula je nevýhodná.
+   Pokud má Luky víc karet než hráč,
+   výměna je pro něj zajímavější.
 ========================================================= */
 
 function scoreZeroPlay(
     hand,
     gameState
 ) {
+
     const playerCards =
         Array.isArray(
-            gameState.playerHand
+            gameState
+                ?.playerHand
         )
             ? gameState.playerHand.length
             : 0;
@@ -722,29 +873,37 @@ function scoreZeroPlay(
 
 
     if (
-        difference >= 4
+        difference >=
+        4
     ) {
+
         return 45;
     }
 
 
     if (
-        difference >= 2
+        difference >=
+        2
     ) {
+
         return 24;
     }
 
 
     if (
-        difference <= -3
+        difference <=
+        -3
     ) {
+
         return -30;
     }
 
 
     if (
-        difference <= -1
+        difference <=
+        -1
     ) {
+
         return -12;
     }
 
@@ -754,16 +913,18 @@ function scoreZeroPlay(
 
 
 /* =========================================================
-   SEDMIČKA – BODOVÁNÍ KARTY
+   SEDMIČKA
 ========================================================= */
 
 function scoreSevenPlay(
     hand,
     gameState
 ) {
+
     const playerCards =
         Array.isArray(
-            gameState.playerHand
+            gameState
+                ?.playerHand
         )
             ? gameState.playerHand.length
             : 0;
@@ -775,22 +936,28 @@ function scoreSevenPlay(
 
 
     if (
-        difference >= 4
+        difference >=
+        4
     ) {
+
         return 32;
     }
 
 
     if (
-        difference >= 2
+        difference >=
+        2
     ) {
+
         return 18;
     }
 
 
     if (
-        difference <= -2
+        difference <=
+        -2
     ) {
+
         return -12;
     }
 
@@ -800,34 +967,48 @@ function scoreSevenPlay(
 
 
 /* =========================================================
-   SEDMIČKA – CHCE LUKY VYMĚNIT RUCE?
-
-   AI si nepamatuje starou ruku hráče.
-   Rozhodnutí je založeno pouze na aktuálních počtech karet.
+   CHCE LUKY VYMĚNIT RUCE PO 7?
 ========================================================= */
 
 function shouldLukySwapOnSeven(
     gameState
 ) {
+
     const lukyCards =
-        gameState?.lukyHand?.length ||
+        gameState
+            ?.lukyHand
+            ?.length ||
         0;
 
 
     const playerCards =
-        gameState?.playerHand?.length ||
+        gameState
+            ?.playerHand
+            ?.length ||
         0;
 
 
     /*
-        Pokud má Luky alespoň o 2 karty víc,
-        většinou chce výměnu.
+        Výrazně horší ruka:
+        skoro vždy chce výměnu.
     */
+
+    if (
+        lukyCards >=
+        playerCards + 4
+    ) {
+
+        return randomChance(
+            0.92
+        );
+    }
+
 
     if (
         lukyCards >=
         playerCards + 2
     ) {
+
         return randomChance(
             0.82
         );
@@ -836,13 +1017,14 @@ function shouldLukySwapOnSeven(
 
     /*
         Stejný počet:
-        malá náhodná možnost.
+        jen občas.
     */
 
     if (
         lukyCards ===
         playerCards
     ) {
+
         return randomChance(
             0.18
         );
@@ -851,7 +1033,7 @@ function shouldLukySwapOnSeven(
 
     /*
         Pokud je na tom Luky lépe,
-        téměř nikdy nemění.
+        výměnu téměř nechce.
     */
 
     return randomChance(
@@ -868,35 +1050,43 @@ function chooseDrawStackCounter(
     hand,
     topPenaltyType
 ) {
+
     const drawFours =
         groupIdenticalCardsByType(
             hand,
-            CARD_TYPES.WILD_DRAW_FOUR
+            CARD_TYPES
+                .WILD_DRAW_FOUR
         );
 
 
     const drawTwos =
         groupIdenticalCardsByType(
             hand,
-            CARD_TYPES.DRAW_TWO
+            CARD_TYPES
+                .DRAW_TWO
         );
 
 
-    /*
-        NAVRCHU +4
-    */
+    /* =====================================================
+       NAVRCHU +4
+    ===================================================== */
 
     if (
         topPenaltyType ===
-        CARD_TYPES.WILD_DRAW_FOUR
+        CARD_TYPES
+            .WILD_DRAW_FOUR
     ) {
+
         /*
-            Nejraději použije +4.
+            Jedna nebo více +4 stačí
+            bez ohledu na velikost aktuálního součtu.
         */
 
         if (
-            drawFours.length > 0
+            drawFours.length >
+            0
         ) {
+
             return chooseDrawCardGroup(
                 drawFours
             );
@@ -904,10 +1094,10 @@ function chooseDrawStackCounter(
 
 
         /*
-            Jinak potřebuje alespoň 2× +2.
+            Na +4 lze použít minimálně 2× +2.
         */
 
-        const validTwos =
+        const validDrawTwos =
             drawTwos.filter(
                 (group) =>
                     group.length >=
@@ -918,10 +1108,12 @@ function chooseDrawStackCounter(
 
 
         if (
-            validTwos.length > 0
+            validDrawTwos.length >
+            0
         ) {
+
             return chooseDrawCardGroup(
-                validTwos,
+                validDrawTwos,
                 GAME_CONFIG
                     .drawStacking
                     .minimumDrawTwosAgainstDrawFour
@@ -933,30 +1125,40 @@ function chooseDrawStackCounter(
     }
 
 
-    /*
-        NAVRCHU +2
-    */
+    /* =====================================================
+       NAVRCHU +2
+    ===================================================== */
 
     if (
         topPenaltyType ===
-        CARD_TYPES.DRAW_TWO
+        CARD_TYPES
+            .DRAW_TWO
     ) {
+
         /*
-            Preferuje +2, pokud ji má.
+            Preferuje +2.
         */
 
         if (
-            drawTwos.length > 0
+            drawTwos.length >
+            0
         ) {
+
             return chooseDrawCardGroup(
                 drawTwos
             );
         }
 
 
+        /*
+            +4 je také možné.
+        */
+
         if (
-            drawFours.length > 0
+            drawFours.length >
+            0
         ) {
+
             return chooseDrawCardGroup(
                 drawFours
             );
@@ -969,15 +1171,14 @@ function chooseDrawStackCounter(
 
 
 /* =========================================================
-   SKUPINY IDENTICKÝCH DOBÍRACÍCH KARET
-
-   Např. dvě modré +2 tvoří jednu Kuř! skupinu.
+   IDENTICKÉ DOBÍRACÍ KARTY
 ========================================================= */
 
 function groupIdenticalCardsByType(
     hand,
     type
 ) {
+
     const relevant =
         hand.filter(
             (card) =>
@@ -986,46 +1187,52 @@ function groupIdenticalCardsByType(
         );
 
 
-    const groups = [];
+    const groups =
+        [];
+
 
     const used =
         new Set();
 
 
-    relevant.forEach((card) => {
+    relevant.forEach(
+        (card) => {
 
-        if (
-            used.has(
-                card.id
-            )
-        ) {
-            return;
-        }
+            if (
+                used.has(
+                    card.id
+                )
+            ) {
+
+                return;
+            }
 
 
-        const group =
-            relevant.filter(
-                (candidate) =>
-                    areCardsIdentical(
-                        card,
-                        candidate
-                    )
+            const group =
+                relevant.filter(
+                    (candidate) =>
+                        areCardsIdentical(
+                            card,
+                            candidate
+                        )
+                );
+
+
+            group.forEach(
+                (item) => {
+
+                    used.add(
+                        item.id
+                    );
+                }
             );
 
 
-        group.forEach(
-            (item) => {
-                used.add(
-                    item.id
-                );
-            }
-        );
-
-
-        groups.push(
-            group
-        );
-    });
+            groups.push(
+                group
+            );
+        }
+    );
 
 
     return groups;
@@ -1033,20 +1240,22 @@ function groupIdenticalCardsByType(
 
 
 /* =========================================================
-   VÝBĚR DOBÍRACÍ SKUPINY
-
-   AI občas zahraje všechny stejné karty přes Kuř!,
-   ale ne vždy.
+   VÝBĚR +2 / +4 SKUPINY
 ========================================================= */
 
 function chooseDrawCardGroup(
     groups,
     minimumCount = 1
 ) {
+
     if (
-        !Array.isArray(groups) ||
-        groups.length === 0
+        !Array.isArray(
+            groups
+        ) ||
+        groups.length ===
+            0
     ) {
+
         return null;
     }
 
@@ -1060,16 +1269,21 @@ function chooseDrawCardGroup(
 
 
     if (
-        valid.length === 0
+        valid.length ===
+        0
     ) {
+
         return null;
     }
 
 
     valid.sort(
-        (a, b) =>
-            b.length -
-            a.length
+        (
+            first,
+            second
+        ) =>
+            second.length -
+            first.length
     );
 
 
@@ -1078,18 +1292,24 @@ function chooseDrawCardGroup(
 
 
     /*
-        Pokud má více identických karet,
-        často je pošle najednou.
+        Více identických karet:
+        často je hodí najednou, ale ne vždy.
     */
 
     if (
         best.length >
         minimumCount
     ) {
+
         if (
-            randomChance(0.72)
+            randomChance(
+                0.72
+            )
         ) {
-            return [...best];
+
+            return [
+                ...best
+            ];
         }
 
 
@@ -1100,7 +1320,9 @@ function chooseDrawCardGroup(
     }
 
 
-    return [...best];
+    return [
+        ...best
+    ];
 }
 
 
@@ -1108,8 +1330,11 @@ function chooseDrawCardGroup(
    STŮJ COUNTER
 ========================================================= */
 
-function chooseSkipCounter(hand) {
-    const skipGroups =
+function chooseSkipCounter(
+    hand
+) {
+
+    const groups =
         groupIdenticalCardsByType(
             hand,
             CARD_TYPES.SKIP
@@ -1117,28 +1342,34 @@ function chooseSkipCounter(hand) {
 
 
     if (
-        skipGroups.length === 0
+        groups.length ===
+        0
     ) {
+
         return null;
     }
 
 
     /*
-        Stačí jedna Stůj.
-
-        Pokud má více identických, Kuř! mu nedává
-        zvláštní efekt, takže AI většinou použije jednu.
+        Více Stůj přes Kuř! nedává silnější efekt,
+        takže si je Luky většinou šetří.
     */
 
     const group =
-        skipGroups[0];
+        groups[0];
 
 
     if (
-        group.length >= 2 &&
-        randomChance(0.12)
+        group.length >=
+            2 &&
+        randomChance(
+            0.10
+        )
     ) {
-        return [...group];
+
+        return [
+            ...group
+        ];
     }
 
 
@@ -1152,11 +1383,18 @@ function chooseSkipCounter(hand) {
    JE POTŘEBA VYBRAT BARVU?
 ========================================================= */
 
-function needsColorChoice(cards) {
+function needsColorChoice(
+    cards
+) {
+
     if (
-        !Array.isArray(cards) ||
-        cards.length === 0
+        !Array.isArray(
+            cards
+        ) ||
+        cards.length ===
+            0
     ) {
+
         return false;
     }
 
@@ -1168,16 +1406,17 @@ function needsColorChoice(cards) {
 
 
 /* =========================================================
-   VÝBĚR BARVY PO DIVOKÉ KARTĚ
+   VÝBĚR BARVY PO WILD
 
-   Luky vybere barvu, které má v ruce nejvíc
-   po odečtení právě zahraných karet.
+   Vybere barvu, které má po zahrání
+   nejvíc v ruce.
 ========================================================= */
 
 function chooseLukyColorAfterPlay(
     hand,
     playedCards
 ) {
+
     const playedIds =
         new Set(
             playedCards.map(
@@ -1197,10 +1436,18 @@ function chooseLukyColorAfterPlay(
 
 
     const counts = {
-        red: 0,
-        yellow: 0,
-        green: 0,
-        blue: 0
+
+        red:
+            0,
+
+        yellow:
+            0,
+
+        green:
+            0,
+
+        blue:
+            0
     };
 
 
@@ -1208,11 +1455,14 @@ function chooseLukyColorAfterPlay(
         (card) => {
 
             if (
-                Object.prototype.hasOwnProperty.call(
-                    counts,
-                    card.color
-                )
+                Object.prototype
+                    .hasOwnProperty
+                    .call(
+                        counts,
+                        card.color
+                    )
             ) {
+
                 counts[
                     card.color
                 ] += 1;
@@ -1228,23 +1478,38 @@ function chooseLukyColorAfterPlay(
 
 
     entries.sort(
-        (a, b) =>
-            b[1] -
-            a[1]
+        (
+            first,
+            second
+        ) =>
+            second[1] -
+            first[1]
     );
 
 
     const bestCount =
-        entries[0][1];
+        entries[0]?.[1] ||
+        0;
 
+
+    /*
+        Nemá žádnou barevnou kartu.
+        Barvu zvolí náhodně.
+    */
 
     if (
-        bestCount === 0
+        bestCount ===
+        0
     ) {
+
         const colors = [
+
             CARD_COLORS.RED,
+
             CARD_COLORS.YELLOW,
+
             CARD_COLORS.GREEN,
+
             CARD_COLORS.BLUE
         ];
 
@@ -1287,6 +1552,7 @@ function chooseLukyColorAfterPlay(
 function lukyHasYellowCard(
     gameState
 ) {
+
     return Boolean(
         gameState
             ?.lukyHand
@@ -1300,12 +1566,13 @@ function lukyHasYellowCard(
 
 
 /* =========================================================
-   MÁ LUKY PŘESNĚ JEDNU KARTU?
+   MÁ LUKY UNO?
 ========================================================= */
 
 function lukyHasUno(
     gameState
 ) {
+
     return (
         gameState
             ?.lukyHand
@@ -1316,10 +1583,11 @@ function lukyHasUno(
 
 
 /* =========================================================
-   ROZHODNUTÍ, ZDA LUKY UNO ZAPOMENE
+   ZAPOMENE UNO?
 ========================================================= */
 
 function shouldLukyForgetUno() {
+
     return randomChance(
         GAME_CONFIG
             .lukyUno
@@ -1329,15 +1597,17 @@ function shouldLukyForgetUno() {
 
 
 /* =========================================================
-   EMOTE – SILNÁ SITUACE PRO LUKYHO
+   SILNÝ EMOTE
 ========================================================= */
 
 function shouldShowLukyStrongEmote() {
+
     if (
         !GAME_CONFIG
             .emotes
             .enabled
     ) {
+
         return false;
     }
 
@@ -1351,15 +1621,17 @@ function shouldShowLukyStrongEmote() {
 
 
 /* =========================================================
-   EMOTE – MÍRNÁ SITUACE PRO LUKYHO
+   MÍRNÝ EMOTE
 ========================================================= */
 
 function shouldShowLukyMildEmote() {
+
     if (
         !GAME_CONFIG
             .emotes
             .enabled
     ) {
+
         return false;
     }
 
@@ -1373,14 +1645,15 @@ function shouldShowLukyMildEmote() {
 
 
 /* =========================================================
-   ROZDÍL POČTU KARET
+   VÝHODA LUKYHO PODLE POČTU KARET
 
-   Kladné číslo = hráč má více karet než Luky.
+   Kladné číslo = hráč má víc karet než Luky.
 ========================================================= */
 
 function getLukyCardAdvantage(
     gameState
 ) {
+
     const playerCount =
         gameState
             ?.playerHand
@@ -1403,30 +1676,30 @@ function getLukyCardAdvantage(
 
 
 /* =========================================================
-   JE LUKY VE VÝRAZNÉ VÝHODĚ POČTEM KARET?
+   JE LUKY VÝRAZNĚ VE VEDENÍ?
 ========================================================= */
 
 function isLukyClearlyAhead(
     gameState
 ) {
+
     return (
         getLukyCardAdvantage(
             gameState
-        ) >= 4
+        ) >=
+        4
     );
 }
 
 
 /* =========================================================
-   POMOCNÁ FUNKCE PRO AI DEBUG
-
-   Lze zavolat v konzoli:
-   debugLukyDecision(gameState)
+   DEBUG
 ========================================================= */
 
 function debugLukyDecision(
     gameState
 ) {
+
     const decision =
         getLukyDecision(
             gameState
