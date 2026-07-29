@@ -6,12 +6,10 @@
    HLÁŠKY POSTAV
 
    DŮLEŽITÉ:
-   Do tohoto souboru přidáváme pouze hlášky, které byly
-   výslovně určené pro hru.
+   Do hry patří pouze hlášky výslovně zadané pro projekt.
+   Hra sama žádné Lukyho hlášky nevymýšlí.
 
-   Herní engine žádné vlastní hlášky nevymýšlí.
-
-   "..." není skutečná hláška Lukyho.
+   "..." není skutečná hláška postavy.
    Jde pouze o vizuální stav přemýšlení.
 ========================================================= */
 
@@ -24,12 +22,13 @@ const GAME_QUOTES = {
 
     system: {
 
-        thinking: "..."
+        thinking:
+            "..."
     },
 
 
     /* =====================================================
-       LUKY – POVINNÉ REAKCE NA HERNÍ SITUACE
+       LUKY
     ===================================================== */
 
     luky: {
@@ -37,105 +36,115 @@ const GAME_QUOTES = {
         reactions: {
 
             /*
-                Hráč klikne na UNO!, přestože nemá
-                právě jednu kartu.
+                Hráč klikne na UNO!, i když
+                nemá přesně jednu kartu.
             */
 
-            falseUno: "Přestaň tady lhát!",
+            falseUno:
+                "Přestaň tady lhát!",
 
 
             /*
                 Lukymu zůstane jedna karta.
-
-                Tato hláška se používá bez ohledu na to,
-                jestli UNO řekl správně nebo jej zapomněl.
             */
 
-            oneCardLeft: "Je po všem.",
+            oneCardLeft:
+                "Je po všem.",
 
 
             /*
-                Skutečné zahlášení UNO.
+                Správné zahlášení UNO.
             */
 
-            uno: "UNO!",
+            uno:
+                "UNO!",
+
+
+            /*
+                Hráč tvrdí, že Luky neřekl UNO,
+                ale Luky ho ve skutečnosti řekl.
+            */
+
+            unoAlreadySaid:
+                "UNO jsem řekl.",
 
 
             /*
                 Hráč Lukyho správně nachytá,
-                že neřekl UNO.
+                že UNO neřekl.
+
+                Tohle říká hráč, nikoliv Luky,
+                ale zachováváme původní getter níže.
             */
 
-            caughtUno: "Neřekl jsi UNO!",
+            caughtUno:
+                "Neřekl jsi UNO!",
 
 
             /*
-                Odpověď na tlačítko "Neřekl jsi UNO!",
-                pokud jej hráč použije ve chvíli,
-                kdy Luky nemá jednu kartu.
+                Luky byl správně nachytán,
+                dostane +2 a reaguje.
+            */
 
-                Samotné číslo se doplní dynamicky.
+            caughtUnoPenalty:
+                "Sakra.",
 
-                Výsledek např.:
-                "Mám 5 karet."
+
+            /*
+                Odpověď na tlačítko
+                "Neřekl jsi UNO!",
+                pokud má Luky více než jednu kartu.
             */
 
             invalidUnoCatch: {
-                prefix: "Mám ",
-                suffix: " karet."
+
+                prefix:
+                    "Mám ",
+
+                suffix:
+                    " karet."
             },
 
 
             /*
                 Stůj – první přehazování.
-
-                Např.:
-                Dany: Stůj
-                Luky: Stůj
-                Luky: "Ty stojíš!"
             */
 
-            skipFirstCounter: "Ty stojíš!",
+            skipFirstCounter:
+                "Ty stojíš!",
 
 
             /*
                 Každé další přehazování Stůj.
             */
 
-            skipFurtherCounter: "Ne, ty stojíš!",
+            skipFurtherCounter:
+                "Ne, ty stojíš!",
 
 
             /*
-                Odpověď na otázku:
                 "Má někdo žlutou?"
-
-                Luky má alespoň jednu žlutou kartu.
             */
 
-            hasYellow: "Já.",
+            hasYellow:
+                "Já.",
 
 
-            /*
-                Luky nemá žlutou.
-            */
-
-            noYellow: "..."
+            noYellow:
+                "..."
         },
 
 
         /* =================================================
            OBECNÉ ÚVODNÍ HLÁŠKY
-
-           Použijí se pouze tam, kde nemá přednost
-           specifická hláška pro konkrétní postavu.
-
-           Po vyčerpání dostupných vhodných hlášek se
-           mohou později náhodně střídat.
         ================================================= */
 
         openingGeneral: [
+
             "Rozdrtím tě.",
+
             "Hodně jsem trénoval.",
+
             "Nemáš šanci"
         ],
 
@@ -146,72 +155,64 @@ const GAME_QUOTES = {
 
         characters: {
 
-            /* ---------------------------------------------
+            /* =============================================
                DANY
-            --------------------------------------------- */
+            ============================================= */
 
             dany: {
 
                 /*
-                    Specifickou úvodní hlášku zatím nemáme.
-                    Použijí se obecné.
+                    Specifický opening zatím není.
                 */
 
-                opening: [],
+                opening:
+                    [],
 
 
                 /*
-                    Dany Lukymu výrazně naloží
-                    dobíracími kartami.
+                    Dany Lukymu výrazně naloží.
                 */
 
                 heavyDrawReaction: [
+
                     "Dany, zklamal jsi mě."
                 ]
             },
 
 
-            /* ---------------------------------------------
+            /* =============================================
                FILIP
-            --------------------------------------------- */
+            ============================================= */
 
             filip: {
 
-                opening: [],
+                opening:
+                    [],
 
-
-                /*
-                    Filip Lukymu výrazně naloží
-                    dobíracími kartami.
-                */
 
                 heavyDrawReaction: [
+
                     "Filipe, jsi otravný."
                 ]
             },
 
 
-            /* ---------------------------------------------
+            /* =============================================
                96 / PAVEL
-            --------------------------------------------- */
+            ============================================= */
 
             "96": {
 
                 /*
-                    Luky oslovuje postavu 96 jako Pavla.
-
-                    Máme dva specifické openingy.
-
-                    První je jedna bublina.
-
-                    Druhý je sekvence dvou bublin,
-                    aby nebylo moc textu najednou.
+                    Specifické openingy mají přednost
+                    před obecnými hláškami.
                 */
 
                 opening: [
 
                     {
-                        type: "single",
+                        type:
+                            "single",
 
                         text:
                             "Pavle, víš co je to plíseň?"
@@ -219,10 +220,13 @@ const GAME_QUOTES = {
 
 
                     {
-                        type: "sequence",
+                        type:
+                            "sequence",
 
                         lines: [
+
                             "Včera Slipknot chyběl klaun.",
+
                             "Proč jsi tam nebyl?"
                         ]
                     }
@@ -230,11 +234,11 @@ const GAME_QUOTES = {
 
 
                 /*
-                    96 Lukymu výrazně naloží
-                    dobíracími kartami.
+                    96 Lukymu výrazně naloží.
                 */
 
                 heavyDrawReaction: [
+
                     "PAVLEEE!!"
                 ]
             }
@@ -243,12 +247,7 @@ const GAME_QUOTES = {
 
 
     /* =====================================================
-       HLÁŠKY HRÁČSKÉ POSTAVY
-
-       Zatím máme pouze hlášky, které vyplývají
-       z konkrétních domácích pravidel.
-
-       Nejsou zde žádné náhodně generované reakce.
+       HRÁČSKÁ POSTAVA
     ===================================================== */
 
     player: {
@@ -256,102 +255,81 @@ const GAME_QUOTES = {
         reactions: {
 
             /*
-                Více identických karet zahraných najednou.
+                Více stejných karet najednou.
             */
 
-            kur: "Kuř!",
+            kur:
+                "Kuř!",
 
 
             /*
-                Hráč zahraje sedmičku a rozhodne se
-                převzít Lukyho ruku.
+                Hráč zahraje 7 a chce Lukyho karty.
             */
 
-            sevenSwap: "Chci tvoje karty.",
+            sevenSwap:
+                "Chci tvoje karty.",
 
 
             /*
-                Hráč přehodí Lukyho Stůj vlastním Stůj.
-
-                Pokud jde o první counter v řetězci:
-                "Ty stojíš!"
-
-                Pokud už se Stůj přehazovalo:
-                "Ne, ty stojíš!"
+                Stůj.
             */
 
-            skipFirstCounter: "Ty stojíš!",
+            skipFirstCounter:
+                "Ty stojíš!",
 
-            skipFurtherCounter: "Ne, ty stojíš!",
+            skipFurtherCounter:
+                "Ne, ty stojíš!",
 
 
             /*
                 Hráč správně zahlásí UNO.
             */
 
-            uno: "UNO!",
+            uno:
+                "UNO!",
 
 
             /*
-                Hráč nachytá Lukyho.
+                Hráč správně nachytá Lukyho.
             */
 
-            caughtLukyUno: "Neřekl jsi UNO!"
+            caughtLukyUno:
+                "Neřekl jsi UNO!"
         }
     }
 };
 
 
 /* =========================================================
-   INTERNÍ STAV POUŽITÝCH ÚVODNÍCH HLÁŠEK
-
-   Toto není save systém samotný.
-
-   saves.js může tyto informace uložit, aby hra věděla,
-   které openingy už byly v daném slotu použity.
+   HISTORIE ÚVODNÍCH HLÁŠEK
 ========================================================= */
 
-
 function createEmptyQuoteHistory() {
+
     return {
 
         opening: {
 
-            /*
-                Použité specifické openingy podle postavy.
+            character:
+                {},
 
-                Např.:
-                "96": [0, 1]
-            */
-
-            character: {},
-
-
-            /*
-                Indexy použitých obecných openingů.
-            */
-
-            general: []
+            general:
+                []
         },
 
-
-        /*
-            Poslední použitá hláška.
-
-            Hodí se později k omezení okamžitého
-            opakování stejného textu.
-        */
-
-        lastQuoteKey: null
+        lastQuoteKey:
+            null
     };
 }
 
 
 /* =========================================================
-   ZÍSKÁNÍ KONFIGURACE HLÁŠEK POSTAVY
+   HLÁŠKY KONKRÉTNÍ POSTAVY
 ========================================================= */
 
-function getCharacterQuotes(characterId) {
+function getCharacterQuotes(
+    characterId
+) {
 
     return (
         GAME_QUOTES
@@ -365,7 +343,7 @@ function getCharacterQuotes(characterId) {
 
 
 /* =========================================================
-   OBECNÁ ÚVODNÍ HLÁŠKA
+   OBECNÉ OPENINGY
 ========================================================= */
 
 function getGeneralOpeningQuotes() {
@@ -379,7 +357,7 @@ function getGeneralOpeningQuotes() {
 
 
 /* =========================================================
-   SPECIFICKÉ ÚVODNÍ HLÁŠKY POSTAVY
+   SPECIFICKÉ OPENINGY
 ========================================================= */
 
 function getCharacterOpeningQuotes(
@@ -398,6 +376,7 @@ function getCharacterOpeningQuotes(
             characterQuotes.opening
         )
     ) {
+
         return [];
     }
 
@@ -411,14 +390,11 @@ function getCharacterOpeningQuotes(
 /* =========================================================
    VÝBĚR ÚVODNÍ HLÁŠKY
 
-   Pravidlo:
-
-   1. Nejdřív nepoužité specifické hlášky postavy.
-   2. Potom nepoužité obecné hlášky.
-   3. Po vyčerpání obou skupin náhodný výběr ze všech
-      vhodných hlášek.
-   4. Pokud je možné vybrat jinou hlášku než poslední,
-      neopakujeme bezprostředně stejnou.
+   Pořadí:
+   1. nepoužitá specifická
+   2. nepoužitá obecná
+   3. po vyčerpání náhodná
+   4. pokud lze, neopakuje se stejná jako minule
 ========================================================= */
 
 function chooseOpeningQuote(
@@ -442,27 +418,31 @@ function chooseOpeningQuote(
 
 
     const usedSpecific =
-        history.opening
+        history
+            .opening
             ?.character
             ?.[characterId] ||
         [];
 
 
     const usedGeneral =
-        history.opening
+        history
+            .opening
             ?.general ||
         [];
 
 
     /* =====================================================
-       1. NEPOUŽITÉ SPECIFICKÉ HLÁŠKY
+       NEPOUŽITÉ SPECIFICKÉ
     ===================================================== */
 
     const unusedSpecific =
         specificQuotes
             .map(
                 (quote, index) => ({
+
                     quote,
+
                     index
                 })
             )
@@ -475,7 +455,8 @@ function chooseOpeningQuote(
 
 
     if (
-        unusedSpecific.length > 0
+        unusedSpecific.length >
+        0
     ) {
 
         const selected =
@@ -483,7 +464,9 @@ function chooseOpeningQuote(
 
 
         return {
-            source: "character",
+
+            source:
+                "character",
 
             characterId,
 
@@ -500,14 +483,16 @@ function chooseOpeningQuote(
 
 
     /* =====================================================
-       2. NEPOUŽITÉ OBECNÉ HLÁŠKY
+       NEPOUŽITÉ OBECNÉ
     ===================================================== */
 
     const unusedGeneral =
         generalQuotes
             .map(
                 (quote, index) => ({
+
                     quote,
+
                     index
                 })
             )
@@ -520,7 +505,8 @@ function chooseOpeningQuote(
 
 
     if (
-        unusedGeneral.length > 0
+        unusedGeneral.length >
+        0
     ) {
 
         const selected =
@@ -528,13 +514,17 @@ function chooseOpeningQuote(
 
 
         return {
-            source: "general",
+
+            source:
+                "general",
 
             index:
                 selected.index,
 
             quote: {
-                type: "single",
+
+                type:
+                    "single",
 
                 text:
                     selected.quote
@@ -547,12 +537,11 @@ function chooseOpeningQuote(
 
 
     /* =====================================================
-       3. VŠECHNO UŽ BYLO POUŽITO
-
-       Náhodně vybíráme ze specifických + obecných.
+       VŠECHNO UŽ BYLO POUŽITO
     ===================================================== */
 
-    const pool = [];
+    const pool =
+        [];
 
 
     specificQuotes.forEach(
@@ -560,7 +549,8 @@ function chooseOpeningQuote(
 
             pool.push({
 
-                source: "character",
+                source:
+                    "character",
 
                 characterId,
 
@@ -580,12 +570,16 @@ function chooseOpeningQuote(
 
             pool.push({
 
-                source: "general",
+                source:
+                    "general",
 
                 index,
 
                 quote: {
-                    type: "single",
+
+                    type:
+                        "single",
+
                     text
                 },
 
@@ -597,23 +591,21 @@ function chooseOpeningQuote(
 
 
     if (
-        pool.length === 0
+        pool.length ===
+        0
     ) {
+
         return null;
     }
 
-
-    /*
-        Pokud máme více možností,
-        odstraníme poslední použitou.
-    */
 
     let availablePool =
         pool;
 
 
     if (
-        pool.length > 1 &&
+        pool.length >
+            1 &&
         history.lastQuoteKey
     ) {
 
@@ -626,8 +618,10 @@ function chooseOpeningQuote(
 
 
         if (
-            filtered.length > 0
+            filtered.length >
+            0
         ) {
+
             availablePool =
                 filtered;
         }
@@ -644,7 +638,7 @@ function chooseOpeningQuote(
 
 
 /* =========================================================
-   ZAPSÁNÍ POUŽITÉ ÚVODNÍ HLÁŠKY DO HISTORIE
+   REGISTRACE POUŽITÉHO OPENINGU
 ========================================================= */
 
 function registerOpeningQuoteUsage(
@@ -656,6 +650,7 @@ function registerOpeningQuoteUsage(
         !quoteHistory ||
         !selection
     ) {
+
         return;
     }
 
@@ -663,31 +658,48 @@ function registerOpeningQuoteUsage(
     if (
         !quoteHistory.opening
     ) {
+
         quoteHistory.opening = {
-            character: {},
-            general: []
+
+            character:
+                {},
+
+            general:
+                []
         };
     }
 
 
     if (
-        !quoteHistory.opening.character
+        !quoteHistory
+            .opening
+            .character
     ) {
-        quoteHistory.opening.character = {};
+
+        quoteHistory
+            .opening
+            .character =
+            {};
     }
 
 
     if (
         !Array.isArray(
-            quoteHistory.opening.general
+            quoteHistory
+                .opening
+                .general
         )
     ) {
-        quoteHistory.opening.general = [];
+
+        quoteHistory
+            .opening
+            .general =
+            [];
     }
 
 
     /* =====================================================
-       SPECIFICKÁ HLÁŠKA
+       SPECIFICKÁ
     ===================================================== */
 
     if (
@@ -696,7 +708,8 @@ function registerOpeningQuoteUsage(
     ) {
 
         const characterId =
-            selection.characterId;
+            selection
+                .characterId;
 
 
         if (
@@ -713,7 +726,8 @@ function registerOpeningQuoteUsage(
                 .opening
                 .character[
                     characterId
-                ] = [];
+                ] =
+                [];
         }
 
 
@@ -739,7 +753,7 @@ function registerOpeningQuoteUsage(
 
 
     /* =====================================================
-       OBECNÁ HLÁŠKA
+       OBECNÁ
     ===================================================== */
 
     if (
@@ -772,12 +786,7 @@ function registerOpeningQuoteUsage(
 
 
 /* =========================================================
-   REAKCE NA VÝRAZNOU DOBÍRACÍ PENALIZACI
-
-   Konkrétní hranici toho, co znamená "naložit",
-   určí game.js podle herní situace.
-
-   Zde pouze vracíme schválenou hlášku.
+   REAKCE NA VÝRAZNOU PENALIZACI
 ========================================================= */
 
 function getHeavyDrawReaction(
@@ -796,19 +805,16 @@ function getHeavyDrawReaction(
 
 
     if (
-        !Array.isArray(reactions) ||
-        reactions.length === 0
+        !Array.isArray(
+            reactions
+        ) ||
+        reactions.length ===
+            0
     ) {
+
         return null;
     }
 
-
-    /*
-        Zatím má každá postava jednu variantu.
-
-        Funkce je ale připravená na více variant,
-        které můžeš později dodat.
-    */
 
     return reactions[
         Math.floor(
@@ -820,16 +826,17 @@ function getHeavyDrawReaction(
 
 
 /* =========================================================
-   ODPOVĚĎ "MÁM X KARET."
+   "MÁM X KARET"
 
-   Čeština má různé tvary:
+   1 karta je záměrně speciální.
 
-   1 karta
-   2–4 karty
-   5+ karet
+   Pokud má Luky jednu kartu a hráč ho zkouší
+   nachytat po správně řečeném UNO, odpověď je:
 
-   Luky tuto odpověď používá při nesmyslném kliknutí
-   na "Neřekl jsi UNO!".
+   "UNO jsem řekl."
+
+   game.js bude navíc evidovat skutečný UNO stav,
+   takže tuto odpověď použije jen ve správné situaci.
 ========================================================= */
 
 function getLukyCardCountQuote(
@@ -843,9 +850,11 @@ function getLukyCardCountQuote(
 
 
     if (
-        count === 1
+        count ===
+        1
     ) {
-        return "Mám 1 kartu.";
+
+        return getLukyUnoAlreadySaidQuote();
     }
 
 
@@ -853,6 +862,7 @@ function getLukyCardCountQuote(
         count >= 2 &&
         count <= 4
     ) {
+
         return `Mám ${count} karty.`;
     }
 
@@ -862,15 +872,7 @@ function getLukyCardCountQuote(
 
 
 /* =========================================================
-   STŮJ
-
-   counterNumber:
-
-   1 = první přehazování
-       "Ty stojíš!"
-
-   2+ = další přehazování
-        "Ne, ty stojíš!"
+   STŮJ – LUKY
 ========================================================= */
 
 function getSkipCounterQuote(
@@ -878,7 +880,8 @@ function getSkipCounterQuote(
 ) {
 
     if (
-        counterNumber <= 1
+        counterNumber <=
+        1
     ) {
 
         return GAME_QUOTES
@@ -896,11 +899,7 @@ function getSkipCounterQuote(
 
 
 /* =========================================================
-   HRÁČOVA HLÁŠKA PŘI STŮJ
-
-   Text je stejný jako u Lukyho,
-   ale držíme to odděleně, protože později můžeš
-   pro hráčské postavy dodat vlastní varianty.
+   STŮJ – HRÁČ
 ========================================================= */
 
 function getPlayerSkipCounterQuote(
@@ -908,7 +907,8 @@ function getPlayerSkipCounterQuote(
 ) {
 
     if (
-        counterNumber <= 1
+        counterNumber <=
+        1
     ) {
 
         return GAME_QUOTES
@@ -928,16 +928,7 @@ function getPlayerSkipCounterQuote(
 /* =========================================================
    NORMALIZACE HLÁŠKY
 
-   Umožní UI pracovat stejně s:
-
-   "Rozdrtím tě."
-
-   i:
-
-   {
-       type: "sequence",
-       lines: [...]
-   }
+   Převádí string nebo objekt na jednotný formát.
 ========================================================= */
 
 function normalizeQuote(
@@ -945,6 +936,7 @@ function normalizeQuote(
 ) {
 
     if (!quote) {
+
         return null;
     }
 
@@ -955,8 +947,12 @@ function normalizeQuote(
     ) {
 
         return {
-            type: "single",
-            text: quote
+
+            type:
+                "single",
+
+            text:
+                quote
         };
     }
 
@@ -969,7 +965,10 @@ function normalizeQuote(
     ) {
 
         return {
-            type: "single",
+
+            type:
+                "single",
+
             text:
                 quote.text
         };
@@ -985,14 +984,17 @@ function normalizeQuote(
     ) {
 
         return {
-            type: "sequence",
+
+            type:
+                "sequence",
 
             lines:
                 quote.lines.filter(
                     (line) =>
                         typeof line ===
                             "string" &&
-                        line.length > 0
+                        line.length >
+                            0
                 )
         };
     }
@@ -1003,7 +1005,12 @@ function normalizeQuote(
 
 
 /* =========================================================
-   KRÁTKÉ POMOCNÉ GETTERY
+   POMOCNÉ GETTERY
+========================================================= */
+
+
+/* =========================================================
+   FALEŠNÉ UNO HRÁČE
 ========================================================= */
 
 function getFalseUnoQuote() {
@@ -1015,6 +1022,10 @@ function getFalseUnoQuote() {
 }
 
 
+/* =========================================================
+   LUKYMU ZBÝVÁ JEDNA KARTA
+========================================================= */
+
 function getLukyOneCardQuote() {
 
     return GAME_QUOTES
@@ -1023,6 +1034,10 @@ function getLukyOneCardQuote() {
         .oneCardLeft;
 }
 
+
+/* =========================================================
+   LUKY ŘEKNE UNO
+========================================================= */
 
 function getLukyUnoQuote() {
 
@@ -1033,6 +1048,38 @@ function getLukyUnoQuote() {
 }
 
 
+/* =========================================================
+   LUKY UNO UŽ ŘEKL
+========================================================= */
+
+function getLukyUnoAlreadySaidQuote() {
+
+    return GAME_QUOTES
+        .luky
+        .reactions
+        .unoAlreadySaid;
+}
+
+
+/* =========================================================
+   LUKY BYL NACHYTÁN
+========================================================= */
+
+function getLukyCaughtUnoPenaltyQuote() {
+
+    return GAME_QUOTES
+        .luky
+        .reactions
+        .caughtUnoPenalty;
+}
+
+
+/* =========================================================
+   STARŠÍ GETTER
+
+   Zachováváme kvůli kompatibilitě game.js.
+========================================================= */
+
 function getCaughtUnoQuote() {
 
     return GAME_QUOTES
@@ -1041,6 +1088,10 @@ function getCaughtUnoQuote() {
         .caughtUno;
 }
 
+
+/* =========================================================
+   HRÁČ ŘEKNE UNO
+========================================================= */
 
 function getPlayerUnoQuote() {
 
@@ -1051,6 +1102,10 @@ function getPlayerUnoQuote() {
 }
 
 
+/* =========================================================
+   HRÁČ NACHYTÁ LUKYHO
+========================================================= */
+
 function getPlayerCaughtLukyUnoQuote() {
 
     return GAME_QUOTES
@@ -1059,6 +1114,10 @@ function getPlayerCaughtLukyUnoQuote() {
         .caughtLukyUno;
 }
 
+
+/* =========================================================
+   KUŘ!
+========================================================= */
 
 function getKurQuote() {
 
@@ -1069,6 +1128,10 @@ function getKurQuote() {
 }
 
 
+/* =========================================================
+   SEDMIČKA
+========================================================= */
+
 function getSevenSwapQuote() {
 
     return GAME_QUOTES
@@ -1077,6 +1140,10 @@ function getSevenSwapQuote() {
         .sevenSwap;
 }
 
+
+/* =========================================================
+   PŘEMÝŠLENÍ
+========================================================= */
 
 function getThinkingQuote() {
 
