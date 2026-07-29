@@ -203,9 +203,7 @@
                     class="character-grid"
                 >
 
-                    <!-- ==================================
-                         DANY
-                    =================================== -->
+                    <!-- DANY -->
 
                     <button
                         type="button"
@@ -239,9 +237,7 @@
                     </button>
 
 
-                    <!-- ==================================
-                         FILIP
-                    =================================== -->
+                    <!-- FILIP -->
 
                     <button
                         type="button"
@@ -275,9 +271,7 @@
                     </button>
 
 
-                    <!-- ==================================
-                         96
-                    =================================== -->
+                    <!-- 96 -->
 
                     <button
                         type="button"
@@ -320,8 +314,6 @@
 
                 <!-- ==========================================
                      VÝBĚR SKINU
-
-                     Zobrazí se po kliknutí na postavu.
                 =========================================== -->
 
                 <section
@@ -720,20 +712,14 @@
                     </div>
 
 
-                    <!-- HLÁŠKA LUKYHO -->
-
                     <div
                         id="luky-speech"
                         class="speech-bubble"
                         hidden
                     >
-
                         <span id="luky-speech-text"></span>
-
                     </div>
 
-
-                    <!-- KARTY LUKYHO -->
 
                     <div
                         id="luky-hand"
@@ -752,8 +738,6 @@
 
                 <section class="table-center">
 
-                    <!-- AKTUÁLNÍ PENALIZACE -->
-
                     <div
                         id="draw-penalty-indicator"
                         class="draw-penalty-indicator"
@@ -769,8 +753,6 @@
                     </div>
 
 
-                    <!-- BALÍČEK -->
-
                     <button
                         type="button"
                         class="draw-pile"
@@ -784,8 +766,6 @@
 
                     </button>
 
-
-                    <!-- ODHOD -->
 
                     <div
                         class="discard-zone"
@@ -805,8 +785,6 @@
 
                     </div>
 
-
-                    <!-- AKTUÁLNÍ BARVA -->
 
                     <div
                         id="current-color-indicator"
@@ -848,7 +826,7 @@
 
 
                 <!-- ==================================
-                     OVLÁDÁNÍ
+                     OVLÁDÁNÍ HRY
                 =================================== -->
 
                 <section class="game-controls">
@@ -868,6 +846,24 @@
                         id="catch-uno-button"
                     >
                         Neřekl jsi UNO!
+                    </button>
+
+
+                    <!--
+                        Zobrazuje se pouze tehdy, když
+                        hráč čelí kartě Stůj.
+
+                        Pokud nemá / nechce přehodit vlastní Stůj,
+                        klikne sem a jeho tah je přeskočen.
+                    -->
+
+                    <button
+                        type="button"
+                        class="skip-accept-button"
+                        id="accept-skip-button"
+                        hidden
+                    >
+                        Stojím
                     </button>
 
                 </section>
@@ -916,20 +912,14 @@
                     </div>
 
 
-                    <!-- HLÁŠKA HRÁČE -->
-
                     <div
                         id="player-speech"
                         class="speech-bubble player-speech"
                         hidden
                     >
-
                         <span id="player-speech-text"></span>
-
                     </div>
 
-
-                    <!-- RUKA HRÁČE -->
 
                     <div
                         id="player-hand"
@@ -969,9 +959,7 @@
             hidden
         >
 
-            <!-- ----------------------------------
-                 VÝBĚR BARVY
-            ----------------------------------- -->
+            <!-- VÝBĚR BARVY -->
 
             <section
                 id="modal-color"
@@ -1022,9 +1010,7 @@
             </section>
 
 
-            <!-- ----------------------------------
-                 SEDMIČKA
-            ----------------------------------- -->
+            <!-- SEDMIČKA -->
 
             <section
                 id="modal-seven"
@@ -1063,9 +1049,7 @@
             </section>
 
 
-            <!-- ----------------------------------
-                 RESET SLOTU
-            ----------------------------------- -->
+            <!-- RESET SLOTU -->
 
             <section
                 id="modal-reset-slot"
@@ -1112,9 +1096,7 @@
             </section>
 
 
-            <!-- ----------------------------------
-                 KONEC PARTIE
-            ----------------------------------- -->
+            <!-- KONEC PARTIE -->
 
             <section
                 id="modal-game-over"
@@ -1136,8 +1118,6 @@
 
                 <div class="game-over-characters">
 
-                    <!-- HRÁČ -->
-
                     <div class="game-over-character">
 
                         <div class="game-over-image-wrap">
@@ -1156,8 +1136,6 @@
 
                     </div>
 
-
-                    <!-- LUKY -->
 
                     <div class="game-over-versus">
                         VS
@@ -1216,9 +1194,7 @@
             </section>
 
 
-            <!-- ----------------------------------
-                 MENU BĚHEM HRY
-            ----------------------------------- -->
+            <!-- MENU BĚHEM HRY -->
 
             <section
                 id="modal-game-menu"
@@ -1260,7 +1236,7 @@
 
 
         <!-- ==========================================
-             TOAST / ACHIEVEMENT
+             TOAST
         =========================================== -->
 
         <div
@@ -1394,7 +1370,10 @@
                     hidden
                 >
 
-                    <span class="skin-lock-icon">
+                    <span
+                        class="skin-lock-icon"
+                        aria-hidden="true"
+                    >
                         🔒
                     </span>
 
@@ -1415,9 +1394,7 @@
                     Výchozí
                 </strong>
 
-                <span
-                    class="skin-card-status"
-                ></span>
+                <span class="skin-card-status"></span>
 
             </div>
 
