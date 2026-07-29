@@ -5,11 +5,12 @@
    DOTS UNO
    CENTRÁLNÍ KONFIGURACE HRY
 
-   Tento soubor obsahuje hodnoty, které budeme pravděpodobně
-   postupně ladit podle toho, jak bude hra působit.
+   Tento soubor drží hodnoty, které chceme mít na jednom
+   místě a později je snadno ladit.
 
-   Herní logika by pokud možno neměla obsahovat podobná čísla
-   natvrdo, ale měla by je číst odsud.
+   DŮLEŽITÉ:
+   Obrázky postav, skiny, win/lose obrázky a emoty mají
+   přesné názvy souborů podle assets/images/.
 ========================================================= */
 
 
@@ -25,7 +26,7 @@ const GAME_CONFIG = {
 
     saveSlotCount: 3,
 
-    storageVersion: 1,
+    storageVersion: 2,
 
 
     /* =====================================================
@@ -37,21 +38,38 @@ const GAME_CONFIG = {
         dany: {
             id: "dany",
             name: "Dany",
-            image: "assets/images/dany.jpg",
+
+            defaultSkinId: "default",
+
+            defaultImage:
+                "assets/images/Dany_default.jpg",
+
             fallback: "D"
         },
+
 
         filip: {
             id: "filip",
             name: "Filip",
-            image: "assets/images/filip.jpg",
+
+            defaultSkinId: "default",
+
+            defaultImage:
+                "assets/images/Fila_default.jpg",
+
             fallback: "F"
         },
+
 
         "96": {
             id: "96",
             name: "96",
-            image: "assets/images/96.jpg",
+
+            defaultSkinId: "default",
+
+            defaultImage:
+                "assets/images/Pavel_default.png",
+
             fallback: "96",
 
             recommended: true
@@ -66,49 +84,248 @@ const GAME_CONFIG = {
     opponent: {
         id: "luky",
         name: "Luky",
-        image: "assets/images/luky.jpg",
-        fallback: "L"
+
+        /*
+            Běžný portrét Lukyho během hry.
+            Pokud později dodáš speciální default obrázek,
+            cestu jen změníme tady.
+        */
+
+        defaultImage:
+            "assets/images/Luky_emote.jpg",
+
+        fallback: "L",
+
+        winImage:
+            "assets/images/Luky_win.png",
+
+        loseImage:
+            "assets/images/Luky_lose.png",
+
+        emotes: {
+
+            /*
+                Silná výhodná situace:
+                +2, +4, výrazně méně karet atd.
+            */
+
+            grin:
+                "assets/images/Luky_grin.jpg",
+
+
+            /*
+                Mírnější výhodná situace:
+                Stůj, hráč musí líznout apod.
+            */
+
+            mild:
+                "assets/images/Luky_emote.jpg"
+        }
+    },
+
+
+    /* =====================================================
+       SKINY POSTAV
+
+       Default skin je vždy dostupný.
+
+       skin1 se odemyká achievementem.
+    ===================================================== */
+
+    skins: {
+
+        dany: [
+
+            {
+                id: "default",
+
+                name: "Výchozí",
+
+                image:
+                    "assets/images/Dany_default.jpg",
+
+                unlockedByDefault: true
+            },
+
+
+            {
+                id: "skin1",
+
+                name: "Skin 1",
+
+                image:
+                    "assets/images/Dany_skin1.jpg",
+
+                unlockedByAchievement:
+                    "dany_new_skin"
+            }
+        ],
+
+
+        filip: [
+
+            {
+                id: "default",
+
+                name: "Výchozí",
+
+                image:
+                    "assets/images/Fila_default.jpg",
+
+                unlockedByDefault: true
+            },
+
+
+            {
+                id: "skin1",
+
+                name: "Skin 1",
+
+                image:
+                    "assets/images/Fila_skin1.jpg",
+
+                unlockedByAchievement:
+                    "fila_new_skin"
+            }
+        ],
+
+
+        "96": [
+
+            {
+                id: "default",
+
+                name: "Výchozí",
+
+                image:
+                    "assets/images/Pavel_default.png",
+
+                unlockedByDefault: true
+            },
+
+
+            {
+                id: "skin1",
+
+                name: "Skin 1",
+
+                image:
+                    "assets/images/Pavel_skin1.jpg",
+
+                unlockedByAchievement:
+                    "96_new_skin"
+            }
+        ]
+    },
+
+
+    /* =====================================================
+       WIN / LOSE OBRÁZKY HRÁČE
+    ===================================================== */
+
+    endScreenImages: {
+
+        dany: {
+
+            win:
+                "assets/images/Dany_default.jpg",
+
+            lose:
+                "assets/images/Dany_default.jpg"
+        },
+
+
+        filip: {
+
+            win:
+                "assets/images/Fila_win.png",
+
+            lose:
+                "assets/images/Fila_lose.jpg"
+        },
+
+
+        "96": {
+
+            win:
+                "assets/images/Pavel_win.png",
+
+            lose:
+                "assets/images/Pavel_lose.png"
+        }
+    },
+
+
+    /* =====================================================
+       EMOTY POSTAVY 96
+    ===================================================== */
+
+    characterEmotes: {
+
+        "96": {
+
+            /*
+                Silně negativní situace:
+                +2, +4, vyšší penalizace,
+                opakované nucené lízání...
+            */
+
+            angry:
+                "assets/images/Pavel_angry.jpg",
+
+
+            /*
+                Mírnější nepříjemnost:
+                Stůj, jednorázové líznutí apod.
+            */
+
+            inDanger:
+                "assets/images/Pavel_in_danger.png"
+        }
     },
 
 
     /* =====================================================
        LUKYHO PŘEMÝŠLENÍ
 
-       Luky nikdy nezahraje okamžitě.
-
        Běžný tah:
        náhodně 2–4 sekundy.
-
-       Později můžeme podle pocitu hru zrychlit nebo zpomalit.
     ===================================================== */
 
     aiThinking: {
+
         minMs: 2000,
+
         maxMs: 4000,
 
-        /*
-            Pravděpodobnost, že se během přemýšlení
-            zobrazí "...".
 
-            0.45 = 45 %
+        /*
+            Pravděpodobnost, že se během čekání
+            objeví "...".
         */
+
         showThinkingDotsChance: 0.45,
 
+
         /*
-            Jak dlouho mají "..." minimálně zůstat viditelné.
+            Minimální doba zobrazení "...".
         */
+
         thinkingDotsMinMs: 900
     },
 
 
     /* =====================================================
        UNO HRÁČE
-
-       Po zahrání předposlední karty má hráč 3 sekundy
-       na kliknutí na UNO!.
     ===================================================== */
 
     playerUno: {
+
+        /*
+            Hráč má 3 sekundy od momentu, kdy mu
+            po zahrání zůstane přesně jedna karta.
+        */
+
         callWindowMs: 3000,
 
         missedPenaltyCards: 2
@@ -117,103 +334,90 @@ const GAME_CONFIG = {
 
     /* =====================================================
        UNO LUKYHO
-
-       Normálně řekne UNO okamžitě.
-
-       Občas zapomene a vytvoří se tajné okno 2–5 sekund,
-       ve kterém jej lze nachytat.
     ===================================================== */
 
     lukyUno: {
 
         /*
-            Jak často Luky zapomene UNO.
+            Zatím první testovací hodnota.
 
-            0.18 = 18 %
-
-            Toto číslo můžeme později upravit podle toho,
-            jestli se to děje moc nebo málo.
+            0.18 = 18 % šance, že Luky UNO zapomene.
         */
+
         forgetChance: 0.18,
 
+
+        /*
+            Pokud zapomene, hráč má tajné okno
+            2–5 sekund.
+        */
+
         forgottenWindowMinMs: 2000,
+
         forgottenWindowMaxMs: 5000,
 
         caughtPenaltyCards: 2,
 
+
         /*
-            Pokud UNO nezapomněl a chce po UNO říct
-            "Je po všem.", bude mezi hláškami prodleva.
+            Prodleva mezi "UNO!" a "Je po všem."
+            pokud UNO řekl hned.
         */
+
         afterUnoPhraseMinMs: 2000,
+
         afterUnoPhraseMaxMs: 3000
     },
 
 
     /* =====================================================
        HLÁŠKY
-
-       Herní engine NESMÍ generovat vlastní hlášky.
-
-       Veškerý obsah bude v quotes.js.
-
-       Zde jsou jen technické hodnoty pro jejich zobrazování.
     ===================================================== */
 
     speech: {
 
-        /*
-            Výchozí doba běžné bubliny.
-        */
         defaultDurationMs: 2600,
 
-        /*
-            Kratší systémové hlášky, např. "..."
-        */
         shortDurationMs: 1600,
 
-        /*
-            Delší texty.
-        */
         longDurationMs: 3600,
 
-        /*
-            Pauza mezi dvěma větami, pokud hláška
-            obsahuje sekvenci dvou bublin.
-        */
         sequencePauseMs: 850
     },
 
 
     /* =====================================================
        +2 / +4
-
-       Penalizace se sčítá.
-
-       Co lze zahrát jako obranu ale určuje karta,
-       která je aktuálně navrchu.
     ===================================================== */
 
     drawStacking: {
 
         /*
-            +2 lze hrát kdykoliv.
+            +2 lze zahrát kdykoliv.
         */
+
         drawTwoAlwaysPlayable: true,
 
+
         /*
-            +4 lze hrát kdykoliv.
+            +4 lze zahrát kdykoliv.
         */
+
         drawFourAlwaysPlayable: true,
+
 
         /*
             Na +4 nelze odpovědět jednou +2.
         */
+
         singleDrawTwoOnDrawFourAllowed: false,
 
+
         /*
-            Na +4 lze odpovědět minimálně dvěma +2 najednou.
+            Na +4 lze odpovědět minimálně dvěma +2
+            zahranými současně.
         */
+
         minimumDrawTwosAgainstDrawFour: 2
     },
 
@@ -225,13 +429,17 @@ const GAME_CONFIG = {
     skip: {
 
         /*
-            V 1v1 může soupeř na Stůj odpovědět vlastním Stůj.
+            Soupeř může na Stůj odpovědět vlastním Stůj.
         */
+
         canCounterSkip: true,
 
+
         /*
-            Více Stůj přes Kuř! nemá násobený efekt.
+            Více Stůj zahraných přes Kuř! nemá
+            vícenásobný efekt.
         */
+
         multipleSkipCardsMultiplyEffect: false
     },
 
@@ -243,8 +451,9 @@ const GAME_CONFIG = {
     reverse: {
 
         /*
-            Ve hře 1 proti 1 nemá žádný speciální efekt.
+            V 1v1 nemá speciální efekt.
         */
+
         hasEffectInTwoPlayerGame: false
     },
 
@@ -255,16 +464,13 @@ const GAME_CONFIG = {
 
     zeroRule: {
 
-        /*
-            Jedna samostatně zahraná nula:
-            automatická výměna rukou.
-        */
         swapHands: true,
 
+
         /*
-            Pokud se přes Kuř! zahraje více nul najednou,
-            ruce se vymění pouze jednou.
+            Více nul přes Kuř! = pouze jedna výměna.
         */
+
         multipleZerosSwapOnlyOnce: true
     },
 
@@ -276,65 +482,51 @@ const GAME_CONFIG = {
     sevenRule: {
 
         /*
-            Po zahrání sedmičky si hráč může vybrat,
-            zda chce soupeřovu ruku.
+            Po zahrání sedmičky se hráč může rozhodnout,
+            zda chce soupeřovy karty.
         */
+
         optionalHandSwap: true
     },
 
 
     /* =====================================================
        KUŘ!
-
-       Více naprosto identických karet lze zahrát současně.
     ===================================================== */
 
     kur: {
 
         enabled: true,
 
-        /*
-            Pro Kuř! musí být karty skutečně totožné:
-            stejná barva + stejná hodnota / typ.
-        */
         identicalCardsOnly: true,
 
-        /*
-            Od kolika karet se jedná o Kuř!.
-        */
         minimumCards: 2,
 
-        /*
-            +2 a +4 se při vícenásobném zahrání sčítají.
-        */
-        sumDrawCards: true,
 
         /*
-            Ostatní speciální efekty se při více identických
-            kartách provedou pouze jednou.
+            +2 a +4 se sčítají.
         */
+
+        sumDrawCards: true,
+
+
+        /*
+            Ostatní speciální efekty se při vícenásobném
+            zahrání provedou jednou.
+        */
+
         repeatOtherSpecialEffects: false
     },
 
 
     /* =====================================================
-       VÝBĚR / DRAG & DROP KARET
+       DRAG & DROP
     ===================================================== */
 
     cardInteraction: {
 
-        /*
-            Kolik pixelů směrem nahoru musí hráč kartu
-            přetáhnout, aby bylo puštění považováno
-            za pokus o zahrání.
-
-            Později podle pocitu doladíme.
-        */
         dragPlayThresholdPx: 80,
 
-        /*
-            Malý pohyb se stále považuje za kliknutí / tap.
-        */
         clickMovementTolerancePx: 8
     },
 
@@ -353,29 +545,23 @@ const GAME_CONFIG = {
             "wild"
         ],
 
-        /*
-            Číselné karty se řadí od 0 do 9.
-
-            Barevné speciální karty přijdou za čísly,
-            divoké úplně na konec.
-        */
         numericCardsFirst: true
     },
 
 
     /* =====================================================
-       SPECIÁLNÍ EVENT "MÁ NĚKDO ŽLUTOU?"
-
-       Event je vzácný a maximálně jednou za partii.
+       EVENT "MÁ NĚKDO ŽLUTOU?"
     ===================================================== */
 
     yellowEvent: {
 
         enabled: true,
 
+
         /*
-            Kandidátem na event je přibližně každá 5. hra.
+            Kandidátem je přibližně každá 5. hra.
         */
+
         everyNthGame: 5,
 
         maxOccurrencesPerGame: 1
@@ -383,64 +569,116 @@ const GAME_CONFIG = {
 
 
     /* =====================================================
-       DOPORUČENÁ POSTAVA
+       VÝBĚR POSTAVY
     ===================================================== */
 
     characterSelection: {
 
         recommendedCharacterId: "96",
 
-        /*
-            Doporučení se zobrazuje při výběru postavy.
-        */
         showRecommendation: true
     },
 
 
     /* =====================================================
-       SAVE
+       EMOTY
 
-       Vše běží lokálně v prohlížeči přes localStorage.
+       Jedna situace = maximálně jeden emote.
+
+       Po zobrazení nastane globální cooldown 5–8 s.
+    ===================================================== */
+
+    emotes: {
+
+        enabled: true,
+
+
+        /*
+            Jak dlouho zůstane emote zobrazený.
+        */
+
+        durationMinMs: 2000,
+
+        durationMaxMs: 3000,
+
+
+        /*
+            Po emotu se další náhodný emote
+            nesmí zobrazit 5–8 sekund.
+        */
+
+        cooldownMinMs: 5000,
+
+        cooldownMaxMs: 8000,
+
+
+        /*
+            Výchozí testovací pravděpodobnosti.
+
+            Později je můžeme ladit podle pocitu.
+        */
+
+        strongSituationChance: 0.30,
+
+        mildSituationChance: 0.20,
+
+
+        /*
+            Při jedné události se vybere maximálně
+            jedna reakce.
+        */
+
+        maxPerSituation: 1
+    },
+
+
+    /* =====================================================
+       SAVE
     ===================================================== */
 
     storage: {
 
-        rootKey: "dotsUno",
+        rootKey:
+            "dotsUno",
 
-        slotsKey: "dotsUno.slots",
+        slotsKey:
+            "dotsUno.slots",
 
-        achievementsKey: "dotsUno.achievements",
+        achievementsKey:
+            "dotsUno.achievements",
 
-        globalStatsKey: "dotsUno.globalStats",
+        globalStatsKey:
+            "dotsUno.globalStats",
 
-        settingsKey: "dotsUno.settings"
+        settingsKey:
+            "dotsUno.settings"
     },
 
 
     /* =====================================================
        ACHIEVEMENTY
 
-       Samotná definice achievementů bude
-       v achievements.js.
-
-       Zde jsou pouze hranice používané první sadou.
+       Konkrétní definice jsou v achievements.js.
     ===================================================== */
 
     achievements: {
 
-        gamesPlayedTarget: 10,
-
         winStreakTarget: 3,
 
-        characterWinsTarget: 10
+        skinWinsTarget: 5,
+
+        advancedWinsTarget: 10,
+
+        proWinsTarget: 20,
+
+        monsterWinsTarget: 30,
+
+        noLifeWinsTarget: 50
     },
 
 
     /* =====================================================
        ANIMACE
-
-       Jednoduché společné časy, aby se později dal
-       celkový pocit hry snadno ladit.
     ===================================================== */
 
     animation: {
@@ -457,24 +695,28 @@ const GAME_CONFIG = {
 
 
 /* =========================================================
-   POMOCNÉ FUNKCE KONFIGURACE
+   POSTAVY
 ========================================================= */
 
-
-/**
- * Vrátí celou konfiguraci zvolené postavy.
- */
 function getCharacterConfig(characterId) {
-    return GAME_CONFIG.characters[characterId] || null;
+
+    return (
+        GAME_CONFIG
+            .characters[
+                characterId
+            ] ||
+        null
+    );
 }
 
 
-/**
- * Vrátí zobrazované jméno postavy.
- */
 function getCharacterName(characterId) {
+
     const character =
-        getCharacterConfig(characterId);
+        getCharacterConfig(
+            characterId
+        );
+
 
     return character
         ? character.name
@@ -482,59 +724,291 @@ function getCharacterName(characterId) {
 }
 
 
-/**
- * Vrátí náhodné celé číslo včetně obou krajních hodnot.
- */
-function randomInteger(min, max) {
+/* =========================================================
+   SKINY
+========================================================= */
+
+function getConfiguredCharacterSkins(
+    characterId
+) {
+
+    return [
+        ...(
+            GAME_CONFIG
+                .skins[
+                    characterId
+                ] ||
+            []
+        )
+    ];
+}
+
+
+function getConfiguredCharacterSkin(
+    characterId,
+    skinId
+) {
+
+    const skins =
+        getConfiguredCharacterSkins(
+            characterId
+        );
+
+
+    return (
+        skins.find(
+            (skin) =>
+                skin.id ===
+                skinId
+        ) ||
+        null
+    );
+}
+
+
+function getDefaultCharacterSkin(
+    characterId
+) {
+
+    const character =
+        getCharacterConfig(
+            characterId
+        );
+
+
+    if (!character) {
+        return null;
+    }
+
+
+    return (
+        getConfiguredCharacterSkin(
+            characterId,
+            character.defaultSkinId
+        ) ||
+        null
+    );
+}
+
+
+function getCharacterImage(
+    characterId,
+    skinId = "default"
+) {
+
+    const skin =
+        getConfiguredCharacterSkin(
+            characterId,
+            skinId
+        );
+
+
+    if (skin?.image) {
+        return skin.image;
+    }
+
+
+    const character =
+        getCharacterConfig(
+            characterId
+        );
+
+
+    return (
+        character?.defaultImage ||
+        ""
+    );
+}
+
+
+/* =========================================================
+   WIN / LOSE OBRÁZKY
+========================================================= */
+
+function getConfiguredPlayerEndImage(
+    characterId,
+    result
+) {
+
+    return (
+        GAME_CONFIG
+            .endScreenImages
+            ?.[characterId]
+            ?.[result] ||
+        null
+    );
+}
+
+
+function getConfiguredLukyEndImage(
+    result
+) {
+
+    if (
+        result === "win"
+    ) {
+        return GAME_CONFIG
+            .opponent
+            .winImage;
+    }
+
+
+    if (
+        result === "lose"
+    ) {
+        return GAME_CONFIG
+            .opponent
+            .loseImage;
+    }
+
+
+    return null;
+}
+
+
+/* =========================================================
+   EMOTY
+========================================================= */
+
+function getConfiguredLukyEmote(
+    emoteId
+) {
+
+    return (
+        GAME_CONFIG
+            .opponent
+            .emotes
+            ?.[emoteId] ||
+        null
+    );
+}
+
+
+function getConfiguredCharacterEmote(
+    characterId,
+    emoteId
+) {
+
+    return (
+        GAME_CONFIG
+            .characterEmotes
+            ?.[characterId]
+            ?.[emoteId] ||
+        null
+    );
+}
+
+
+function getRandomEmoteDuration() {
+
+    return randomInteger(
+        GAME_CONFIG
+            .emotes
+            .durationMinMs,
+
+        GAME_CONFIG
+            .emotes
+            .durationMaxMs
+    );
+}
+
+
+function getRandomEmoteCooldown() {
+
+    return randomInteger(
+        GAME_CONFIG
+            .emotes
+            .cooldownMinMs,
+
+        GAME_CONFIG
+            .emotes
+            .cooldownMaxMs
+    );
+}
+
+
+/* =========================================================
+   NÁHODA
+========================================================= */
+
+function randomInteger(
+    min,
+    max
+) {
+
     const minimum =
         Math.ceil(min);
+
 
     const maximum =
         Math.floor(max);
 
+
     return Math.floor(
         Math.random() *
-        (maximum - minimum + 1)
+        (
+            maximum -
+            minimum +
+            1
+        )
     ) + minimum;
 }
 
 
-/**
- * Náhodná délka Lukyho přemýšlení.
- */
-function getRandomAiThinkingTime() {
-    return randomInteger(
-        GAME_CONFIG.aiThinking.minMs,
-        GAME_CONFIG.aiThinking.maxMs
-    );
-}
-
-
-/**
- * Náhodná délka okna při Lukyho zapomenutém UNO.
- */
-function getRandomLukyUnoWindow() {
-    return randomInteger(
-        GAME_CONFIG.lukyUno.forgottenWindowMinMs,
-        GAME_CONFIG.lukyUno.forgottenWindowMaxMs
-    );
-}
-
-
-/**
- * Náhodná pauza mezi UNO a "Je po všem.".
- */
-function getRandomLukyAfterUnoDelay() {
-    return randomInteger(
-        GAME_CONFIG.lukyUno.afterUnoPhraseMinMs,
-        GAME_CONFIG.lukyUno.afterUnoPhraseMaxMs
-    );
-}
-
-
-/**
- * Pomocná funkce pro pravděpodobnost 0–1.
- */
 function randomChance(chance) {
-    return Math.random() < chance;
+
+    return (
+        Math.random() <
+        chance
+    );
+}
+
+
+/* =========================================================
+   AI
+========================================================= */
+
+function getRandomAiThinkingTime() {
+
+    return randomInteger(
+        GAME_CONFIG
+            .aiThinking
+            .minMs,
+
+        GAME_CONFIG
+            .aiThinking
+            .maxMs
+    );
+}
+
+
+/* =========================================================
+   UNO LUKYHO
+========================================================= */
+
+function getRandomLukyUnoWindow() {
+
+    return randomInteger(
+        GAME_CONFIG
+            .lukyUno
+            .forgottenWindowMinMs,
+
+        GAME_CONFIG
+            .lukyUno
+            .forgottenWindowMaxMs
+    );
+}
+
+
+function getRandomLukyAfterUnoDelay() {
+
+    return randomInteger(
+        GAME_CONFIG
+            .lukyUno
+            .afterUnoPhraseMinMs,
+
+        GAME_CONFIG
+            .lukyUno
+            .afterUnoPhraseMaxMs
+    );
 }
