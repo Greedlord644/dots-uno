@@ -4302,10 +4302,25 @@ function renderYellowEvent(
         );
 
 
+    const playerBusy =
+        Boolean(
+            GAME_RUNTIME
+                .pendingSevenChoice ||
+            UI_STATE.pendingPlayCardIds !==
+                null ||
+            UI_STATE.colorChoiceMinimized
+        );
+
+
     container.hidden =
         !state.yellowEventAvailable ||
         state.yellowEventUsed ||
-        modalOpen;
+        modalOpen ||
+        playerBusy ||
+        state.status !==
+            "playing" ||
+        state.turn !==
+            "luky";
 }
 
 
