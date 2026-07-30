@@ -216,9 +216,22 @@ async function waitForLukyThinking(
             : null;
 
 
-    const totalDelay =
+    const baseDelay =
         getRandomAiThinkingTime(
             handCount
+        );
+
+
+    /*
+        Luky reaguje svižněji než dřív.
+        Zachováme náhodnost z configu, ale běžné
+        přemýšlení zkrátíme přibližně o 1 sekundu.
+    */
+
+    const totalDelay =
+        Math.max(
+            300,
+            baseDelay - 1000
         );
 
 
