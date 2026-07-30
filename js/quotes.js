@@ -131,7 +131,13 @@ const GAME_QUOTES = {
 
 
             noYellow:
-                "..."
+                "...",
+
+            badSituation:
+                "Píčeeee!",
+
+            defeat:
+                "Pusinko, jdeme trénovat!"
         },
 
 
@@ -176,7 +182,20 @@ const GAME_QUOTES = {
                 heavyDrawReaction: [
 
                     "Dany, zklamal jsi mě."
-                ]
+                ],
+
+                badSituation: {
+
+                    type:
+                        "sequence",
+
+                    lines: [
+
+                        "Žádný strach...",
+
+                        "vše jde přesně podle plánu."
+                    ]
+                }
             },
 
 
@@ -822,6 +841,40 @@ function getHeavyDrawReaction(
             reactions.length
         )
     ];
+}
+
+
+/* =========================================================
+   SPECIÁLNÍ SITUAČNÍ HLÁŠKY
+========================================================= */
+
+function getDanyBadSituationQuote() {
+
+    return normalizeQuote(
+        GAME_QUOTES
+            .luky
+            .characters
+            .dany
+            .badSituation
+    );
+}
+
+
+function getLukyBadSituationQuote() {
+
+    return GAME_QUOTES
+        .luky
+        .reactions
+        .badSituation;
+}
+
+
+function getLukyDefeatQuote() {
+
+    return GAME_QUOTES
+        .luky
+        .reactions
+        .defeat;
 }
 
 
