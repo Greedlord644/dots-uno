@@ -309,28 +309,28 @@ const GAME_CONFIG = {
     aiThinking: {
 
         normalMinMs:
-            2000,
+            1000,
 
         normalMaxMs:
-            4000,
+            3000,
 
         slowChance:
             0.16,
 
         slowMinMs:
-            6000,
+            5000,
 
         slowMaxMs:
-            8000,
+            7000,
 
         largeHandThreshold:
             12,
 
         largeHandMinMs:
-            1500,
+            500,
 
         largeHandMaxMs:
-            3000,
+            2000,
 
         showThinkingDotsChance:
             0.48,
