@@ -6181,3 +6181,51 @@ button.game-card.is-dragging {
     display: none !important;
 }
 
+/* =========================================================
+   GAME OVER - LUKY DEFEAT QUOTE
+   Persistent quote shown under Luky's name when the player wins.
+========================================================= */
+
+.game-over-defeat-quote {
+    max-width: 260px;
+
+    margin-top: -4px;
+    padding: 8px 12px;
+
+    color: var(--text);
+
+    text-align: center;
+
+    border:
+        1px solid rgba(212, 163, 63, 0.22);
+
+    border-radius: 12px;
+
+    background:
+        rgba(212, 163, 63, 0.055);
+
+    font-size: 0.94rem;
+    font-weight: 800;
+    line-height: 1.35;
+}
+
+.game-over-defeat-quote::before {
+    content: "„";
+}
+
+.game-over-defeat-quote::after {
+    content: "“";
+}
+
+@media (max-width: 760px) {
+
+    .game-over-defeat-quote {
+        max-width: 150px;
+
+        padding: 6px 8px;
+
+        font-size: 0.78rem;
+        line-height: 1.3;
+    }
+}
+
