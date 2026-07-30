@@ -977,7 +977,6 @@ function updateConfirmCharacterButton() {
         );
 }
 
-
 function clearNewCharacterSelection() {
 
     UI_STATE.selectedCharacterId =
@@ -1505,6 +1504,9 @@ function renderAchievements() {
     }
 
 
+    setupAchievementLightboxControls();
+
+
     container.innerHTML =
         "";
 
@@ -1524,6 +1526,12 @@ function renderAchievements() {
             const card =
                 fragment.querySelector(
                     ".achievement-card"
+                );
+
+
+            const visual =
+                fragment.querySelector(
+                    ".achievement-visual"
                 );
 
 
@@ -1614,6 +1622,36 @@ function renderAchievements() {
                 image.alt =
                     achievement.title;
 
+
+                /*
+                    Fotografie odemykaného skinu je klikací
+                    a zobrazí se v plné velikosti.
+                */
+
+                if (visual) {
+
+                    visual.disabled =
+                        false;
+
+
+                    visual.setAttribute(
+                        "aria-label",
+                        `Zobrazit ${achievement.title} v plné velikosti`
+                    );
+
+
+                    visual.addEventListener(
+                        "click",
+                        () => {
+
+                            openAchievementLightbox(
+                                achievement.image,
+                                achievement.title
+                            );
+                        }
+                    );
+                }
+
             } else if (
                 achievement.cardPreview
             ) {
@@ -1643,10 +1681,24 @@ function renderAchievements() {
                     );
                 }
 
+
+                if (visual) {
+
+                    visual.disabled =
+                        true;
+                }
+
             } else {
 
                 icon.hidden =
                     false;
+
+
+                if (visual) {
+
+                    visual.disabled =
+                        true;
+                }
             }
 
 
@@ -1659,14 +1711,34 @@ function renderAchievements() {
                     false;
 
 
+                const current =
+                    Number(
+                        achievement.current ||
+                        0
+                    );
+
+
+                const target =
+                    Math.max(
+                        1,
+                        Number(
+                            achievement.target ||
+                            1
+                        )
+                    );
+
+
                 const percent =
                     Math.min(
                         100,
-                        (
-                            achievement.current /
-                            achievement.target
-                        ) *
-                        100
+                        Math.max(
+                            0,
+                            (
+                                current /
+                                target
+                            ) *
+                            100
+                        )
                     );
 
 
@@ -1675,7 +1747,7 @@ function renderAchievements() {
 
 
                 progressText.textContent =
-                    `${achievement.current} / ${achievement.target}`;
+                    `${current} / ${target}`;
 
             } else {
 
@@ -1797,6 +1869,159 @@ function createAchievementCardPreview(
 
 
 /* =========================================================
+   ACHIEVEMENT LIGHTBOX
+========================================================= */
+
+function setupAchievementLightboxControls() {
+
+    const lightbox =
+        document.getElementById(
+            "achievement-image-lightbox"
+        );
+
+
+    if (
+        !lightbox ||
+        lightbox.dataset
+            .controlsReady ===
+            "true"
+    ) {
+        return;
+    }
+
+
+    const closeButton =
+        document.getElementById(
+            "achievement-lightbox-close"
+        );
+
+
+    const backdrop =
+        document.getElementById(
+            "achievement-lightbox-backdrop"
+        );
+
+
+    closeButton
+        ?.addEventListener(
+            "click",
+            closeAchievementLightbox
+        );
+
+
+    backdrop
+        ?.addEventListener(
+            "click",
+            closeAchievementLightbox
+        );
+
+
+    document.addEventListener(
+        "keydown",
+        (event) => {
+
+            if (
+                event.key ===
+                    "Escape" &&
+                !lightbox.hidden
+            ) {
+
+                closeAchievementLightbox();
+            }
+        }
+    );
+
+
+    lightbox.dataset.controlsReady =
+        "true";
+}
+
+
+function openAchievementLightbox(
+    imageSrc,
+    title
+) {
+
+    const lightbox =
+        document.getElementById(
+            "achievement-image-lightbox"
+        );
+
+
+    const image =
+        document.getElementById(
+            "achievement-lightbox-image"
+        );
+
+
+    const titleElement =
+        document.getElementById(
+            "achievement-lightbox-title"
+        );
+
+
+    if (
+        !lightbox ||
+        !image
+    ) {
+        return;
+    }
+
+
+    image.src =
+        imageSrc;
+
+
+    image.alt =
+        title ||
+        "Náhled skinu";
+
+
+    if (titleElement) {
+
+        titleElement.textContent =
+            title ||
+            "Nový skin";
+    }
+
+
+    lightbox.hidden =
+        false;
+}
+
+
+function closeAchievementLightbox() {
+
+    const lightbox =
+        document.getElementById(
+            "achievement-image-lightbox"
+        );
+
+
+    const image =
+        document.getElementById(
+            "achievement-lightbox-image"
+        );
+
+
+    if (!lightbox) {
+        return;
+    }
+
+
+    lightbox.hidden =
+        true;
+
+
+    if (image) {
+
+        image.src =
+            "";
+    }
+}
+
+
+/* =========================================================
    GAME START
 ========================================================= */
 
@@ -1811,14 +2036,18 @@ function startGameUI(
 
     UI_STATE.selectedCardIds.clear();
 
+
     UI_STATE.pendingPlayCardIds =
         null;
+
 
     UI_STATE.colorChoiceMinimized =
         false;
 
+
     UI_STATE.firstPlayerActionDone =
         false;
+
 
     resetSpeechUI();
 
@@ -1895,9 +2124,6 @@ function setupGameControls() {
             "click",
             () => {
 
-                markFirstPlayerAction();
-
-
                 const state =
                     getGameState();
 
@@ -1911,7 +2137,7 @@ function setupGameControls() {
 
                     showToast(
                         "Stůj",
-                        "Musíš přehodit Stůj, nebo zvolit „Stojím“."
+                        "Přehraj Stůj, nebo zvol „Stojím“."
                     );
 
 
@@ -1919,10 +2145,30 @@ function setupGameControls() {
                 }
 
 
-                playerDraw();
+                const success =
+                    playerDraw();
+
+
+                if (success) {
+
+                    markFirstPlayerAction();
+                }
             }
         );
 
+
+    /*
+        Celá zóna odhodu je klikací.
+
+        Díky CSS:
+        .discard-pile,
+        .discard-pile * {
+            pointer-events: none;
+        }
+
+        projde klik i přímo přes vrchní kartu
+        do #discard-zone.
+    */
 
     document
         .getElementById(
@@ -1938,8 +2184,6 @@ function setupGameControls() {
                         .size >
                     0
                 ) {
-
-                    markFirstPlayerAction();
 
                     attemptSelectedCardPlay();
 
@@ -1960,7 +2204,13 @@ function setupGameControls() {
             "click",
             () => {
 
-                markFirstPlayerAction();
+                /*
+                    UNO tlačítko samo o sobě nebereme
+                    jako první tah karty.
+
+                    Hlavně se zde nesmí zobrazovat
+                    žádná nápověda hráči.
+                */
 
                 playerCallUno();
             }
@@ -1988,15 +2238,19 @@ function setupGameControls() {
             "click",
             () => {
 
-                markFirstPlayerAction();
-
-
                 UI_STATE
                     .selectedCardIds
                     .clear();
 
 
-                playerAcceptSkip();
+                const success =
+                    playerAcceptSkip();
+
+
+                if (success) {
+
+                    markFirstPlayerAction();
+                }
             }
         );
 
@@ -2054,13 +2308,22 @@ function setupGameControls() {
 
                 saveAndLeaveGame();
 
+
+                /*
+                    Při skutečném opuštění partie
+                    už může být YouTube zastavený.
+                */
+
                 stopMusic();
 
+
                 closeModal();
+
 
                 renderMainMenuStats();
 
                 renderMusicSetting();
+
 
                 showScreen(
                     "screen-menu"
@@ -2111,11 +2374,14 @@ function setupGameControls() {
 
                 stopMusic();
 
+
                 closeModal();
+
 
                 renderMainMenuStats();
 
                 renderMusicSetting();
+
 
                 showScreen(
                     "screen-menu"
@@ -2218,6 +2484,17 @@ function renderGame() {
     updateDiscardPlayTarget();
 
     updateMusicButton();
+
+
+    /*
+        Na mobilu se po každém renderu
+        ruka přepočítá tak, aby byly
+        všechny karty viditelné.
+    */
+
+    requestAnimationFrame(
+        fitPlayerHandToScreen
+    );
 }
 
 
@@ -2415,7 +2692,9 @@ function renderPlayerHand(
             "playing" &&
         state.turn ===
             "player" &&
-        !GAME_RUNTIME.paused;
+        !GAME_RUNTIME.paused &&
+        !GAME_RUNTIME
+            .pendingSevenChoice;
 
 
     container.classList.toggle(
@@ -2487,6 +2766,142 @@ function renderPlayerHand(
             container.appendChild(
                 element
             );
+        }
+    );
+
+
+    requestAnimationFrame(
+        fitPlayerHandToScreen
+    );
+}
+
+
+/* =========================================================
+   MOBILNÍ PŘIZPŮSOBENÍ RUKY
+========================================================= */
+
+function fitPlayerHandToScreen() {
+
+    const container =
+        document.getElementById(
+            "player-hand"
+        );
+
+
+    if (!container) {
+        return;
+    }
+
+
+    const cards =
+        [
+            ...container.querySelectorAll(
+                ".game-card"
+            )
+        ];
+
+
+    if (
+        cards.length ===
+        0
+    ) {
+        return;
+    }
+
+
+    /*
+        Desktop si nechává rozestupy
+        kompletně řídit přes CSS.
+    */
+
+    if (
+        window.innerWidth >
+        760
+    ) {
+
+        cards.forEach(
+            (card) => {
+
+                card.style.removeProperty(
+                    "margin-left"
+                );
+            }
+        );
+
+
+        cards[0].style.marginLeft =
+            "0px";
+
+
+        return;
+    }
+
+
+    const availableWidth =
+        Math.max(
+            1,
+            container.clientWidth -
+            6
+        );
+
+
+    const cardWidth =
+        cards[0]
+            .getBoundingClientRect()
+            .width;
+
+
+    if (
+        cards.length ===
+        1
+    ) {
+
+        cards[0].style.marginLeft =
+            "0px";
+
+
+        return;
+    }
+
+
+    /*
+        Maximální vzdálenost mezi levými
+        hranami sousedních karet tak,
+        aby se poslední karta vešla.
+    */
+
+    const step =
+        Math.max(
+            12,
+            Math.min(
+                cardWidth,
+                (
+                    availableWidth -
+                    cardWidth
+                ) /
+                (
+                    cards.length -
+                    1
+                )
+            )
+        );
+
+
+    const overlap =
+        Math.max(
+            0,
+            cardWidth -
+            step
+        );
+
+
+    cards.forEach(
+        (card, index) => {
+
+            card.style.marginLeft =
+                index === 0
+                    ? "0px"
+                    : `-${overlap}px`;
         }
     );
 }
@@ -2583,6 +2998,15 @@ function renderDiscardPile(
 
     element.disabled =
         true;
+
+
+    /*
+        Klik má zachytit celý #discard-zone,
+        nikoliv samotný button karty.
+    */
+
+    element.tabIndex =
+        -1;
 
 
     container.appendChild(
@@ -2708,7 +3132,10 @@ function handleCardClick(
         state.status !==
             "playing" ||
         state.turn !==
-            "player"
+            "player" ||
+        GAME_RUNTIME.paused ||
+        GAME_RUNTIME
+            .pendingSevenChoice
     ) {
         return;
     }
@@ -2789,6 +3216,7 @@ function handleCardClick(
     } else {
 
         selected.clear();
+
 
         selected.add(
             card.id
@@ -2887,7 +3315,6 @@ function sanitizeSelectedCards(
     );
 }
 
-
 /* =========================================================
    DISCARD TARGET
 ========================================================= */
@@ -2943,9 +3370,31 @@ function beginCardDrag(
         state.status !==
             "playing" ||
         state.turn !==
-            "player"
+            "player" ||
+        GAME_RUNTIME.paused ||
+        GAME_RUNTIME
+            .pendingSevenChoice
     ) {
         return;
+    }
+
+
+    /*
+        DŮLEŽITÉ PRO MOBIL:
+
+        Jakmile gesto začne na kartě,
+        prohlížeč nesmí gesto použít
+        ke scrollování stránky.
+
+        CSS má navíc na .game-card:
+        touch-action: none;
+    */
+
+    if (
+        event.cancelable
+    ) {
+
+        event.preventDefault();
     }
 
 
@@ -3015,7 +3464,7 @@ function beginCardDrag(
             .map(
                 (id) =>
                     document.querySelector(
-                        `[data-card-id="${CSS.escape(id)}"]`
+                        `#player-hand [data-card-id="${CSS.escape(id)}"]`
                     )
             )
             .filter(
@@ -3072,7 +3521,11 @@ function beginCardDrag(
 
     window.addEventListener(
         "pointermove",
-        handleCardDragMove
+        handleCardDragMove,
+        {
+            passive:
+                false
+        }
     );
 
 
@@ -3111,6 +3564,19 @@ function handleCardDragMove(
             drag.pointerId
     ) {
         return;
+    }
+
+
+    /*
+        Na mobilu při držení karty
+        blokujeme scroll stránky.
+    */
+
+    if (
+        event.cancelable
+    ) {
+
+        event.preventDefault();
     }
 
 
@@ -3187,6 +3653,14 @@ function endCardDrag(
     }
 
 
+    if (
+        event.cancelable
+    ) {
+
+        event.preventDefault();
+    }
+
+
     const deltaY =
         event.clientY -
         drag.startY;
@@ -3207,16 +3681,36 @@ function endCardDrag(
 
 
     const shouldPlay =
-        inDropZone ||
-        movedEnoughUp;
+        drag.moved &&
+        (
+            inDropZone ||
+            movedEnoughUp
+        );
+
+
+    /*
+        Pointerup po dragování může následně
+        vyvolat click na kartě.
+
+        Ten by nám znovu změnil výběr,
+        proto jej po skutečném dragu
+        na chvíli ignorujeme.
+    */
+
+    if (
+        drag.moved
+    ) {
+
+        UI_STATE.suppressCardClickUntil =
+            Date.now() +
+            250;
+    }
 
 
     cleanupCardDrag();
 
 
     if (shouldPlay) {
-
-        markFirstPlayerAction();
 
         attemptSelectedCardPlay();
     }
@@ -3252,11 +3746,33 @@ function cleanupCardDrag() {
     );
 
 
+    const zone =
+        document.getElementById(
+            "discard-zone"
+        );
+
+
+    if (zone) {
+
+        zone.classList.toggle(
+            "is-play-target",
+            UI_STATE
+                .selectedCardIds
+                .size >
+            0
+        );
+    }
+
+
     UI_STATE.drag.active =
         false;
 
 
     UI_STATE.drag.pointerId =
+        null;
+
+
+    UI_STATE.drag.cardId =
         null;
 
 
@@ -3381,9 +3897,18 @@ async function attemptSelectedCardPlay() {
         .clear();
 
 
-    await playerPlayCards(
-        ids
-    );
+    const result =
+        await playerPlayCards(
+            ids
+        );
+
+
+    if (
+        result?.valid
+    ) {
+
+        markFirstPlayerAction();
+    }
 
 
     renderGame();
@@ -3407,11 +3932,12 @@ function renderGameIndicators(
     if (penalty) {
 
         /*
-            Penalizaci ukazujeme hlavně tehdy,
-            když ji řeší hráč.
+            Penalizaci ukazujeme jako informaci
+            jen když ji řeší hráč.
 
-            Když hráč sám právě poslal +X Lukymu,
-            nebude to působit jako akční tlačítko.
+            Když ji hráč právě poslal Lukymu,
+            nemá to vypadat jako tlačítko,
+            které má hráč stisknout.
         */
 
         penalty.hidden =
@@ -3523,13 +4049,6 @@ function renderGameStatus(
             "Rozhodni se, zda chceš Lukyho karty.";
 
     } else if (
-        state.pendingPlayerUno
-    ) {
-
-        text =
-            "Řekni UNO!";
-
-    } else if (
         state.drawPenalty >
         0
     ) {
@@ -3537,7 +4056,7 @@ function renderGameStatus(
         text =
             state.turn ===
                 "player"
-                ? `Přehraj penalizaci +${state.drawPenalty}, nebo si vezmi karty.`
+                ? `Přehraj +${state.drawPenalty} nebo si lízni karty.`
                 : "Luky řeší penalizaci.";
 
     } else if (
@@ -3548,13 +4067,21 @@ function renderGameStatus(
         text =
             state.turn ===
                 "player"
-                ? "Luky dal Stůj. Přehraj ho vlastním Stůj, nebo zvol „Stojím“."
+                ? "Luky dal Stůj. Přehraj Stůj nebo zvol „Stojím“."
                 : "Luky řeší Stůj.";
 
     } else if (
         state.turn ===
         "player"
     ) {
+
+        /*
+            pendingPlayerUno se zde ZÁMĚRNĚ
+            vůbec nepoužívá.
+
+            Hra hráči nesmí napovědět,
+            že má jednu kartu nebo že má říct UNO.
+        */
 
         text =
             "Jsi na tahu.";
@@ -3659,10 +4186,19 @@ function setupModalControls() {
                         closeColorChoice();
 
 
-                        await playerPlayCards(
-                            ids,
-                            color
-                        );
+                        const result =
+                            await playerPlayCards(
+                                ids,
+                                color
+                            );
+
+
+                        if (
+                            result?.valid
+                        ) {
+
+                            markFirstPlayerAction();
+                        }
 
 
                         renderGame();
@@ -3706,6 +4242,9 @@ function setupModalControls() {
                 await resolvePlayerSevenChoice(
                     true
                 );
+
+
+                renderGame();
             }
         );
 
@@ -3724,6 +4263,9 @@ function setupModalControls() {
                 await resolvePlayerSevenChoice(
                     false
                 );
+
+
+                renderGame();
             }
         );
 
@@ -4119,6 +4661,9 @@ function closeHistory() {
     );
 }
 
+/* =========================================================
+   HISTORY RENDER
+========================================================= */
 
 function renderHistory(
     state
@@ -4432,7 +4977,7 @@ function createHistoryCardElement(
     const fakeCard = {
 
         id:
-            `history-${Math.random()}`,
+            `history-${Date.now()}-${Math.random()}`,
 
         type:
             card.type,
@@ -4457,9 +5002,19 @@ function createHistoryCardElement(
             true;
 
 
+        element.tabIndex =
+            -1;
+
+
         return element;
 
-    } catch {
+    } catch (error) {
+
+        console.error(
+            "Nepodařilo se vytvořit kartu historie:",
+            error
+        );
+
 
         return null;
     }
@@ -4582,6 +5137,7 @@ function setupGameEvents() {
             showLukySpeech(
                 event.detail
                     ?.text,
+
                 event.detail
                     ?.duration
             );
@@ -4596,6 +5152,7 @@ function setupGameEvents() {
             showPlayerSpeech(
                 event.detail
                     ?.text,
+
                 event.detail
                     ?.duration
             );
@@ -4685,14 +5242,54 @@ function setupGameEvents() {
     );
 
 
+    /*
+        DŮLEŽITÉ:
+        Zde už hráči nic nenapovídáme předem.
+
+        Event přijde až POTÉ, co skutečně
+        nestihl říct UNO.
+    */
+
     window.addEventListener(
         "dotsuno:player-missed-uno",
         (event) => {
 
+            const detail =
+                event.detail ||
+                {};
+
+
+            const playerName =
+                detail.playerName ||
+                getActivePlayerDisplayName();
+
+
+            const penalty =
+                Number(
+                    detail.penalty ??
+                    2
+                );
+
+
+            const message =
+                detail.text ||
+                `${playerName} neřekl UNO a proto si líže ${formatUICardAmount(penalty)}.`;
+
+
             showToast(
                 "Neřekl jsi UNO!",
-                `Bereš ${event.detail?.penalty ?? 2} karty.`
+                message
             );
+
+
+            /*
+                renderGame() sice přijde přes
+                state-changed, ale explicitní
+                render nevadí a zajistí okamžitou
+                aktualizaci statusu.
+            */
+
+            renderGame();
         }
     );
 
@@ -4713,8 +5310,97 @@ function setupGameEvents() {
 
     window.addEventListener(
         "dotsuno:game-left",
-        stopMusic
+        () => {
+
+            stopMusic();
+        }
     );
+
+
+    /*
+        Globální změna hudby z settings.js.
+
+        Během partie se player NErestartuje.
+        Jen se ztlumí / odtlumí.
+    */
+
+    window.addEventListener(
+        "dotsuno:music-setting-changed",
+        (event) => {
+
+            const enabled =
+                Boolean(
+                    event.detail
+                        ?.enabled
+                );
+
+
+            applyMusicEnabledState(
+                enabled
+            );
+
+
+            renderMusicSetting();
+
+            updateMusicButton();
+        }
+    );
+}
+
+
+function getActivePlayerDisplayName() {
+
+    const slotIndex =
+        getActiveSlotIndex();
+
+
+    if (
+        slotIndex ===
+        null
+    ) {
+
+        return "Hráč";
+    }
+
+
+    const slot =
+        getSaveSlot(
+            slotIndex
+        );
+
+
+    return (
+        getCharacterName(
+            slot?.characterId
+        ) ||
+        "Hráč"
+    );
+}
+
+
+function formatUICardAmount(
+    amount
+) {
+
+    if (
+        amount ===
+        1
+    ) {
+
+        return "1 kartu";
+    }
+
+
+    if (
+        amount >= 2 &&
+        amount <= 4
+    ) {
+
+        return `${amount} karty`;
+    }
+
+
+    return `${amount} karet`;
 }
 
 
@@ -4912,6 +5598,18 @@ function hideLukySpeech() {
     }
 
 
+    if (
+        UI_STATE
+            .lukySpeechTimer
+    ) {
+
+        clearTimeout(
+            UI_STATE
+                .lukySpeechTimer
+        );
+    }
+
+
     UI_STATE.lukySpeechTimer =
         null;
 }
@@ -4999,6 +5697,18 @@ function hidePlayerSpeech() {
     }
 
 
+    if (
+        UI_STATE
+            .playerSpeechTimer
+    ) {
+
+        clearTimeout(
+            UI_STATE
+                .playerSpeechTimer
+        );
+    }
+
+
     UI_STATE.playerSpeechTimer =
         null;
 }
@@ -5039,11 +5749,18 @@ function resetSpeechUI() {
     }
 
 
+    UI_STATE.lukySpeechTimer =
+        null;
+
+
+    UI_STATE.playerSpeechTimer =
+        null;
+
+
     hideLukySpeech();
 
     hidePlayerSpeech();
 }
-
 
 /* =========================================================
    EMOTES
@@ -5297,6 +6014,119 @@ function showGameOver(
     }
 
 
+    /*
+        Vítěz má zelené ohraničení,
+        poražený červené.
+
+        CSS umí obě varianty:
+        .winner / .loser na celé postavě
+        i .is-winner / .is-loser na image-wrap.
+    */
+
+    const playerCharacter =
+        document.getElementById(
+            "game-over-player"
+        );
+
+
+    const lukyCharacter =
+        document.getElementById(
+            "game-over-luky"
+        );
+
+
+    const playerImageWrap =
+        document.getElementById(
+            "game-over-player-image-wrap"
+        );
+
+
+    const lukyImageWrap =
+        document.getElementById(
+            "game-over-luky-image-wrap"
+        );
+
+
+    [
+        playerCharacter,
+        lukyCharacter
+    ].forEach(
+        (element) => {
+
+            element?.classList.remove(
+                "winner",
+                "loser"
+            );
+        }
+    );
+
+
+    [
+        playerImageWrap,
+        lukyImageWrap
+    ].forEach(
+        (element) => {
+
+            element?.classList.remove(
+                "is-winner",
+                "is-loser"
+            );
+        }
+    );
+
+
+    if (playerWon) {
+
+        playerCharacter
+            ?.classList.add(
+                "winner"
+            );
+
+
+        playerImageWrap
+            ?.classList.add(
+                "is-winner"
+            );
+
+
+        lukyCharacter
+            ?.classList.add(
+                "loser"
+            );
+
+
+        lukyImageWrap
+            ?.classList.add(
+                "is-loser"
+            );
+
+    } else {
+
+        playerCharacter
+            ?.classList.add(
+                "loser"
+            );
+
+
+        playerImageWrap
+            ?.classList.add(
+                "is-loser"
+            );
+
+
+        lukyCharacter
+            ?.classList.add(
+                "winner"
+            );
+
+
+        lukyImageWrap
+            ?.classList.add(
+                "is-winner"
+            );
+    }
+
+
     if (
         detail.slot
     ) {
@@ -5350,56 +6180,26 @@ function setupMusicControls() {
             "click",
             () => {
 
-                const enabled =
-                    toggleMusicEnabled();
+                /*
+                    toggleMusicEnabled() vyvolá
+                    dotsuno:music-setting-changed.
 
+                    Samotné mute/unmute tedy
+                    řeší listener v setupGameEvents().
 
-                if (enabled) {
+                    Hudba se NERESTARTUJE.
+                */
 
-                    startMusicForGame();
-
-                } else {
-
-                    stopMusic();
-                }
-
-
-                renderMusicSetting();
-
-                updateMusicButton();
+                toggleMusicEnabled();
             }
         );
 
 
-    window.addEventListener(
-        "dotsuno:music-setting-changed",
-        (event) => {
+    /*
+        YouTube připravujeme už při načtení menu.
+    */
 
-            const enabled =
-                Boolean(
-                    event.detail
-                        ?.enabled
-                );
-
-
-            if (!enabled) {
-
-                stopMusic();
-
-            } else if (
-                UI_STATE.currentScreen ===
-                "screen-game"
-            ) {
-
-                startMusicForGame();
-            }
-
-
-            renderMusicSetting();
-
-            updateMusicButton();
-        }
-    );
+    initializeYouTubePlayer();
 }
 
 
@@ -5472,33 +6272,108 @@ function updateMusicButton() {
    YOUTUBE
 ========================================================= */
 
-window.onYouTubeIframeAPIReady =
-    function onYouTubeIframeAPIReady() {
+/*
+    API script je vložený v index.html.
 
-        const target =
-            GAME_CONFIG
-                .music
-                .youtube
-                .playerElementId;
+    Proto mohou nastat dvě situace:
+
+    1) API ještě není připravené:
+       počkáme na onYouTubeIframeAPIReady.
+
+    2) API už připravené je:
+       vytvoříme player rovnou.
+*/
+
+function initializeYouTubePlayer() {
+
+    if (
+        UI_STATE.youtubePlayer ||
+        UI_STATE.youtubeInitializing
+    ) {
+        return;
+    }
 
 
-        if (
-            !window.YT ||
-            !YT.Player
-        ) {
-            return;
-        }
+    UI_STATE.youtubeInitializing =
+        true;
 
+
+    if (
+        window.YT &&
+        typeof YT.Player ===
+            "function"
+    ) {
+
+        createYouTubePlayer();
+
+        return;
+    }
+
+
+    /*
+        Globální callback si může YouTube
+        zavolat později.
+    */
+
+    window.onYouTubeIframeAPIReady =
+        function onYouTubeIframeAPIReady() {
+
+            createYouTubePlayer();
+        };
+}
+
+
+function createYouTubePlayer() {
+
+    if (
+        UI_STATE.youtubePlayer
+    ) {
+
+        UI_STATE.youtubeInitializing =
+            false;
+
+        return;
+    }
+
+
+    if (
+        !window.YT ||
+        typeof YT.Player !==
+            "function"
+    ) {
+
+        UI_STATE.youtubeInitializing =
+            false;
+
+        return;
+    }
+
+
+    const target =
+        GAME_CONFIG
+            .music
+            .youtube
+            .playerElementId;
+
+
+    try {
 
         UI_STATE.youtubePlayer =
             new YT.Player(
                 target,
                 {
+                    /*
+                        Player má skutečnou velikost.
+                        CSS ho pouze přesouvá mimo viewport.
+
+                        To je vhodnější než původní 1×1 px.
+                    */
+
                     height:
-                        "1",
+                        "240",
 
                     width:
-                        "1",
+                        "240",
 
                     videoId:
                         GAME_CONFIG
@@ -5507,6 +6382,7 @@ window.onYouTubeIframeAPIReady =
                             .videoId,
 
                     playerVars: {
+
                         autoplay:
                             0,
 
@@ -5519,9 +6395,6 @@ window.onYouTubeIframeAPIReady =
                         fs:
                             0,
 
-                        modestbranding:
-                            1,
-
                         playsinline:
                             1,
 
@@ -5532,52 +6405,178 @@ window.onYouTubeIframeAPIReady =
                     events: {
 
                         onReady:
-                            () => {
+                            handleYouTubePlayerReady,
 
-                                UI_STATE.youtubeReady =
-                                    true;
+                        onStateChange:
+                            handleYouTubeStateChange,
 
+                        onError:
+                            (event) => {
 
-                                try {
-
-                                    UI_STATE
-                                        .youtubePlayer
-                                        .setVolume(
-                                            GAME_CONFIG
-                                                .music
-                                                .volume
-                                        );
-
-                                } catch {
-                                    // ignore
-                                }
-
-
-                                if (
-                                    UI_STATE.currentScreen ===
-                                        "screen-game" &&
-                                    isMusicEnabled()
-                                ) {
-
-                                    startMusicForGame();
-                                }
+                                console.warn(
+                                    "YouTube player chyba:",
+                                    event.data
+                                );
                             }
                     }
                 }
             );
-    };
+
+    } catch (error) {
+
+        UI_STATE.youtubeInitializing =
+            false;
 
 
-function startMusicForGame() {
+        console.warn(
+            "YouTube player se nepodařilo vytvořit.",
+            error
+        );
+    }
+}
+
+
+function handleYouTubePlayerReady() {
+
+    UI_STATE.youtubeReady =
+        true;
+
+
+    UI_STATE.youtubeInitializing =
+        false;
+
+
+    try {
+
+        UI_STATE
+            .youtubePlayer
+            .setVolume(
+                GAME_CONFIG
+                    .music
+                    .volume
+            );
+
+
+        /*
+            V menu je YouTube vždy ztlumený.
+
+            Nechceme, aby cokoli začalo
+            znít před spuštěním partie.
+        */
+
+        UI_STATE
+            .youtubePlayer
+            .mute();
+
+    } catch (error) {
+
+        console.warn(
+            "Nepodařilo se nastavit YouTube player.",
+            error
+        );
+    }
+
+
+    prepareMusicPlayerInMenu();
+
 
     if (
-        !isMusicEnabled() ||
-        UI_STATE.currentScreen !==
-            "screen-game"
+        UI_STATE.currentScreen ===
+        "screen-game"
+    ) {
+
+        startMusicForGame();
+    }
+}
+
+
+function handleYouTubeStateChange(
+    event
+) {
+
+    if (
+        !window.YT
     ) {
         return;
     }
 
+
+    if (
+        event.data ===
+        YT.PlayerState.PLAYING
+    ) {
+
+        UI_STATE.musicPlaying =
+            true;
+
+
+        /*
+            Pokud jsme ve hře, respektujeme
+            globální nastavení zvuku.
+
+            V menu player zůstává ztlumený.
+        */
+
+        if (
+            UI_STATE.currentScreen ===
+            "screen-game"
+        ) {
+
+            applyMusicEnabledState(
+                isMusicEnabled()
+            );
+
+        } else {
+
+            try {
+
+                UI_STATE
+                    .youtubePlayer
+                    .mute();
+
+            } catch {
+                // ignore
+            }
+        }
+
+    } else if (
+        event.data ===
+            YT.PlayerState.ENDED
+    ) {
+
+        /*
+            Video skončilo.
+            Při další partii se vybere
+            nový náhodný track.
+        */
+
+        UI_STATE.musicPlaying =
+            false;
+
+
+        UI_STATE.activeMusicTrack =
+            null;
+
+
+        if (
+            UI_STATE.currentScreen ===
+            "screen-game"
+        ) {
+
+            prepareNextMusicTrack();
+
+
+            startPreparedMusicTrack();
+        }
+    }
+}
+
+
+/* =========================================================
+   MUSIC PRELOAD / CUE
+========================================================= */
+
+function prepareMusicPlayerInMenu() {
 
     if (
         !UI_STATE.youtubeReady ||
@@ -5588,14 +6587,40 @@ function startMusicForGame() {
 
 
     /*
-        Pokud už hudba v aktuální partii hraje,
-        znovu nevybíráme jinou skladbu.
+        Pokud je už něco připravené,
+        zbytečně nepřipravujeme další track.
     */
 
     if (
-        UI_STATE.musicPlaying
+        UI_STATE.activeMusicTrack
     ) {
+
+        try {
+
+            UI_STATE
+                .youtubePlayer
+                .mute();
+
+        } catch {
+            // ignore
+        }
+
+
         return;
+    }
+
+
+    prepareNextMusicTrack();
+}
+
+
+function prepareNextMusicTrack() {
+
+    if (
+        !UI_STATE.youtubeReady ||
+        !UI_STATE.youtubePlayer
+    ) {
+        return false;
     }
 
 
@@ -5603,15 +6628,43 @@ function startMusicForGame() {
         getRandomMusicTrack();
 
 
+    if (!track) {
+        return false;
+    }
+
+
     UI_STATE.activeMusicTrack =
         track;
 
 
+    UI_STATE.musicPlaying =
+        false;
+
+
     try {
+
+        /*
+            cueVideoById video pouze připraví.
+            Samo ho nespustí.
+
+            Tím se player načte už v menu
+            a samotná hra nemusí teprve
+            vytvářet nový iframe.
+
+            YouTube API ale bohužel neposkytuje
+            spolehlivý stav "běží reklama",
+            takže reklamy nejde programově
+            zaručeně detekovat a filtrovat.
+        */
 
         UI_STATE
             .youtubePlayer
-            .loadVideoById({
+            .mute();
+
+
+        UI_STATE
+            .youtubePlayer
+            .cueVideoById({
                 videoId:
                     GAME_CONFIG
                         .music
@@ -5624,6 +6677,154 @@ function startMusicForGame() {
             });
 
 
+        return true;
+
+    } catch (error) {
+
+        console.warn(
+            "Hudbu se nepodařilo připravit.",
+            error
+        );
+
+
+        UI_STATE.activeMusicTrack =
+            null;
+
+
+        return false;
+    }
+}
+
+
+/* =========================================================
+   START HUDBY PRO PARTII
+========================================================= */
+
+function startMusicForGame() {
+
+    if (
+        UI_STATE.currentScreen !==
+        "screen-game"
+    ) {
+        return;
+    }
+
+
+    if (
+        !UI_STATE.youtubeReady ||
+        !UI_STATE.youtubePlayer
+    ) {
+
+        /*
+            Player se vytvoří asynchronně.
+            onReady pak startMusicForGame()
+            zavolá znovu.
+        */
+
+        initializeYouTubePlayer();
+
+        return;
+    }
+
+
+    /*
+        Pokud není připravený track,
+        vybereme jeden teď.
+    */
+
+    if (
+        !UI_STATE.activeMusicTrack
+    ) {
+
+        prepareNextMusicTrack();
+    }
+
+
+    startPreparedMusicTrack();
+}
+
+
+function startPreparedMusicTrack() {
+
+    if (
+        UI_STATE.currentScreen !==
+            "screen-game" ||
+        !UI_STATE.youtubeReady ||
+        !UI_STATE.youtubePlayer
+    ) {
+        return;
+    }
+
+
+    const track =
+        UI_STATE.activeMusicTrack ||
+        getRandomMusicTrack();
+
+
+    if (!track) {
+        return;
+    }
+
+
+    UI_STATE.activeMusicTrack =
+        track;
+
+
+    try {
+
+        /*
+            Pokud byl track pouze cue-nutý,
+            playVideo() začne přehrávat
+            připravenou pozici.
+
+            Když cue z nějakého důvodu
+            neproběhl, loadVideoById níže
+            zajistí správný start.
+        */
+
+        const currentVideoData =
+            typeof UI_STATE
+                .youtubePlayer
+                .getVideoData ===
+                "function"
+                ? UI_STATE
+                    .youtubePlayer
+                    .getVideoData()
+                : null;
+
+
+        const expectedVideoId =
+            GAME_CONFIG
+                .music
+                .youtube
+                .videoId;
+
+
+        if (
+            !currentVideoData ||
+            currentVideoData.video_id !==
+                expectedVideoId
+        ) {
+
+            UI_STATE
+                .youtubePlayer
+                .loadVideoById({
+                    videoId:
+                        expectedVideoId,
+
+                    startSeconds:
+                        track.startSeconds ||
+                        0
+                });
+
+        } else {
+
+            UI_STATE
+                .youtubePlayer
+                .playVideo();
+        }
+
+
         UI_STATE
             .youtubePlayer
             .setVolume(
@@ -5633,9 +6834,16 @@ function startMusicForGame() {
             );
 
 
-        UI_STATE
-            .youtubePlayer
-            .playVideo();
+        /*
+            Zvuk nastavujeme podle preference.
+
+            Vypnutá hudba NEZASTAVÍ video.
+            Video pokračuje potichu.
+        */
+
+        applyMusicEnabledState(
+            isMusicEnabled()
+        );
 
 
         UI_STATE.musicPlaying =
@@ -5651,7 +6859,130 @@ function startMusicForGame() {
 }
 
 
+/* =========================================================
+   MUTE / UNMUTE
+========================================================= */
+
+function applyMusicEnabledState(
+    enabled
+) {
+
+    const player =
+        UI_STATE.youtubePlayer;
+
+
+    if (
+        !player ||
+        !UI_STATE.youtubeReady
+    ) {
+        return;
+    }
+
+
+    try {
+
+        if (
+            UI_STATE.currentScreen !==
+            "screen-game"
+        ) {
+
+            /*
+                Mimo hru se nikdy nemá ozvat zvuk.
+            */
+
+            player.mute();
+
+            UI_STATE.musicMuted =
+                true;
+
+
+            return;
+        }
+
+
+        if (enabled) {
+
+            player.setVolume(
+                GAME_CONFIG
+                    .music
+                    .volume
+            );
+
+
+            player.unMute();
+
+
+            /*
+                Pokud byl player z nějakého
+                důvodu pozastavený, pokračujeme.
+            */
+
+            const playerState =
+                typeof player.getPlayerState ===
+                    "function"
+                    ? player.getPlayerState()
+                    : null;
+
+
+            if (
+                window.YT &&
+                (
+                    playerState ===
+                        YT.PlayerState.PAUSED ||
+                    playerState ===
+                        YT.PlayerState.CUED
+                )
+            ) {
+
+                player.playVideo();
+            }
+
+
+            UI_STATE.musicMuted =
+                false;
+
+        } else {
+
+            /*
+                DŮLEŽITÉ:
+                žádné stopVideo() ani nový track.
+
+                Přehrávání pokračuje na pozadí,
+                pouze není slyšet.
+            */
+
+            player.mute();
+
+
+            UI_STATE.musicMuted =
+                true;
+        }
+
+    } catch (error) {
+
+        console.warn(
+            "Nepodařilo se změnit stav hudby.",
+            error
+        );
+    }
+}
+
+
+/* =========================================================
+   STOP HUDBY
+========================================================= */
+
 function stopMusic() {
+
+    /*
+        stopMusic() používáme pouze při:
+        - konci partie
+        - Uložit a odejít
+        - návratu z game-over do menu
+
+        NIKOLIV při běžném vypnutí
+        tlačítkem 🔊 / 🔇.
+    */
 
     if (
         UI_STATE.youtubePlayer
@@ -5663,6 +6994,11 @@ function stopMusic() {
                 .youtubePlayer
                 .stopVideo();
 
+
+            UI_STATE
+                .youtubePlayer
+                .mute();
+
         } catch {
             // ignore
         }
@@ -5673,10 +7009,31 @@ function stopMusic() {
         false;
 
 
+    UI_STATE.musicMuted =
+        true;
+
+
     UI_STATE.activeMusicTrack =
         null;
-}
 
+
+    /*
+        Jakmile jsme zpět v menu,
+        můžeme si dopředu připravit
+        náhodný track pro příští partii.
+    */
+
+    if (
+        UI_STATE.currentScreen !==
+        "screen-game"
+    ) {
+
+        setTimeout(
+            prepareMusicPlayerInMenu,
+            0
+        );
+    }
+}
 
 /* =========================================================
    IMAGE FALLBACKS
@@ -5758,6 +7115,20 @@ function setImageWithFallback({
         true;
 
 
+    if (!src) {
+
+        image.hidden =
+            true;
+
+
+        fallbackElement.hidden =
+            false;
+
+
+        return;
+    }
+
+
     image.hidden =
         false;
 
@@ -5789,6 +7160,142 @@ function setImageWithFallback({
     image.src =
         src;
 }
+
+
+/* =========================================================
+   RESPONSIVE UI
+========================================================= */
+
+function setupResponsiveGameListeners() {
+
+    let resizeTimer =
+        null;
+
+
+    const scheduleHandFit =
+        () => {
+
+            if (
+                resizeTimer
+            ) {
+
+                clearTimeout(
+                    resizeTimer
+                );
+            }
+
+
+            resizeTimer =
+                setTimeout(
+                    () => {
+
+                        resizeTimer =
+                            null;
+
+
+                        if (
+                            UI_STATE.currentScreen ===
+                            "screen-game"
+                        ) {
+
+                            fitPlayerHandToScreen();
+                        }
+                    },
+                    80
+                );
+        };
+
+
+    window.addEventListener(
+        "resize",
+        scheduleHandFit
+    );
+
+
+    window.addEventListener(
+        "orientationchange",
+        () => {
+
+            setTimeout(
+                fitPlayerHandToScreen,
+                160
+            );
+        }
+    );
+
+
+    /*
+        Na mobilech se při změně velikosti
+        visual viewportu může měnit dostupná
+        výška i bez klasického window resize.
+    */
+
+    window.visualViewport
+        ?.addEventListener(
+            "resize",
+            scheduleHandFit
+        );
+
+
+    /*
+        Po skutečném dragování nesmí následný
+        syntetický click znovu označit kartu.
+
+        Listener běží v capture fázi dřív,
+        než click listener konkrétní karty.
+    */
+
+    document.addEventListener(
+        "click",
+        (event) => {
+
+            if (
+                Date.now() >=
+                (
+                    UI_STATE
+                        .suppressCardClickUntil ||
+                    0
+                )
+            ) {
+
+                return;
+            }
+
+
+            const card =
+                event.target.closest(
+                    "#player-hand .game-card"
+                );
+
+
+            if (!card) {
+                return;
+            }
+
+
+            event.preventDefault();
+
+            event.stopPropagation();
+
+            event.stopImmediatePropagation();
+        },
+        true
+    );
+}
+
+
+/*
+    initializeUI() z první části byl vytvořený
+    ještě před přidáním responsive helperu.
+
+    Tento samostatný listener proto bezpečně
+    zapne responzivní obsluhu po načtení DOMu.
+*/
+
+document.addEventListener(
+    "DOMContentLoaded",
+    setupResponsiveGameListeners
+);
 
 
 /* =========================================================
