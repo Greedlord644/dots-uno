@@ -69,6 +69,12 @@ const GAME_RUNTIME = {
     emoteTimer:
         null,
 
+    mildEmoteTimestamps:
+        [],
+
+    lukyJustAcceptedSkip:
+        false,
+
     lukyTurnRunning:
         false,
 
@@ -153,6 +159,16 @@ function startNewGame(
 
     GAME_RUNTIME.paused =
         false;
+
+
+    GAME_RUNTIME
+        .lukyJustAcceptedSkip =
+        false;
+
+
+    GAME_RUNTIME
+        .mildEmoteTimestamps =
+        [];
 
 
     const gameNumber =
@@ -433,6 +449,16 @@ function continueSavedGame(
 
     GAME_RUNTIME.paused =
         false;
+
+
+    GAME_RUNTIME
+        .lukyJustAcceptedSkip =
+        false;
+
+
+    GAME_RUNTIME
+        .mildEmoteTimestamps =
+        [];
 
 
     emitGameEvent(
@@ -1072,6 +1098,16 @@ async function playerPlayCards(
         false;
 
 
+    if (
+        state.playerHand.length !==
+        1
+    ) {
+
+        state.playerUnoSaid =
+            false;
+    }
+
+
     cancelPlayerUnoTimer();
 
 
@@ -1605,7 +1641,17 @@ function playerDraw() {
         emitStateChanged();
 
 
-        maybeTriggerStrongSituationEmote();
+        if (
+            amount >=
+            4
+        ) {
+
+            forceLukyGrinEmote();
+
+        } else {
+
+            maybeTriggerStrongSituationEmote();
+        }
 
 
         scheduleLukyTurn();
@@ -1742,6 +1788,11 @@ function playerAcceptSkip() {
     }
 
 
+    const lukyWonSkipExchange =
+        state.skipChainCount >=
+        2;
+
+
     addHistory({
         actor:
             "player",
@@ -1755,6 +1806,14 @@ function playerAcceptSkip() {
 
 
     clearSkipChain();
+
+
+    if (
+        lukyWonSkipExchange
+    ) {
+
+        forceLukyGrinEmote();
+    }
 
 
     state.turn =
@@ -2058,6 +2117,29 @@ function drawCards(
             sortHand(
                 state.playerHand
             );
+
+
+        if (
+            state.playerHand.length !==
+            1
+        ) {
+
+            state.pendingPlayerUno =
+                false;
+
+
+            state.playerUnoDeferred =
+                false;
+
+
+            state.playerUnoSaid =
+                false;
+
+
+            cancelPlayerUnoTimer(
+                true
+            );
+        }
     }
 }
 
@@ -2270,34 +2352,52 @@ async function runLukyTurn() {
 
     try {
 
-        await waitForLukyThinking({
+        const fastRepeatedSkipResponse =
+            Boolean(
+                GAME_RUNTIME
+                    .lukyJustAcceptedSkip &&
+                state.skipChainCount >
+                    0
+            );
 
-            gameState:
-                state,
 
-            onThinkingStart:
-                (text) => {
+        if (
+            fastRepeatedSkipResponse
+        ) {
 
-                    emitGameEvent(
-                        "luky-speech",
-                        {
-                            text,
+            await waitForFastLukySkipResponse();
 
-                            thinking:
-                                true
-                        }
-                    );
-                },
+        } else {
 
-            onThinkingEnd:
-                () => {
+            await waitForLukyThinking({
 
-                    emitGameEvent(
-                        "luky-thinking-end",
-                        {}
-                    );
-                }
-        });
+                gameState:
+                    state,
+
+                onThinkingStart:
+                    (text) => {
+
+                        emitGameEvent(
+                            "luky-speech",
+                            {
+                                text,
+
+                                thinking:
+                                    true
+                            }
+                        );
+                    },
+
+                onThinkingEnd:
+                    () => {
+
+                        emitGameEvent(
+                            "luky-thinking-end",
+                            {}
+                        );
+                    }
+            });
+        }
 
 
         if (
@@ -2328,6 +2428,28 @@ async function runLukyTurn() {
             .lukyTurnRunning =
             false;
     }
+}
+
+
+function waitForFastLukySkipResponse() {
+
+    const delay =
+        300 +
+        Math.floor(
+            Math.random() *
+            701
+        );
+
+
+    return new Promise(
+        (resolve) => {
+
+            setTimeout(
+                resolve,
+                delay
+            );
+        }
+    );
 }
 
 
@@ -2400,6 +2522,11 @@ async function executeLukyDecision(
         clearDrawPenalty();
 
 
+        GAME_RUNTIME
+            .lukyJustAcceptedSkip =
+            false;
+
+
         state.turn =
             "player";
 
@@ -2435,6 +2562,11 @@ async function executeLukyDecision(
 
 
         clearSkipChain();
+
+
+        GAME_RUNTIME
+            .lukyJustAcceptedSkip =
+            true;
 
 
         state.turn =
@@ -2495,6 +2627,11 @@ async function executeLukyDecision(
         );
 
 
+        GAME_RUNTIME
+            .lukyJustAcceptedSkip =
+            false;
+
+
         state.turn =
             "player";
 
@@ -2550,6 +2687,11 @@ async function executeLukyDecision(
 
     const previousSkipChain =
         state.skipChainCount;
+
+
+    GAME_RUNTIME
+        .lukyJustAcceptedSkip =
+        false;
 
 
     resetLukyUnoState();
@@ -4863,6 +5005,58 @@ function beginEmoteCooldown() {
 }
 
 
+function canUseLukyMildEmoteNow() {
+
+    const windowStart =
+        Date.now() -
+        120000;
+
+
+    GAME_RUNTIME
+        .mildEmoteTimestamps =
+        GAME_RUNTIME
+            .mildEmoteTimestamps
+            .filter(
+                (timestamp) =>
+                    timestamp >=
+                    windowStart
+            );
+
+
+    return (
+        GAME_RUNTIME
+            .mildEmoteTimestamps
+            .length <
+        2
+    );
+}
+
+
+function registerLukyMildEmoteUse() {
+
+    GAME_RUNTIME
+        .mildEmoteTimestamps
+        .push(
+            Date.now()
+        );
+}
+
+
+function forceLukyGrinEmote() {
+
+    return showTemporaryEmote(
+        "luky",
+        getConfiguredLukyEmote(
+            "grin"
+        ),
+        {
+            force:
+                true
+        }
+    );
+}
+
+
 /* =========================================================
    SILNÁ VÝHODA LUKYHO
 ========================================================= */
@@ -4966,17 +5160,25 @@ function maybeTriggerMildSituationEmote() {
     ) {
 
         if (
+            canUseLukyMildEmoteNow() &&
             randomChance(
                 0.5
             )
         ) {
 
-            showTemporaryEmote(
-                "luky",
-                getConfiguredLukyEmote(
-                    "mild"
-                )
-            );
+            const shown =
+                showTemporaryEmote(
+                    "luky",
+                    getConfiguredLukyEmote(
+                        "mild"
+                    )
+                );
+
+
+            if (shown) {
+
+                registerLukyMildEmoteUse();
+            }
 
         } else {
 
@@ -4994,12 +5196,27 @@ function maybeTriggerMildSituationEmote() {
     }
 
 
-    showTemporaryEmote(
-        "luky",
-        getConfiguredLukyEmote(
-            "mild"
-        )
-    );
+    if (
+        !canUseLukyMildEmoteNow()
+    ) {
+
+        return;
+    }
+
+
+    const shown =
+        showTemporaryEmote(
+            "luky",
+            getConfiguredLukyEmote(
+                "mild"
+            )
+        );
+
+
+    if (shown) {
+
+        registerLukyMildEmoteUse();
+    }
 }
 
 
@@ -5108,12 +5325,18 @@ function maybeTriggerPlayerDrawReaction() {
 
 function showTemporaryEmote(
     actor,
-    image
+    image,
+    {
+        force = false
+    } = {}
 ) {
 
     if (
         !image ||
-        isEmoteCooldownActive()
+        (
+            !force &&
+            isEmoteCooldownActive()
+        )
     ) {
 
         return false;
@@ -5288,6 +5511,15 @@ async function finishGame(
     );
 
 
+    emitStateChanged();
+
+
+    /*
+        Game-over event posíláme až po finálním state-changed.
+        UI tak vítěznou obrazovku otevře jako poslední krok
+        a následný render ji už nepřekryje.
+    */
+
     emitGameEvent(
         "game-over",
         {
@@ -5319,9 +5551,6 @@ async function finishGame(
                 state.history
         }
     );
-
-
-    emitStateChanged();
 }
 
 
