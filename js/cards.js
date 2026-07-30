@@ -684,18 +684,13 @@ function isCardNormallyPlayable(
 
 
     /*
-        Podle našeho pravidla lze +2
-        také zahrát kdykoliv.
-    */
+        +2 se v běžném tahu řídí stejnými pravidly
+        jako ostatní barevné akční karty:
+        - lze ji zahrát na stejnou aktuální barvu
+        - nebo na jinou +2
 
-    if (
-        card.type ===
-        CARD_TYPES.DRAW_TWO &&
-        GAME_CONFIG.drawStacking
-            .drawTwoAlwaysPlayable
-    ) {
-        return true;
-    }
+        Na obyčejnou dvojku jiné barvy zahrát nejde.
+    */
 
 
     /*
