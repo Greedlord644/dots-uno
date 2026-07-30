@@ -6034,3 +6034,108 @@ button.game-card.is-dragging {
     }
 }
 
+/* =========================================================
+   DESKTOP GAME LAYOUT FIXES
+   Keep mobile rules untouched.
+========================================================= */
+
+@media (min-width: 901px) {
+    .game-table {
+        grid-template-rows:
+            52px
+            minmax(160px, 0.92fr)
+            minmax(190px, 1.05fr)
+            auto
+            minmax(220px, 1.18fr);
+
+        padding-bottom:
+            max(14px, env(safe-area-inset-bottom));
+    }
+
+    .opponent-area {
+        align-items: flex-start;
+        padding-top: 8px;
+    }
+
+    .opponent-photo-wrap {
+        width: clamp(150px, 12vw, 205px);
+        height: clamp(150px, 12vw, 205px);
+
+        flex:
+            0 0
+            clamp(150px, 12vw, 205px);
+
+        overflow: hidden;
+    }
+
+    .opponent-photo {
+        object-fit: contain;
+        object-position: center center;
+    }
+
+    .player-area {
+        align-self: stretch;
+        align-items: end;
+
+        padding-top: 0;
+        padding-bottom: 2px;
+    }
+
+    .player-hand-zone {
+        height: min(178px, 19vh);
+        min-height: 132px;
+    }
+
+    .game-status-panel {
+        align-self: end;
+
+        max-height: 100%;
+        overflow: visible;
+    }
+}
+
+/*
+   Shorter desktop/laptop viewports need a little more vertical
+   compression so the status panel never drops below the viewport.
+*/
+@media (min-width: 901px) and (max-height: 850px) {
+    :root {
+        --card-width: 96px;
+        --card-height: 144px;
+    }
+
+    .game-table {
+        grid-template-rows:
+            50px
+            minmax(135px, 0.82fr)
+            minmax(165px, 0.96fr)
+            auto
+            minmax(185px, 1.08fr);
+
+        gap: 2px;
+    }
+
+    .opponent-photo-wrap {
+        width: clamp(132px, 10.5vw, 180px);
+        height: clamp(132px, 10.5vw, 180px);
+
+        flex:
+            0 0
+            clamp(132px, 10.5vw, 180px);
+    }
+
+    .player-avatar-wrap {
+        width: clamp(108px, 8.5vw, 150px);
+        height: clamp(108px, 8.5vw, 150px);
+
+        flex:
+            0 0
+            clamp(108px, 8.5vw, 150px);
+    }
+
+    .player-hand-zone {
+        height: min(154px, 18vh);
+        min-height: 120px;
+    }
+}
+
