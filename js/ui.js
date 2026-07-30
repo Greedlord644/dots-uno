@@ -164,10 +164,14 @@ function initializeUI() {
    OBRAZOVKY
 ========================================================= */
 
-function showScreen(screenId) {
+function showScreen(
+    screenId
+) {
 
     document
-        .querySelectorAll(".screen")
+        .querySelectorAll(
+            ".screen"
+        )
         .forEach(
             (screen) => {
 
@@ -267,6 +271,7 @@ function setupNavigation() {
 
 
                         if (!target) {
+
                             return;
                         }
 
@@ -400,6 +405,7 @@ function renderSaveSlots() {
         !container ||
         !template
     ) {
+
         return;
     }
 
@@ -417,7 +423,9 @@ function renderSaveSlots() {
 
             const fragment =
                 template.content
-                    .cloneNode(true);
+                    .cloneNode(
+                        true
+                    );
 
 
             const button =
@@ -671,6 +679,7 @@ function setupSlotActions() {
                     slotIndex ===
                     null
                 ) {
+
                     return;
                 }
 
@@ -700,6 +709,7 @@ function setupSlotActions() {
                     slotIndex ===
                     null
                 ) {
+
                     return;
                 }
 
@@ -734,6 +744,7 @@ function setupSlotActions() {
                     slotIndex ===
                     null
                 ) {
+
                     return;
                 }
 
@@ -846,6 +857,7 @@ function updateRecommendedCharacter() {
         !card ||
         !badge
     ) {
+
         return;
     }
 
@@ -874,6 +886,7 @@ function selectCharacter(
 
 
     if (!character) {
+
         return;
     }
 
@@ -897,7 +910,8 @@ function selectCharacter(
                 card.classList.toggle(
                     "is-selected",
                     card.dataset
-                        .character === characterId
+                        .character ===
+                        characterId
                 );
             }
         );
@@ -946,6 +960,7 @@ function renderNewCharacterSkinGrid() {
 
 
     if (!characterId) {
+
         return;
     }
 
@@ -984,6 +999,7 @@ function updateConfirmCharacterButton() {
 
 
     if (!button) {
+
         return;
     }
 
@@ -1075,6 +1091,7 @@ function confirmNewCharacter() {
         !characterId ||
         !skinId
     ) {
+
         return;
     }
 
@@ -1085,6 +1102,7 @@ function confirmNewCharacter() {
             skinId
         )
     ) {
+
         return;
     }
 
@@ -1135,6 +1153,7 @@ function setupSkinSelection() {
                         null ||
                     !skinId
                 ) {
+
                     return;
                 }
 
@@ -1146,6 +1165,7 @@ function setupSkinSelection() {
 
 
                 if (!slot) {
+
                     return;
                 }
 
@@ -1156,6 +1176,7 @@ function setupSkinSelection() {
                         skinId
                     )
                 ) {
+
                     return;
                 }
 
@@ -1190,6 +1211,7 @@ function openExistingSkinSelection(
             slot
         )
     ) {
+
         return;
     }
 
@@ -1231,6 +1253,7 @@ function renderExistingSkinGrid() {
         slotIndex ===
         null
     ) {
+
         return;
     }
 
@@ -1242,6 +1265,7 @@ function renderExistingSkinGrid() {
 
 
     if (!slot) {
+
         return;
     }
 
@@ -1281,6 +1305,7 @@ function updateSaveSkinButton() {
 
 
     if (!button) {
+
         return;
     }
 
@@ -1346,6 +1371,7 @@ function renderSkinGrid({
         !container ||
         !template
     ) {
+
         return;
     }
 
@@ -1355,9 +1381,14 @@ function renderSkinGrid({
 
 
     const skins =
-        getCharacterSkins(
-            characterId
-        );
+        typeof getConfiguredCharacterSkins ===
+            "function"
+            ? getConfiguredCharacterSkins(
+                characterId
+            )
+            : getCharacterSkins(
+                characterId
+            );
 
 
     skins.forEach(
@@ -1365,7 +1396,9 @@ function renderSkinGrid({
 
             const fragment =
                 template.content
-                    .cloneNode(true);
+                    .cloneNode(
+                        true
+                    );
 
 
             const card =
@@ -1497,7 +1530,6 @@ function renderSkinGrid({
         }
     );
 }
-
 
 /* =========================================================
    ACHIEVEMENTY
@@ -2127,320 +2159,460 @@ function startGameUI(
 
 
 /* =========================================================
+   JEDEN TAP = JEDNA AKCE
+========================================================= */
+
+function bindReliableTap(
+    element,
+    handler
+) {
+
+    if (
+        !element ||
+        typeof handler !==
+            "function"
+    ) {
+
+        return;
+    }
+
+
+    let pointerHandled =
+        false;
+
+
+    element.addEventListener(
+        "pointerup",
+        (event) => {
+
+            if (
+                element.disabled
+            ) {
+
+                return;
+            }
+
+
+            if (
+                event.pointerType ===
+                    "mouse" &&
+                event.button !==
+                    0
+            ) {
+
+                return;
+            }
+
+
+            pointerHandled =
+                true;
+
+
+            if (
+                event.cancelable
+            ) {
+
+                event.preventDefault();
+            }
+
+
+            handler(
+                event
+            );
+
+
+            window.setTimeout(
+                () => {
+
+                    pointerHandled =
+                        false;
+                },
+                450
+            );
+        },
+        {
+            passive:
+                false
+        }
+    );
+
+
+    element.addEventListener(
+        "click",
+        (event) => {
+
+            if (
+                pointerHandled
+            ) {
+
+                event.preventDefault();
+
+                return;
+            }
+
+
+            if (
+                element.disabled
+            ) {
+
+                return;
+            }
+
+
+            handler(
+                event
+            );
+        }
+    );
+}
+
+
+/* =========================================================
    GAME CONTROLS
 ========================================================= */
 
 function setupGameControls() {
 
-    document
-        .getElementById(
+    const drawPile =
+        document.getElementById(
             "draw-pile"
-        )
-        ?.addEventListener(
-            "click",
-            () => {
-
-                const state =
-                    getGameState();
-
-
-                if (
-                    state?.skipChainCount >
-                        0 &&
-                    state.turn ===
-                        "player"
-                ) {
-
-                    showToast(
-                        "Stůj",
-                        "Přehraj Stůj, nebo zvol „Stojím“."
-                    );
-
-
-                    return;
-                }
-
-
-                const success =
-                    playerDraw();
-
-
-                if (success) {
-
-                    markFirstPlayerAction();
-                }
-            }
         );
 
 
-    document
-        .getElementById(
+    bindReliableTap(
+        drawPile,
+        () => {
+
+            const state =
+                getGameState();
+
+
+            if (
+                state?.skipChainCount >
+                    0 &&
+                state.turn ===
+                    "player"
+            ) {
+
+                showToast(
+                    "Stůj",
+                    "Přehraj Stůj, nebo zvol „Stojím“."
+                );
+
+
+                return;
+            }
+
+
+            const success =
+                playerDraw();
+
+
+            if (success) {
+
+                markFirstPlayerAction();
+            }
+        }
+    );
+
+
+    const discardZone =
+        document.getElementById(
             "discard-zone"
-        )
-        ?.addEventListener(
-            "click",
-            () => {
-
-                if (
-                    UI_STATE
-                        .selectedCardIds
-                        .size >
-                    0
-                ) {
-
-                    attemptSelectedCardPlay();
-
-                    return;
-                }
-
-
-                openHistory();
-            }
         );
 
 
-    document
-        .getElementById(
-            "uno-button"
-        )
-        ?.addEventListener(
-            "click",
-            () => {
+    bindReliableTap(
+        discardZone,
+        () => {
 
-                playerCallUno();
-            }
-        );
-
-
-    document
-        .getElementById(
-            "catch-uno-button"
-        )
-        ?.addEventListener(
-            "click",
-            () => {
-
-                playerCatchLukyUno();
-            }
-        );
-
-
-    document
-        .getElementById(
-            "accept-skip-button"
-        )
-        ?.addEventListener(
-            "click",
-            () => {
-
+            if (
                 UI_STATE
                     .selectedCardIds
-                    .clear();
+                    .size >
+                0
+            ) {
 
+                attemptSelectedCardPlay();
 
-                const success =
-                    playerAcceptSkip();
-
-
-                if (success) {
-
-                    markFirstPlayerAction();
-                }
+                return;
             }
+
+
+            openHistory();
+        }
+    );
+
+
+    const unoButton =
+        document.getElementById(
+            "uno-button"
         );
 
 
-    document
-        .getElementById(
+    bindReliableTap(
+        unoButton,
+        () => {
+
+            playerCallUno();
+        }
+    );
+
+
+    const catchUnoButton =
+        document.getElementById(
+            "catch-uno-button"
+        );
+
+
+    bindReliableTap(
+        catchUnoButton,
+        () => {
+
+            playerCatchLukyUno();
+        }
+    );
+
+
+    const acceptSkipButton =
+        document.getElementById(
+            "accept-skip-button"
+        );
+
+
+    bindReliableTap(
+        acceptSkipButton,
+        () => {
+
+            UI_STATE
+                .selectedCardIds
+                .clear();
+
+
+            const success =
+                playerAcceptSkip();
+
+
+            if (success) {
+
+                markFirstPlayerAction();
+            }
+        }
+    );
+
+
+    const askYellowButton =
+        document.getElementById(
             "ask-yellow-button"
-        )
-        ?.addEventListener(
-            "click",
-            askLukyAboutYellow
         );
 
 
-    document
-        .getElementById(
+    bindReliableTap(
+        askYellowButton,
+        () => {
+
+            askLukyAboutYellow();
+        }
+    );
+
+
+    const gameMenuButton =
+        document.getElementById(
             "game-menu-button"
-        )
-        ?.addEventListener(
-            "click",
-            () => {
-
-                pauseGame();
-
-
-                openModal(
-                    "modal-game-menu"
-                );
-            }
         );
 
 
-    document
-        .getElementById(
+    bindReliableTap(
+        gameMenuButton,
+        () => {
+
+            pauseGame();
+
+
+            openModal(
+                "modal-game-menu"
+            );
+        }
+    );
+
+
+    const resumeGameButton =
+        document.getElementById(
             "resume-game-button"
-        )
-        ?.addEventListener(
-            "click",
-            () => {
-
-                closeModal();
-
-                resumeGame();
-            }
         );
 
 
-    document
-        .getElementById(
+    bindReliableTap(
+        resumeGameButton,
+        () => {
+
+            closeModal();
+
+            resumeGame();
+        }
+    );
+
+
+    const surrenderGameButton =
+        document.getElementById(
             "surrender-game-button"
-        )
-        ?.addEventListener(
-            "click",
-            () => {
-
-                openModal(
-                    "modal-surrender-game"
-                );
-            }
         );
 
 
-    document
-        .getElementById(
+    bindReliableTap(
+        surrenderGameButton,
+        () => {
+
+            openModal(
+                "modal-surrender-game"
+            );
+        }
+    );
+
+
+    const cancelSurrenderButton =
+        document.getElementById(
             "cancel-surrender-game"
-        )
-        ?.addEventListener(
-            "click",
-            () => {
-
-                openModal(
-                    "modal-game-menu"
-                );
-            }
         );
 
 
-    document
-        .getElementById(
+    bindReliableTap(
+        cancelSurrenderButton,
+        () => {
+
+            openModal(
+                "modal-game-menu"
+            );
+        }
+    );
+
+
+    const confirmSurrenderButton =
+        document.getElementById(
             "confirm-surrender-game"
-        )
-        ?.addEventListener(
-            "click",
-            async () => {
-
-                if (
-                    typeof surrenderGame !==
-                    "function"
-                ) {
-
-                    showToast(
-                        "Vzdání partie",
-                        "Funkce vzdání zatím není dostupná."
-                    );
-
-
-                    return;
-                }
-
-
-                closeModal();
-
-
-                await surrenderGame();
-            }
         );
 
 
-    document
-        .getElementById(
+    bindReliableTap(
+        confirmSurrenderButton,
+        async () => {
+
+            if (
+                typeof surrenderGame !==
+                "function"
+            ) {
+
+                showToast(
+                    "Vzdání partie",
+                    "Funkce vzdání zatím není dostupná."
+                );
+
+
+                return;
+            }
+
+
+            closeModal();
+
+
+            await surrenderGame();
+        }
+    );
+
+
+    const saveAndMenuButton =
+        document.getElementById(
             "save-and-menu-button"
-        )
-        ?.addEventListener(
-            "click",
-            () => {
-
-                saveAndLeaveGame();
-
-
-                stopMusic();
-
-
-                closeModal();
-
-
-                renderMainMenuStats();
-
-                renderMusicSetting();
-
-
-                showScreen(
-                    "screen-menu"
-                );
-            }
         );
 
 
-    document
-        .getElementById(
+    bindReliableTap(
+        saveAndMenuButton,
+        () => {
+
+            saveAndLeaveGame();
+
+
+            stopMusic();
+
+
+            closeModal();
+
+
+            renderMainMenuStats();
+
+            renderMusicSetting();
+
+
+            showScreen(
+                "screen-menu"
+            );
+        }
+    );
+
+
+    const playAgainButton =
+        document.getElementById(
             "play-again-button"
-        )
-        ?.addEventListener(
-            "click",
-            () => {
-
-                const slotIndex =
-                    UI_STATE
-                        .selectedSlotIndex;
-
-
-                closeModal();
-
-
-                if (
-                    slotIndex ===
-                    null
-                ) {
-                    return;
-                }
-
-
-                startGameUI(
-                    slotIndex,
-                    false
-                );
-            }
         );
 
 
-    document
-        .getElementById(
+    bindReliableTap(
+        playAgainButton,
+        () => {
+
+            const slotIndex =
+                UI_STATE
+                    .selectedSlotIndex;
+
+
+            closeModal();
+
+
+            if (
+                slotIndex ===
+                null
+            ) {
+
+                return;
+            }
+
+
+            startGameUI(
+                slotIndex,
+                false
+            );
+        }
+    );
+
+
+    const gameOverMenuButton =
+        document.getElementById(
             "game-over-menu-button"
-        )
-        ?.addEventListener(
-            "click",
-            () => {
-
-                stopMusic();
-
-
-                closeModal();
-
-
-                renderMainMenuStats();
-
-                renderMusicSetting();
-
-
-                showScreen(
-                    "screen-menu"
-                );
-            }
         );
-}
 
+
+    bindReliableTap(
+        gameOverMenuButton,
+        () => {
+
+            stopMusic();
+
+
+            closeModal();
+
+
+            renderMainMenuStats();
+
+            renderMusicSetting();
+
+
+            showScreen(
+                "screen-menu"
+            );
+        }
+    );
+}
 
 /* =========================================================
    GAME RENDER
@@ -2496,6 +2668,7 @@ function renderGame() {
         state
     );
 
+
     renderDiscardPile(
         state
     );
@@ -2535,12 +2708,6 @@ function renderGame() {
 
     updateMusicButton();
 
-
-    /*
-        Na mobilu se po každém renderu
-        ruka přepočítá tak, aby byly
-        všechny karty viditelné.
-    */
 
     requestAnimationFrame(
         fitPlayerHandToScreen
@@ -2794,6 +2961,16 @@ function renderPlayerHand(
                 "click",
                 () => {
 
+                    if (
+                        Date.now() <
+                        UI_STATE
+                            .suppressCardClickUntil
+                    ) {
+
+                        return;
+                    }
+
+
                     handleCardClick(
                         card
                     );
@@ -2809,6 +2986,10 @@ function renderPlayerHand(
                         event,
                         card
                     );
+                },
+                {
+                    passive:
+                        false
                 }
             );
 
@@ -2827,7 +3008,7 @@ function renderPlayerHand(
 
 
 /* =========================================================
-   MOBILNÍ PŘIZPŮSOBENÍ RUKY
+   PŘIZPŮSOBENÍ RUKY ŠÍŘCE OBRAZOVKY
 ========================================================= */
 
 function fitPlayerHandToScreen() {
@@ -2859,30 +3040,24 @@ function fitPlayerHandToScreen() {
     }
 
 
-    /*
-        Desktop si nechává rozestupy
-        kompletně řídit přes CSS.
-    */
+    cards.forEach(
+        (card) => {
+
+            card.style.removeProperty(
+                "margin-left"
+            );
+        }
+    );
+
+
+    cards[0].style.marginLeft =
+        "0px";
+
 
     if (
-        window.innerWidth >
-        760
+        cards.length ===
+        1
     ) {
-
-        cards.forEach(
-            (card) => {
-
-                card.style.removeProperty(
-                    "margin-left"
-                );
-            }
-        );
-
-
-        cards[0].style.marginLeft =
-            "0px";
-
-
         return;
     }
 
@@ -2902,37 +3077,44 @@ function fitPlayerHandToScreen() {
 
 
     if (
-        cards.length ===
-        1
+        !Number.isFinite(
+            cardWidth
+        ) ||
+        cardWidth <=
+            0
     ) {
-
-        cards[0].style.marginLeft =
-            "0px";
-
-
         return;
     }
 
 
-    /*
-        Maximální vzdálenost mezi levými
-        hranami sousedních karet tak,
-        aby se poslední karta vešla.
-    */
+    const minimumStep =
+        window.innerWidth <=
+            760
+            ? 12
+            : 20;
+
+
+    const maximumStep =
+        cardWidth;
+
+
+    const calculatedStep =
+        (
+            availableWidth -
+            cardWidth
+        ) /
+        (
+            cards.length -
+            1
+        );
+
 
     const step =
         Math.max(
-            12,
+            minimumStep,
             Math.min(
-                cardWidth,
-                (
-                    availableWidth -
-                    cardWidth
-                ) /
-                (
-                    cards.length -
-                    1
-                )
+                maximumStep,
+                calculatedStep
             )
         );
 
@@ -2949,7 +3131,8 @@ function fitPlayerHandToScreen() {
         (card, index) => {
 
             card.style.marginLeft =
-                index === 0
+                index ===
+                    0
                     ? "0px"
                     : `-${overlap}px`;
         }
@@ -3049,11 +3232,6 @@ function renderDiscardPile(
     element.disabled =
         true;
 
-
-    /*
-        Klik má zachytit celý #discard-zone,
-        nikoliv samotný button karty.
-    */
 
     element.tabIndex =
         -1;
@@ -3494,14 +3672,6 @@ function beginCardDrag(
     }
 
 
-    /*
-        Gesto musí rovnou začít na aktuálním DOM elementu.
-
-        Dříve se při prvním pointerdown provedl renderPlayerHand(),
-        čímž se původní karta nahradila a první pokus o tažení
-        se mohl přerušit. Teď měníme jen CSS třídy bez rerenderu.
-    */
-
     if (
         event.cancelable
     ) {
@@ -3689,11 +3859,6 @@ function handleCardDragMove(
     }
 
 
-    /*
-        Na mobilu při držení karty
-        blokujeme scroll stránky.
-    */
-
     if (
         event.cancelable
     ) {
@@ -3786,7 +3951,8 @@ function endCardDrag(
     const deltaY =
         event.clientY -
         drag.startY;
-   
+
+
     const inDropZone =
         isPointInsideDropZone(
             event.clientX,
@@ -3808,15 +3974,6 @@ function endCardDrag(
             movedEnoughUp
         );
 
-
-    /*
-        Pointerup po dragování může následně
-        vyvolat click na kartě.
-
-        Ten by nám znovu změnil výběr,
-        proto jej po skutečném dragu
-        na chvíli ignorujeme.
-    */
 
     if (
         drag.moved ||
@@ -4132,9 +4289,23 @@ function renderYellowEvent(
     }
 
 
+    const overlay =
+        document.getElementById(
+            "modal-overlay"
+        );
+
+
+    const modalOpen =
+        Boolean(
+            overlay &&
+            !overlay.hidden
+        );
+
+
     container.hidden =
         !state.yellowEventAvailable ||
-        state.yellowEventUsed;
+        state.yellowEventUsed ||
+        modalOpen;
 }
 
 
@@ -4255,8 +4426,8 @@ function setupModalControls() {
         .forEach(
             (button) => {
 
-                button.addEventListener(
-                    "click",
+                bindReliableTap(
+                    button,
                     async () => {
 
                         const color =
@@ -4317,112 +4488,100 @@ function setupModalControls() {
         );
 
 
-    document
-        .getElementById(
+    bindReliableTap(
+        document.getElementById(
             "hide-color-choice-button"
-        )
-        ?.addEventListener(
-            "click",
-            minimizeColorChoice
-        );
+        ),
+        minimizeColorChoice
+    );
 
 
-    document
-        .getElementById(
+    bindReliableTap(
+        document.getElementById(
             "restore-color-choice-button"
-        )
-        ?.addEventListener(
-            "click",
-            restoreColorChoice
-        );
+        ),
+        restoreColorChoice
+    );
 
 
-    document
-        .getElementById(
+    bindReliableTap(
+        document.getElementById(
             "seven-swap-yes"
-        )
-        ?.addEventListener(
-            "click",
-            async () => {
+        ),
+        async () => {
 
-                closeModal();
+            closeModal();
 
 
-                await resolvePlayerSevenChoice(
-                    true
-                );
+            await resolvePlayerSevenChoice(
+                true
+            );
 
 
-                renderGame();
-            }
-        );
+            renderGame();
+        }
+    );
 
 
-    document
-        .getElementById(
+    bindReliableTap(
+        document.getElementById(
             "seven-swap-no"
-        )
-        ?.addEventListener(
-            "click",
-            async () => {
+        ),
+        async () => {
 
-                closeModal();
+            closeModal();
 
 
-                await resolvePlayerSevenChoice(
-                    false
-                );
+            await resolvePlayerSevenChoice(
+                false
+            );
 
 
-                renderGame();
-            }
-        );
+            renderGame();
+        }
+    );
 
 
-    document
-        .getElementById(
+    bindReliableTap(
+        document.getElementById(
             "confirm-reset-slot"
-        )
-        ?.addEventListener(
-            "click",
-            () => {
+        ),
+        () => {
 
-                const slotIndex =
-                    UI_STATE
-                        .selectedSlotIndex;
+            const slotIndex =
+                UI_STATE
+                    .selectedSlotIndex;
 
 
-                if (
-                    slotIndex ===
-                    null
-                ) {
-                    return;
-                }
-
-
-                resetSaveSlot(
-                    slotIndex
-                );
-
-
-                closeModal();
-
-
-                openCharacterSelection(
-                    slotIndex
-                );
+            if (
+                slotIndex ===
+                null
+            ) {
+                return;
             }
-        );
 
 
-    document
-        .getElementById(
+            resetSaveSlot(
+                slotIndex
+            );
+
+
+            closeModal();
+
+
+            openCharacterSelection(
+                slotIndex
+            );
+        }
+    );
+
+
+    bindReliableTap(
+        document.getElementById(
             "cancel-reset-slot"
-        )
-        ?.addEventListener(
-            "click",
-            closeModal
-        );
+        ),
+        closeModal
+    );
 }
 
 
@@ -4457,6 +4616,19 @@ function openModal(
                     modalId;
             }
         );
+
+
+    const yellowEvent =
+        document.getElementById(
+            "yellow-event"
+        );
+
+
+    if (yellowEvent) {
+
+        yellowEvent.hidden =
+            true;
+    }
 }
 
 
@@ -4488,8 +4660,19 @@ function closeModal() {
                     true;
             }
         );
-}
 
+
+    const state =
+        getGameState();
+
+
+    if (state) {
+
+        renderYellowEvent(
+            state
+        );
+    }
+}
 
 /* =========================================================
    COLOR CHOICE
@@ -4554,7 +4737,16 @@ function minimizeColorChoice() {
 
         restore.hidden =
             false;
+
+        restore.classList.add(
+            "is-attention"
+        );
     }
+
+
+    requestAnimationFrame(
+        fitPlayerHandToScreen
+    );
 }
 
 
@@ -4582,6 +4774,10 @@ function restoreColorChoice() {
 
         restore.hidden =
             true;
+
+        restore.classList.remove(
+            "is-attention"
+        );
     }
 
 
@@ -4607,6 +4803,10 @@ function closeColorChoice() {
 
         restore.hidden =
             true;
+
+        restore.classList.remove(
+            "is-attention"
+        );
     }
 
 
@@ -4665,6 +4865,34 @@ function setupHistoryControls() {
 
 function openHistory() {
 
+    const state =
+        getGameState();
+
+
+    if (
+        state?.status ===
+        "finished"
+    ) {
+
+        return;
+    }
+
+
+    const overlay =
+        document.getElementById(
+            "modal-overlay"
+        );
+
+
+    if (
+        overlay &&
+        !overlay.hidden
+    ) {
+
+        return;
+    }
+
+
     const panel =
         document.getElementById(
             "history-panel"
@@ -4717,7 +4945,7 @@ function openHistory() {
 
 
     renderHistory(
-        getGameState()
+        state
     );
 }
 
@@ -5001,7 +5229,7 @@ function renderHistory(
             container.appendChild(
                 fragment
             );
-                   }
+        }
     );
 }
 
@@ -5259,6 +5487,21 @@ function setupGameEvents() {
         "dotsuno:player-speech",
         (event) => {
 
+            const lukyText =
+                document.getElementById(
+                    "luky-speech-text"
+                );
+
+
+            if (
+                lukyText?.textContent ===
+                "..."
+            ) {
+
+                hideLukySpeech();
+            }
+
+
             showPlayerSpeech(
                 event.detail
                     ?.text,
@@ -5352,14 +5595,6 @@ function setupGameEvents() {
     );
 
 
-    /*
-        DŮLEŽITÉ:
-        Zde už hráči nic nenapovídáme předem.
-
-        Event přijde až POTÉ, co skutečně
-        nestihl říct UNO.
-    */
-
     window.addEventListener(
         "dotsuno:player-missed-uno",
         (event) => {
@@ -5402,6 +5637,47 @@ function setupGameEvents() {
         (event) => {
 
             stopMusic();
+
+
+            closeHistory();
+
+
+            const yellowEvent =
+                document.getElementById(
+                    "yellow-event"
+                );
+
+
+            if (yellowEvent) {
+
+                yellowEvent.hidden =
+                    true;
+            }
+
+
+            const restoreColor =
+                document.getElementById(
+                    "restore-color-choice-button"
+                );
+
+
+            if (restoreColor) {
+
+                restoreColor.hidden =
+                    true;
+
+                restoreColor.classList.remove(
+                    "is-attention"
+                );
+            }
+
+
+            UI_STATE.pendingPlayCardIds =
+                null;
+
+
+            UI_STATE.colorChoiceMinimized =
+                false;
 
 
             showGameOver(
@@ -6083,6 +6359,22 @@ function showGameOver(
         );
 
 
+    closeHistory();
+
+
+    UI_STATE
+        .selectedCardIds
+        .clear();
+
+
+    UI_STATE.pendingPlayCardIds =
+        null;
+
+
+    UI_STATE.colorChoiceMinimized =
+        false;
+
+
     const playerCharacter =
         document.getElementById(
             "game-over-player"
@@ -6186,26 +6478,54 @@ function showGameOver(
     );
 
 
+    const playerEndImage =
+        detail?.playerImage ||
+        (
+            typeof getConfiguredPlayerEndImage ===
+                "function"
+                ? getConfiguredPlayerEndImage(
+                    slot.characterId,
+                    playerWon
+                        ? "win"
+                        : "lose"
+                )
+                : getSlotCharacterImage(
+                    slot
+                )
+        );
+
+
+    const lukyEndImage =
+        detail?.lukyImage ||
+        (
+            typeof getConfiguredLukyEndImage ===
+                "function"
+                ? getConfiguredLukyEndImage(
+                    playerWon
+                        ? "lose"
+                        : "win"
+                )
+                : (
+                    playerWon
+                        ? GAME_CONFIG
+                            .opponent
+                            .loseImage
+                        : GAME_CONFIG
+                            .opponent
+                            .winImage
+                )
+        );
+
+
     setSimpleImage(
         "game-over-player-image",
-        getCharacterEndImage(
-            slot.characterId,
-            playerWon
-                ? "win"
-                : "lose"
-        )
+        playerEndImage
     );
 
 
     setSimpleImage(
         "game-over-luky-image",
-        playerWon
-            ? GAME_CONFIG
-                .opponent
-                .loseImage
-            : GAME_CONFIG
-                .opponent
-                .winImage
+        lukyEndImage
     );
 
 
@@ -6248,24 +6568,10 @@ function setupMusicControls() {
             "click",
             () => {
 
-                /*
-                    toggleMusicEnabled() vyvolá
-                    dotsuno:music-setting-changed.
-
-                    Samotné mute/unmute tedy
-                    řeší listener v setupGameEvents().
-
-                    Hudba se NERESTARTUJE.
-                */
-
                 toggleMusicEnabled();
             }
         );
 
-
-    /*
-        YouTube připravujeme už při načtení menu.
-    */
 
     initializeYouTubePlayer();
 }
@@ -6340,18 +6646,6 @@ function updateMusicButton() {
    YOUTUBE
 ========================================================= */
 
-/*
-    API script je vložený v index.html.
-
-    Proto mohou nastat dvě situace:
-
-    1) API ještě není připravené:
-       počkáme na onYouTubeIframeAPIReady.
-
-    2) API už připravené je:
-       vytvoříme player rovnou.
-*/
-
 function initializeYouTubePlayer() {
 
     if (
@@ -6377,11 +6671,6 @@ function initializeYouTubePlayer() {
         return;
     }
 
-
-    /*
-        Globální callback si může YouTube
-        zavolat později.
-    */
 
     window.onYouTubeIframeAPIReady =
         function onYouTubeIframeAPIReady() {
@@ -6430,13 +6719,6 @@ function createYouTubePlayer() {
             new YT.Player(
                 target,
                 {
-                    /*
-                        Player má skutečnou velikost.
-                        CSS ho pouze přesouvá mimo viewport.
-
-                        To je vhodnější než původní 1×1 px.
-                    */
-
                     height:
                         "240",
 
@@ -6525,13 +6807,6 @@ function handleYouTubePlayerReady() {
             );
 
 
-        /*
-            V menu je YouTube vždy ztlumený.
-
-            Nechceme, aby cokoli začalo
-            znít před spuštěním partie.
-        */
-
         UI_STATE
             .youtubePlayer
             .mute();
@@ -6578,13 +6853,6 @@ function handleYouTubeStateChange(
             true;
 
 
-        /*
-            Pokud jsme ve hře, respektujeme
-            globální nastavení zvuku.
-
-            V menu player zůstává ztlumený.
-        */
-
         if (
             UI_STATE.currentScreen ===
             "screen-game"
@@ -6603,6 +6871,7 @@ function handleYouTubeStateChange(
                     .mute();
 
             } catch {
+
                 // ignore
             }
         }
@@ -6611,12 +6880,6 @@ function handleYouTubeStateChange(
         event.data ===
             YT.PlayerState.ENDED
     ) {
-
-        /*
-            Video skončilo.
-            Při další partii se vybere
-            nový náhodný track.
-        */
 
         UI_STATE.musicPlaying =
             false;
@@ -6632,7 +6895,6 @@ function handleYouTubeStateChange(
         ) {
 
             prepareNextMusicTrack();
-
 
             startPreparedMusicTrack();
         }
@@ -6654,11 +6916,6 @@ function prepareMusicPlayerInMenu() {
     }
 
 
-    /*
-        Pokud je už něco připravené,
-        zbytečně nepřipravujeme další track.
-    */
-
     if (
         UI_STATE.activeMusicTrack
     ) {
@@ -6670,6 +6927,7 @@ function prepareMusicPlayerInMenu() {
                 .mute();
 
         } catch {
+
             // ignore
         }
 
@@ -6710,20 +6968,6 @@ function prepareNextMusicTrack() {
 
 
     try {
-
-        /*
-            cueVideoById video pouze připraví.
-            Samo ho nespustí.
-
-            Tím se player načte už v menu
-            a samotná hra nemusí teprve
-            vytvářet nový iframe.
-
-            YouTube API ale bohužel neposkytuje
-            spolehlivý stav "běží reklama",
-            takže reklamy nejde programově
-            zaručeně detekovat a filtrovat.
-        */
 
         UI_STATE
             .youtubePlayer
@@ -6783,22 +7027,11 @@ function startMusicForGame() {
         !UI_STATE.youtubePlayer
     ) {
 
-        /*
-            Player se vytvoří asynchronně.
-            onReady pak startMusicForGame()
-            zavolá znovu.
-        */
-
         initializeYouTubePlayer();
 
         return;
     }
 
-
-    /*
-        Pokud není připravený track,
-        vybereme jeden teď.
-    */
 
     if (
         !UI_STATE.activeMusicTrack
@@ -6839,16 +7072,6 @@ function startPreparedMusicTrack() {
 
 
     try {
-
-        /*
-            Pokud byl track pouze cue-nutý,
-            playVideo() začne přehrávat
-            připravenou pozici.
-
-            Když cue z nějakého důvodu
-            neproběhl, loadVideoById níže
-            zajistí správný start.
-        */
 
         const currentVideoData =
             typeof UI_STATE
@@ -6902,13 +7125,6 @@ function startPreparedMusicTrack() {
             );
 
 
-        /*
-            Zvuk nastavujeme podle preference.
-
-            Vypnutá hudba NEZASTAVÍ video.
-            Video pokračuje potichu.
-        */
-
         applyMusicEnabledState(
             isMusicEnabled()
         );
@@ -6954,11 +7170,8 @@ function applyMusicEnabledState(
             "screen-game"
         ) {
 
-            /*
-                Mimo hru se nikdy nemá ozvat zvuk.
-            */
-
             player.mute();
+
 
             UI_STATE.musicMuted =
                 true;
@@ -6979,11 +7192,6 @@ function applyMusicEnabledState(
 
             player.unMute();
 
-
-            /*
-                Pokud byl player z nějakého
-                důvodu pozastavený, pokračujeme.
-            */
 
             const playerState =
                 typeof player.getPlayerState ===
@@ -7011,14 +7219,6 @@ function applyMusicEnabledState(
 
         } else {
 
-            /*
-                DŮLEŽITÉ:
-                žádné stopVideo() ani nový track.
-
-                Přehrávání pokračuje na pozadí,
-                pouze není slyšet.
-            */
-
             player.mute();
 
 
@@ -7042,16 +7242,6 @@ function applyMusicEnabledState(
 
 function stopMusic() {
 
-    /*
-        stopMusic() používáme pouze při:
-        - konci partie
-        - Uložit a odejít
-        - návratu z game-over do menu
-
-        NIKOLIV při běžném vypnutí
-        tlačítkem 🔊 / 🔇.
-    */
-
     if (
         UI_STATE.youtubePlayer
     ) {
@@ -7068,6 +7258,7 @@ function stopMusic() {
                 .mute();
 
         } catch {
+
             // ignore
         }
     }
@@ -7084,12 +7275,6 @@ function stopMusic() {
     UI_STATE.activeMusicTrack =
         null;
 
-
-    /*
-        Jakmile jsme zpět v menu,
-        můžeme si dopředu připravit
-        náhodný track pro příští partii.
-    */
 
     if (
         UI_STATE.currentScreen !==
@@ -7293,26 +7478,12 @@ function setupResponsiveGameListeners() {
     );
 
 
-    /*
-        Na mobilech se při změně velikosti
-        visual viewportu může měnit dostupná
-        výška i bez klasického window resize.
-    */
-
     window.visualViewport
         ?.addEventListener(
             "resize",
             scheduleHandFit
         );
 
-
-    /*
-        Po skutečném dragování nesmí následný
-        syntetický click znovu označit kartu.
-
-        Listener běží v capture fázi dřív,
-        než click listener konkrétní karty.
-    */
 
     document.addEventListener(
         "click",
@@ -7352,14 +7523,6 @@ function setupResponsiveGameListeners() {
     );
 }
 
-
-/*
-    initializeUI() z první části byl vytvořený
-    ještě před přidáním responsive helperu.
-
-    Tento samostatný listener proto bezpečně
-    zapne responzivní obsluhu po načtení DOMu.
-*/
 
 document.addEventListener(
     "DOMContentLoaded",
@@ -7442,6 +7605,7 @@ function formatCardCount(
         count ===
         1
     ) {
+
         return "1 karta";
     }
 
@@ -7450,6 +7614,7 @@ function formatCardCount(
         count >= 2 &&
         count <= 4
     ) {
+
         return `${count} karty`;
     }
 
