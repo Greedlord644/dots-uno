@@ -6139,3 +6139,45 @@ button.game-card.is-dragging {
     }
 }
 
+/* =========================================================
+   YELLOW EVENT INSIDE GAME CONTROLS
+   Keeps "Má někdo žlutou?" in the controls row so it does not
+   create a separate grid row or move the game status downward.
+========================================================= */
+
+.game-controls .yellow-event {
+    position: relative;
+    z-index: 20;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 0;
+    margin: 0;
+
+    order: 4;
+}
+
+.game-controls .yellow-event .secondary-action-button {
+    min-height: 42px;
+
+    padding: 8px 12px;
+
+    color: #f2d66e;
+
+    border-color:
+        rgba(240, 200, 70, 0.24);
+
+    background:
+        rgba(240, 200, 70, 0.06);
+
+    font-size: 0.84rem;
+    white-space: nowrap;
+}
+
+/* The old standalone yellow-event grid row is no longer used. */
+.game-table > .yellow-event {
+    display: none !important;
+}
+
