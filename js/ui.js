@@ -112,6 +112,12 @@ const UI_STATE = {
         true,
 
     activeMusicTrack:
+        null,
+
+    yellowEventVisibleSince:
+        0,
+
+    yellowEventHideTimer:
         null
 };
 
@@ -4312,15 +4318,163 @@ function renderYellowEvent(
         );
 
 
-    container.hidden =
-        !state.yellowEventAvailable ||
-        state.yellowEventUsed ||
-        modalOpen ||
-        playerBusy ||
+    const canShow =
+        Boolean(
+            state &&
+            state.status ===
+                "playing" &&
+            state.turn ===
+                "luky" &&
+            state.yellowEventAvailable &&
+            !state.yellowEventUsed &&
+            !modalOpen &&
+            !playerBusy
+        );
+
+
+    const now =
+        Date.now();
+
+
+    if (canShow) {
+
+        if (
+            container.hidden
+        ) {
+
+            UI_STATE.yellowEventVisibleSince =
+                now;
+        }
+
+
+        if (
+            UI_STATE.yellowEventHideTimer
+        ) {
+
+            clearTimeout(
+                UI_STATE.yellowEventHideTimer
+            );
+
+
+            UI_STATE.yellowEventHideTimer =
+                null;
+        }
+
+
+        container.hidden =
+            false;
+
+
+        return;
+    }
+
+
+    const mustHideImmediately =
+        !state ||
         state.status !==
             "playing" ||
-        state.turn !==
-            "luky";
+        state.yellowEventUsed ||
+        modalOpen ||
+        playerBusy;
+
+
+    if (mustHideImmediately) {
+
+        if (
+            UI_STATE.yellowEventHideTimer
+        ) {
+
+            clearTimeout(
+                UI_STATE.yellowEventHideTimer
+            );
+
+
+            UI_STATE.yellowEventHideTimer =
+                null;
+        }
+
+
+        UI_STATE.yellowEventVisibleSince =
+            0;
+
+
+        container.hidden =
+            true;
+
+
+        return;
+    }
+
+
+    if (
+        container.hidden
+    ) {
+
+        return;
+    }
+
+
+    const minimumVisibleMs =
+        3000;
+
+
+    const elapsed =
+        now -
+        UI_STATE.yellowEventVisibleSince;
+
+
+    const remaining =
+        Math.max(
+            0,
+            minimumVisibleMs -
+            elapsed
+        );
+
+
+    if (
+        remaining ===
+        0
+    ) {
+
+        UI_STATE.yellowEventVisibleSince =
+            0;
+
+
+        container.hidden =
+            true;
+
+
+        return;
+    }
+
+
+    if (
+        UI_STATE.yellowEventHideTimer
+    ) {
+
+        clearTimeout(
+            UI_STATE.yellowEventHideTimer
+        );
+    }
+
+
+    UI_STATE.yellowEventHideTimer =
+        setTimeout(
+            () => {
+
+                UI_STATE.yellowEventHideTimer =
+                    null;
+
+
+                UI_STATE.yellowEventVisibleSince =
+                    0;
+
+
+                container.hidden =
+                    true;
+            },
+            remaining
+        );
 }
 
 
@@ -5663,6 +5817,24 @@ function setupGameEvents() {
                 );
 
 
+            if (
+                UI_STATE.yellowEventHideTimer
+            ) {
+
+                clearTimeout(
+                    UI_STATE.yellowEventHideTimer
+                );
+
+
+                UI_STATE.yellowEventHideTimer =
+                    null;
+            }
+
+
+            UI_STATE.yellowEventVisibleSince =
+                0;
+
+
             if (yellowEvent) {
 
                 yellowEvent.hidden =
@@ -6532,6 +6704,17 @@ function showGameOver(
         );
 
 
+    /*
+        Otevřeme výsledkový modal dřív než nastavíme obrázky.
+        I kdyby některý obrázek selhal, konec partie musí být
+        vždy viditelný a blokovat další herní akce.
+    */
+
+    openModal(
+        "modal-game-over"
+    );
+
+
     setSimpleImage(
         "game-over-player-image",
         playerEndImage
@@ -6545,11 +6728,6 @@ function showGameOver(
 
 
     renderMainMenuStats();
-
-
-    openModal(
-        "modal-game-over"
-    );
 }
 
 /* =========================================================
@@ -7345,6 +7523,60 @@ function setupStaticImageFallbacks() {
                 );
             }
         );
+}
+
+
+function setSimpleImage(
+    imageId,
+    src
+) {
+
+    const image =
+        document.getElementById(
+            imageId
+        );
+
+
+    if (!image) {
+        return;
+    }
+
+
+    if (!src) {
+
+        image.removeAttribute(
+            "src"
+        );
+
+        image.hidden =
+            true;
+
+        return;
+    }
+
+
+    image.hidden =
+        false;
+
+
+    image.onerror =
+        () => {
+
+            image.hidden =
+                true;
+        };
+
+
+    image.onload =
+        () => {
+
+            image.hidden =
+                false;
+        };
+
+
+    image.src =
+        src;
 }
 
 
