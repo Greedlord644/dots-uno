@@ -1136,70 +1136,26 @@ function confirmNewCharacter() {
 
 function setupSkinSelection() {
 
-    document
-        .getElementById(
+    /*
+        Výběr existujícího skinu se ukládá okamžitě po kliknutí.
+        Staré tlačítko Uložit už nemá žádnou funkci a zůstává skryté.
+    */
+
+    const saveSkinButton =
+        document.getElementById(
             "save-skin-button"
-        )
-        ?.addEventListener(
-            "click",
-            () => {
-
-                const slotIndex =
-                    UI_STATE
-                        .selectedSlotIndex;
-
-
-                const skinId =
-                    UI_STATE
-                        .existingSlotSkinId;
-
-
-                if (
-                    slotIndex ===
-                        null ||
-                    !skinId
-                ) {
-
-                    return;
-                }
-
-
-                const slot =
-                    getSaveSlot(
-                        slotIndex
-                    );
-
-
-                if (!slot) {
-
-                    return;
-                }
-
-
-                if (
-                    !isSkinUnlocked(
-                        slot.characterId,
-                        skinId
-                    )
-                ) {
-
-                    return;
-                }
-
-
-                setSlotSkin(
-                    slotIndex,
-                    skinId
-                );
-
-
-                openSlotActions(
-                    slotIndex
-                );
-            }
         );
-}
 
+
+    if (saveSkinButton) {
+
+        saveSkinButton.hidden =
+            true;
+
+        saveSkinButton.disabled =
+            true;
+    }
+}
 
 function openExistingSkinSelection(
     slotIndex
@@ -1241,6 +1197,9 @@ function openExistingSkinSelection(
 
         saveSkinButton.hidden =
             true;
+
+        saveSkinButton.disabled =
+            true;
     }
 
 
@@ -1251,8 +1210,6 @@ function openExistingSkinSelection(
 
 
     renderExistingSkinGrid();
-
-    updateSaveSkinButton();
 
 
     showScreen(
@@ -1327,58 +1284,6 @@ function renderExistingSkinGrid() {
                 renderExistingSkinGrid();
             }
     });
-}
-
-
-function updateSaveSkinButton() {
-
-    const button =
-        document.getElementById(
-            "save-skin-button"
-        );
-
-
-    if (!button) {
-
-        return;
-    }
-
-
-    const slotIndex =
-        UI_STATE
-            .selectedSlotIndex;
-
-
-    const skinId =
-        UI_STATE
-            .existingSlotSkinId;
-
-
-    if (
-        slotIndex ===
-            null ||
-        !skinId
-    ) {
-
-        button.disabled =
-            true;
-
-        return;
-    }
-
-
-    const slot =
-        getSaveSlot(
-            slotIndex
-        );
-
-
-    button.disabled =
-        !slot ||
-        !isSkinUnlocked(
-            slot.characterId,
-            skinId
-        );
 }
 
 
