@@ -404,15 +404,39 @@ const GAME_CONFIG = {
 
         /*
             Úvodní hláška zůstane až 6 sekund.
-            UI ji později zároveň schová při prvním
-            tahu hráče.
+            UI ji zároveň schová při prvním
+            skutečném tahu hráče.
         */
 
         openingDurationMs:
             6000,
 
         sequencePauseMs:
-            850
+            850,
+
+        /*
+            Průběžné Lukyho hlášky během partie.
+
+            Další hláška se naplánuje náhodně
+            mezi 2 a 3 minutami.
+
+            Specifická hláška pro zvolenou postavu
+            se během jedné partie smí použít
+            maximálně jednou. Poté se používají
+            jen obecné hlášky.
+        */
+
+        ambientEnabled:
+            true,
+
+        ambientMinMs:
+            120000,
+
+        ambientMaxMs:
+            180000,
+
+        specificAmbientMaxPerGame:
+            1
     },
 
 
@@ -708,42 +732,19 @@ const GAME_CONFIG = {
             2
     },
 
-
     /* =====================================================
        STŮJ
     ===================================================== */
+   
+    skipStacking: {
 
-    skip: {
-
-        canCounterSkip:
+        enabled:
             true,
 
-        multipleSkipCardsMultiplyEffect:
-            false
-    },
-
-
-    /* =====================================================
-       ZMĚNA SMĚRU
-    ===================================================== */
-
-    reverse: {
-
-        hasEffectInTwoPlayerGame:
-            false
-    },
-
-
-    /* =====================================================
-       NULA
-    ===================================================== */
-
-    zeroRule: {
-
-        swapHands:
+        playerCanAcceptSkip:
             true,
 
-        multipleZerosSwapOnlyOnce:
+        aiCanAcceptSkip:
             true
     },
 
@@ -752,44 +753,55 @@ const GAME_CONFIG = {
        SEDMIČKA
     ===================================================== */
 
-    sevenRule: {
+    sevenSwap: {
 
-        optionalHandSwap:
+        enabled:
+            true,
+
+        playerCanChoose:
+            true,
+
+        aiAlwaysSwaps:
             true
     },
 
 
     /* =====================================================
-       KUŘ!
+       STEJNÉ KARTY NAJEDNOU
     ===================================================== */
 
-    kur: {
+    multiPlay: {
 
         enabled:
             true,
 
-        identicalCardsOnly:
-            true,
-
-        minimumCards:
-            2,
-
-        sumDrawCards:
-            true,
-
-        repeatOtherSpecialEffects:
-            false
+        requireExactMatch:
+            true
     },
 
 
     /* =====================================================
-       OVLÁDÁNÍ KARET
+       DRAG & DROP KARET
     ===================================================== */
 
     cardInteraction: {
 
+        /*
+            O kolik pixelů musí karta při tažení
+            směrem nahoru překročit práh,
+            aby se pokusila zahrát.
+
+            Pokud je karta přímo nad odhazovacím
+            prostorem, stačí samotný drop.
+        */
+
         dragPlayThresholdPx:
-            80,
+            90,
+
+        /*
+            Pohyb menší než tato hodnota
+            stále považujeme za kliknutí.
+        */
 
         clickMovementTolerancePx:
             8
@@ -797,20 +809,38 @@ const GAME_CONFIG = {
 
 
     /* =====================================================
-       AUTOMATICKÉ ŘAZENÍ RUKY
+       AI
     ===================================================== */
 
-    handSorting: {
+    ai: {
 
-        colorOrder: [
-            "red",
-            "yellow",
-            "green",
-            "blue",
-            "wild"
-        ],
+        /*
+            Luky se nejdříve snaží zahrát
+            rozumnou kartu podle aktuální situace.
 
-        numericCardsFirst:
+            Pokud má více možností se stejným
+            hodnocením, může mezi nimi náhodně
+            vybrat.
+        */
+
+        randomizeEqualChoices:
+            true,
+
+        /*
+            Preferovat akční karty, pokud tím
+            může hráče dostat pod tlak.
+        */
+
+        preferActionCards:
+            true,
+
+        /*
+            Při výběru barvy po divoké kartě
+            preferuje barvu, které má v ruce
+            nejvíce.
+        */
+
+        chooseMostCommonColor:
             true
     },
 
@@ -824,6 +854,40 @@ const GAME_CONFIG = {
         enabled:
             true,
 
+        /*
+            Dokud hráč v konkrétním slotu otázku
+            alespoň jednou skutečně nepoužije,
+            dostane ji v každé partii jako
+            garantovanou příležitost.
+
+            V první i dalších takových partiích
+            se objeví náhodně 30–60 sekund
+            po začátku hry a zůstane dostupná
+            5 sekund.
+        */
+
+        firstUseGuaranteed:
+            true,
+
+        firstUseDelayMinMs:
+            30000,
+
+        firstUseDelayMaxMs:
+            60000,
+
+        firstUseWindowMs:
+            5000,
+
+        repeatUntilFirstUse:
+            true,
+
+        /*
+            Po prvním skutečném použití otázky
+            se vrací původní vzácná logika:
+            způsobilá je každá pátá partie,
+            maximálně jednou za partii.
+        */
+
         everyNthGame:
             5,
 
@@ -833,137 +897,171 @@ const GAME_CONFIG = {
 
 
     /* =====================================================
-       VÝBĚR POSTAVY
-    ===================================================== */
-
-    characterSelection: {
-
-        recommendedCharacterId:
-            "96",
-
-        showRecommendation:
-            true
-    },
-
-
-    /* =====================================================
-       EMOTY
-    ===================================================== */
-
-    emotes: {
-
-        enabled:
-            true,
-
-        durationMinMs:
-            2600,
-
-        durationMaxMs:
-            3800,
-
-        cooldownMinMs:
-            5000,
-
-        cooldownMaxMs:
-            8000,
-
-        strongSituationChance:
-            0.30,
-
-        mildSituationChance:
-            0.20,
-
-        maxPerSituation:
-            1
-    },
-
-
-    /* =====================================================
-       HISTORIE HRY
-    ===================================================== */
-
-    history: {
-
-        enabled:
-            true,
-
-        maxEntries:
-            150
-    },
-
-
-    /* =====================================================
-       STORAGE
-    ===================================================== */
-
-    storage: {
-
-        rootKey:
-            "dotsUno",
-
-        slotsKey:
-            "dotsUno.slots",
-
-        achievementsKey:
-            "dotsUno.achievements",
-
-        globalStatsKey:
-            "dotsUno.globalStats",
-
-        settingsKey:
-            "dotsUno.settings"
-    },
-
-
-    /* =====================================================
-       ACHIEVEMENT TARGETY
+       ACHIEVEMENTY
     ===================================================== */
 
     achievements: {
 
-        winStreakTarget:
-            3,
+        dany_new_skin: {
 
-        skinWinsTarget:
-            5,
+            id:
+                "dany_new_skin",
 
-        advancedWinsTarget:
-            10,
+            characterId:
+                "dany",
 
-        proWinsTarget:
-            20,
+            title:
+                "Nový skin",
 
-        monsterWinsTarget:
-            30,
+            description:
+                "Vyhraj 5 partií za Danyho.",
 
-        noLifeWinsTarget:
-            50
-    },
+            type:
+                "wins",
+
+            target:
+                5,
+
+            reward: {
+
+                type:
+                    "skin",
+
+                characterId:
+                    "dany",
+
+                skinId:
+                    "skin1"
+            }
+        },
 
 
-    /* =====================================================
-       ANIMACE
-    ===================================================== */
+        fila_new_skin: {
 
-    animation: {
+            id:
+                "fila_new_skin",
 
-        fastMs:
-            160,
+            characterId:
+                "filip",
 
-        normalMs:
-            280,
+            title:
+                "Nový skin",
 
-        cardPlayMs:
-            360,
+            description:
+                "Vyhraj 5 partií za Filipa.",
 
-        handSwapMs:
-            700
+            type:
+                "wins",
+
+            target:
+                5,
+
+            reward: {
+
+                type:
+                    "skin",
+
+                characterId:
+                    "filip",
+
+                skinId:
+                    "skin1"
+            }
+        },
+
+
+        "96_new_skin": {
+
+            id:
+                "96_new_skin",
+
+            characterId:
+                "96",
+
+            title:
+                "Nový skin",
+
+            description:
+                "Vyhraj 5 partií za 96.",
+
+            type:
+                "wins",
+
+            target:
+                5,
+
+            reward: {
+
+                type:
+                    "skin",
+
+                characterId:
+                    "96",
+
+                skinId:
+                    "skin1"
+            }
+        }
     }
 };
 
 
 /* =========================================================
-   POSTAVY
+   ODVOZENÉ KONSTANTY
+========================================================= */
+
+
+const CARD_COLORS = [
+    "red",
+    "yellow",
+    "green",
+    "blue"
+];
+
+
+const CARD_COLOR_LABELS = {
+
+    red:
+        "červená",
+
+    yellow:
+        "žlutá",
+
+    green:
+        "zelená",
+
+    blue:
+        "modrá"
+};
+
+
+const CARD_TYPES = {
+
+    NUMBER:
+        "number",
+
+    SKIP:
+        "skip",
+
+    REVERSE:
+        "reverse",
+
+    DRAW_TWO:
+        "draw2",
+
+    WILD:
+        "wild",
+
+    WILD_DRAW_FOUR:
+        "wild4",
+
+    SEVEN:
+        "seven"
+};
+
+
+/* =========================================================
+   CHARACTERS
 ========================================================= */
 
 function getCharacterConfig(
@@ -984,45 +1082,37 @@ function getCharacterName(
     characterId
 ) {
 
-    const character =
+    return (
         getCharacterConfig(
             characterId
-        );
-
-
-    return character
-        ? character.name
-        : "";
+        )?.name ||
+        characterId ||
+        "Hráč"
+    );
 }
 
 
-/* =========================================================
-   SKINY
-========================================================= */
-
-function getConfiguredCharacterSkins(
+function getCharacterSkins(
     characterId
 ) {
 
-    return [
-        ...(
-            GAME_CONFIG
-                .skins[
-                    characterId
-                ] ||
-            []
-        )
-    ];
+    return (
+        GAME_CONFIG
+            .skins[
+                characterId
+            ] ||
+        []
+    );
 }
 
 
-function getConfiguredCharacterSkin(
+function getCharacterSkin(
     characterId,
     skinId
 ) {
 
     const skins =
-        getConfiguredCharacterSkins(
+        getCharacterSkins(
             characterId
         );
 
@@ -1054,10 +1144,13 @@ function getDefaultCharacterSkin(
 
 
     return (
-        getConfiguredCharacterSkin(
+        getCharacterSkin(
             characterId,
             character.defaultSkinId
         ) ||
+        getCharacterSkins(
+            characterId
+        )[0] ||
         null
     );
 }
@@ -1065,22 +1158,89 @@ function getDefaultCharacterSkin(
 
 function getCharacterImage(
     characterId,
-    skinId = "default"
+    skinId = null
 ) {
 
     const skin =
-        getConfiguredCharacterSkin(
-            characterId,
-            skinId
-        );
+        skinId
+            ? getCharacterSkin(
+                characterId,
+                skinId
+            )
+            : getDefaultCharacterSkin(
+                characterId
+            );
 
 
     if (
         skin?.image
     ) {
+
         return skin.image;
     }
 
+
+    return (
+        getCharacterConfig(
+            characterId
+        )?.defaultImage ||
+        null
+    );
+}
+
+
+function getCharacterEndImage(
+    characterId,
+    result
+) {
+
+    const config =
+        GAME_CONFIG
+            .endScreenImages[
+                characterId
+            ];
+
+
+    if (!config) {
+
+        return getCharacterImage(
+            characterId
+        );
+    }
+
+
+    return (
+        config[result] ||
+        getCharacterImage(
+            characterId
+        )
+    );
+}
+
+
+/* =========================================================
+   SKINY
+========================================================= */
+
+function getSkinUnlockAchievementId(
+    characterId,
+    skinId
+) {
+
+    return (
+        getCharacterSkin(
+            characterId,
+            skinId
+        )?.unlockedByAchievement ||
+        null
+    );
+}
+
+
+function isDefaultSkin(
+    characterId,
+    skinId
+) {
 
     const character =
         getCharacterConfig(
@@ -1088,123 +1248,265 @@ function getCharacterImage(
         );
 
 
+    return Boolean(
+        character &&
+        character.defaultSkinId ===
+            skinId
+    );
+}
+
+
+/* =========================================================
+   KARTY
+========================================================= */
+
+function isCardColor(
+    color
+) {
+
+    return CARD_COLORS.includes(
+        color
+    );
+}
+
+
+function isWildCard(
+    card
+) {
+
+    return Boolean(
+        card &&
+        (
+            card.type ===
+                CARD_TYPES.WILD ||
+            card.type ===
+                CARD_TYPES.WILD_DRAW_FOUR
+        )
+    );
+}
+
+
+function isDrawCard(
+    card
+) {
+
+    return Boolean(
+        card &&
+        (
+            card.type ===
+                CARD_TYPES.DRAW_TWO ||
+            card.type ===
+                CARD_TYPES.WILD_DRAW_FOUR
+        )
+    );
+}
+
+
+function isSkipCard(
+    card
+) {
+
+    return Boolean(
+        card &&
+        card.type ===
+            CARD_TYPES.SKIP
+    );
+}
+
+
+function isSevenCard(
+    card
+) {
+
+    return Boolean(
+        card &&
+        card.type ===
+            CARD_TYPES.SEVEN
+    );
+}
+
+
+function getCardDisplayValue(
+    card
+) {
+
+    if (!card) {
+        return "";
+    }
+
+
+    switch (
+        card.type
+    ) {
+
+        case CARD_TYPES.NUMBER:
+            return String(
+                card.value
+            );
+
+
+        case CARD_TYPES.SKIP:
+            return "⊘";
+
+
+        case CARD_TYPES.REVERSE:
+            return "↻";
+
+
+        case CARD_TYPES.DRAW_TWO:
+            return "+2";
+
+
+        case CARD_TYPES.WILD:
+            return "W";
+
+
+        case CARD_TYPES.WILD_DRAW_FOUR:
+            return "+4";
+
+
+        case CARD_TYPES.SEVEN:
+            return "7";
+
+
+        default:
+            return (
+                card.value ??
+                "?"
+            );
+    }
+}
+
+
+function getCardDescription(
+    card
+) {
+
+    if (!card) {
+        return "";
+    }
+
+
+    const color =
+        CARD_COLOR_LABELS[
+            card.color
+        ] ||
+        "";
+
+
+    switch (
+        card.type
+    ) {
+
+        case CARD_TYPES.NUMBER:
+            return `${color} ${card.value}`;
+
+
+        case CARD_TYPES.SKIP:
+            return `${color} Stůj`;
+
+
+        case CARD_TYPES.REVERSE:
+            return `${color} Změna směru`;
+
+
+        case CARD_TYPES.DRAW_TWO:
+            return `${color} +2`;
+
+
+        case CARD_TYPES.WILD:
+            return "Změna barvy";
+
+
+        case CARD_TYPES.WILD_DRAW_FOUR:
+            return "Změna barvy +4";
+
+
+        case CARD_TYPES.SEVEN:
+            return `${color} 7`;
+
+
+        default:
+            return "Karta";
+    }
+}
+
+
+function areCardsIdentical(
+    cardA,
+    cardB
+) {
+
+    if (
+        !cardA ||
+        !cardB
+    ) {
+        return false;
+    }
+
+
+    if (
+        cardA.type !==
+        cardB.type
+    ) {
+        return false;
+    }
+
+
+    if (
+        cardA.color !==
+        cardB.color
+    ) {
+        return false;
+    }
+
+
+    if (
+        cardA.type ===
+        CARD_TYPES.NUMBER
+    ) {
+
+        return (
+            cardA.value ===
+            cardB.value
+        );
+    }
+
+
+    return true;
+}
+
+
+/* =========================================================
+   BARVY
+========================================================= */
+
+function getColorLabel(
+    color
+) {
+
     return (
-        character?.defaultImage ||
+        CARD_COLOR_LABELS[
+            color
+        ] ||
+        color ||
         ""
     );
 }
 
 
-/* =========================================================
-   WIN / LOSE OBRÁZKY
-========================================================= */
-
-function getConfiguredPlayerEndImage(
-    characterId,
-    result
+function isPlayableColor(
+    color
 ) {
 
-    return (
-        GAME_CONFIG
-            .endScreenImages
-            ?.[characterId]
-            ?.[result] ||
-        null
-    );
-}
-
-
-function getConfiguredLukyEndImage(
-    result
-) {
-
-    if (
-        result === "win"
-    ) {
-
-        return GAME_CONFIG
-            .opponent
-            .winImage;
-    }
-
-
-    if (
-        result === "lose"
-    ) {
-
-        return GAME_CONFIG
-            .opponent
-            .loseImage;
-    }
-
-
-    return null;
-}
-
-
-/* =========================================================
-   EMOTY
-========================================================= */
-
-function getConfiguredLukyEmote(
-    emoteId
-) {
-
-    return (
-        GAME_CONFIG
-            .opponent
-            .emotes
-            ?.[emoteId] ||
-        null
-    );
-}
-
-
-function getConfiguredCharacterEmote(
-    characterId,
-    emoteId
-) {
-
-    return (
-        GAME_CONFIG
-            .characterEmotes
-            ?.[characterId]
-            ?.[emoteId] ||
-        null
-    );
-}
-
-
-function getRandomEmoteDuration() {
-
-    return randomInteger(
-        GAME_CONFIG
-            .emotes
-            .durationMinMs,
-
-        GAME_CONFIG
-            .emotes
-            .durationMaxMs
-    );
-}
-
-
-function getRandomEmoteCooldown() {
-
-    return randomInteger(
-        GAME_CONFIG
-            .emotes
-            .cooldownMinMs,
-
-        GAME_CONFIG
-            .emotes
-            .cooldownMaxMs
+    return CARD_COLORS.includes(
+        color
     );
 }
 
 
 /* =========================================================
-   NÁHODA
+   RANDOM
 ========================================================= */
 
 function randomInteger(
@@ -1212,58 +1514,79 @@ function randomInteger(
     max
 ) {
 
-    const minimum =
-        Math.ceil(min);
+    const safeMin =
+        Math.ceil(
+            Math.min(
+                min,
+                max
+            )
+        );
 
 
-    const maximum =
-        Math.floor(max);
+    const safeMax =
+        Math.floor(
+            Math.max(
+                min,
+                max
+            )
+        );
 
-
-    return Math.floor(
-        Math.random() *
-        (
-            maximum -
-            minimum +
-            1
-        )
-    ) + minimum;
-}
-
-
-function randomChance(
-    chance
-) {
 
     return (
-        Math.random() <
-        chance
+        Math.floor(
+            Math.random() *
+            (
+                safeMax -
+                safeMin +
+                1
+            )
+        ) +
+        safeMin
     );
 }
 
 
+function randomArrayItem(
+    items
+) {
+
+    if (
+        !Array.isArray(
+            items
+        ) ||
+        items.length ===
+            0
+    ) {
+
+        return null;
+    }
+
+
+    return items[
+        randomInteger(
+            0,
+            items.length - 1
+        )
+    ];
+}
+
+
 /* =========================================================
-   AI – DÉLKA PŘEMÝŠLENÍ
+   PŘEMÝŠLENÍ LUKYHO
 ========================================================= */
 
-function getRandomAiThinkingTime(
-    handCount = null
+function getLukyThinkingDelay(
+    handSize
 ) {
 
     const config =
-        GAME_CONFIG.aiThinking;
+        GAME_CONFIG
+            .aiThinking;
 
-
-    /*
-        Hodně karet = trochu rychlejší Luky.
-    */
 
     if (
-        Number.isFinite(
-            handCount
-        ) &&
-        handCount >=
-            config.largeHandThreshold
+        handSize >=
+        config.largeHandThreshold
     ) {
 
         return randomInteger(
@@ -1273,14 +1596,9 @@ function getRandomAiThinkingTime(
     }
 
 
-    /*
-        Občas přemýšlí déle.
-    */
-
     if (
-        randomChance(
-            config.slowChance
-        )
+        Math.random() <
+        config.slowChance
     ) {
 
         return randomInteger(
@@ -1297,11 +1615,47 @@ function getRandomAiThinkingTime(
 }
 
 
+function shouldShowThinkingDots(
+    delayMs
+) {
+
+    const config =
+        GAME_CONFIG
+            .aiThinking;
+
+
+    if (
+        delayMs <
+        config.thinkingDotsMinMs
+    ) {
+
+        return false;
+    }
+
+
+    return (
+        Math.random() <
+        config.showThinkingDotsChance
+    );
+}
+
+
 /* =========================================================
    UNO LUKYHO
 ========================================================= */
 
-function getRandomLukyUnoWindow() {
+function shouldLukyForgetUno() {
+
+    return (
+        Math.random() <
+        GAME_CONFIG
+            .lukyUno
+            .forgetChance
+    );
+}
+
+
+function getLukyForgottenUnoWindow() {
 
     return randomInteger(
         GAME_CONFIG
@@ -1315,7 +1669,7 @@ function getRandomLukyUnoWindow() {
 }
 
 
-function getRandomLukyAfterUnoDelay() {
+function getLukyAfterUnoPhraseDelay() {
 
     return randomInteger(
         GAME_CONFIG
@@ -1325,6 +1679,42 @@ function getRandomLukyAfterUnoDelay() {
         GAME_CONFIG
             .lukyUno
             .afterUnoPhraseMaxMs
+    );
+}
+
+
+/* =========================================================
+   PRŮBĚŽNÉ HLÁŠKY
+========================================================= */
+
+function getRandomAmbientSpeechDelay() {
+
+    return randomInteger(
+        GAME_CONFIG
+            .speech
+            .ambientMinMs,
+
+        GAME_CONFIG
+            .speech
+            .ambientMaxMs
+    );
+}
+
+
+/* =========================================================
+   EVENT "MÁ NĚKDO ŽLUTOU?"
+========================================================= */
+
+function getRandomFirstYellowEventDelay() {
+
+    return randomInteger(
+        GAME_CONFIG
+            .yellowEvent
+            .firstUseDelayMinMs,
+
+        GAME_CONFIG
+            .yellowEvent
+            .firstUseDelayMaxMs
     );
 }
 
@@ -1342,27 +1732,77 @@ function getRandomMusicTrack() {
 
 
     if (
-        !Array.isArray(tracks) ||
-        tracks.length === 0
+        !Array.isArray(
+            tracks
+        ) ||
+        tracks.length ===
+            0
     ) {
 
-        return {
-            id:
-                "video-start",
-
-            title:
-                "Dramatická klasická hudba",
-
-            startSeconds:
-                0
-        };
+        return null;
     }
 
 
-    return tracks[
-        randomInteger(
-            0,
-            tracks.length - 1
+    return randomArrayItem(
+        tracks
+    );
+}
+
+
+/* =========================================================
+   ACHIEVEMENTY
+========================================================= */
+
+function getAchievementConfig(
+    achievementId
+) {
+
+    return (
+        GAME_CONFIG
+            .achievements[
+                achievementId
+            ] ||
+        null
+    );
+}
+
+
+function getAchievementsForCharacter(
+    characterId
+) {
+
+    return Object
+        .values(
+            GAME_CONFIG
+                .achievements
         )
-    ];
+        .filter(
+            (achievement) =>
+                achievement
+                    .characterId ===
+                characterId
+        );
+}
+
+
+/* =========================================================
+   FORMÁTOVÁNÍ
+========================================================= */
+
+function formatRecord(
+    wins,
+    losses
+) {
+
+    return `${wins}–${losses}`;
+}
+
+
+/* =========================================================
+   ČAS
+========================================================= */
+
+function nowTimestamp() {
+
+    return Date.now();
 }
