@@ -6693,6 +6693,71 @@ function showGameOver(
     );
 
 
+    /*
+        Hláška Lukyho po prohře patří přímo na výsledkovou obrazovku.
+        Vytvoří se dynamicky pod jeho jménem a zůstane tam po celou
+        dobu, dokud hráč neopustí výsledkovou obrazovku.
+    */
+
+    let lukyDefeatQuoteElement =
+        document.getElementById(
+            "game-over-luky-defeat-quote"
+        );
+
+
+    const lukyNameElement =
+        document.getElementById(
+            "game-over-luky-name"
+        );
+
+
+    if (
+        !lukyDefeatQuoteElement &&
+        lukyNameElement
+    ) {
+
+        lukyDefeatQuoteElement =
+            document.createElement(
+                "div"
+            );
+
+
+        lukyDefeatQuoteElement.id =
+            "game-over-luky-defeat-quote";
+
+
+        lukyDefeatQuoteElement.className =
+            "game-over-defeat-quote";
+
+
+        lukyNameElement.insertAdjacentElement(
+            "afterend",
+            lukyDefeatQuoteElement
+        );
+    }
+
+
+    const lukyDefeatQuote =
+        playerWon &&
+        typeof detail?.lukyDefeatQuote ===
+            "string"
+            ? detail.lukyDefeatQuote.trim()
+            : "";
+
+
+    if (
+        lukyDefeatQuoteElement
+    ) {
+
+        lukyDefeatQuoteElement.textContent =
+            lukyDefeatQuote;
+
+
+        lukyDefeatQuoteElement.hidden =
+            !lukyDefeatQuote;
+    }
+
+
     const playerEndImage =
         detail?.playerImage ||
         (
