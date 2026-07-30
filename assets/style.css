@@ -5270,3 +5270,577 @@ body {
         font-size: 0.46rem;
     }
 }
+
+/* =========================================================
+   FINÁLNÍ REVIZE – RESPONSIVE UI / PC + iPHONE SE
+========================================================= */
+
+/* ---------- HLAVNÍ MENU / LOGO ---------- */
+
+.game-logo {
+    margin-bottom: 24px;
+}
+
+.menu-brand-image-wrap {
+    width: min(330px, 80vw);
+    height: auto;
+    aspect-ratio: 16 / 9;
+
+    margin: 0 auto 8px;
+
+    overflow: visible;
+}
+
+.menu-brand-image {
+    width: 100%;
+    height: 100%;
+
+    object-fit: contain;
+    object-position: center;
+}
+
+.game-logo-mark {
+    display: none !important;
+}
+
+.game-logo h1 {
+    margin-top: 0;
+}
+
+/* ---------- PROFILOVÉ FOTKY ---------- */
+
+.character-image,
+.skin-preview-image,
+.achievement-image,
+.slot-summary-avatar img,
+.opponent-photo,
+.player-avatar,
+.history-entry-avatar,
+.game-over-image-wrap img {
+    object-position: top center;
+}
+
+.opponent-photo,
+.player-avatar {
+    object-fit: cover;
+}
+
+/* ---------- DESKTOP HRA ---------- */
+
+@media (min-width: 761px) {
+
+    .game-table {
+        grid-template-rows:
+            52px
+            minmax(170px, 0.9fr)
+            minmax(200px, 1.08fr)
+            auto
+            minmax(300px, 1.55fr);
+
+        gap: 4px;
+    }
+
+    .opponent-photo-wrap {
+        width: clamp(175px, 14vw, 235px);
+        height: clamp(175px, 14vw, 235px);
+
+        flex-basis: clamp(175px, 14vw, 235px);
+    }
+
+    .opponent-info h2 {
+        font-size: clamp(1.85rem, 2.7vw, 2.5rem);
+    }
+
+    .opponent-info span {
+        font-size: 1.08rem;
+    }
+
+    .player-avatar-wrap {
+        width: clamp(150px, 12vw, 210px);
+        height: clamp(150px, 12vw, 210px);
+
+        flex-basis: clamp(150px, 12vw, 210px);
+    }
+
+    .player-info {
+        min-width: 145px;
+        padding: 12px 15px;
+    }
+
+    .player-info h2 {
+        font-size: clamp(1.6rem, 2.25vw, 2.15rem);
+    }
+
+    .player-info span {
+        font-size: 1rem;
+    }
+
+    .player-area {
+        grid-template-rows:
+            auto
+            minmax(160px, 1fr)
+            auto;
+    }
+
+    .player-play-row {
+        align-items: center;
+    }
+
+    .player-status-row {
+        width: min(1040px, 100%);
+        padding: 12px 18px;
+    }
+
+    .player-status-row .game-status {
+        font-size: clamp(1.2rem, 1.55vw, 1.55rem);
+        line-height: 1.18;
+    }
+
+    .player-status-row .last-action-text {
+        font-size: clamp(0.92rem, 1.1vw, 1.08rem);
+        line-height: 1.3;
+    }
+}
+
+/* ---------- NÁVRAT K VÝBĚRU BARVY ---------- */
+
+.restore-color-choice-button {
+    left: 50%;
+    bottom: max(88px, calc(env(safe-area-inset-bottom) + 72px));
+
+    width: min(360px, calc(100vw - 28px));
+
+    transform: translateX(-50%);
+}
+
+.restore-color-choice-button.is-attention {
+    color: #17120a;
+
+    border-color: var(--gold-bright);
+
+    background:
+        linear-gradient(
+            180deg,
+            var(--gold-bright),
+            var(--gold)
+        );
+
+    box-shadow:
+        0 0 0 4px rgba(240, 206, 131, 0.16),
+        0 0 30px rgba(212, 163, 63, 0.42),
+        0 12px 34px rgba(0, 0, 0, 0.48);
+
+    font-weight: 950;
+
+    animation: color-return-pulse 1.15s ease-in-out infinite alternate;
+}
+
+@keyframes color-return-pulse {
+    from {
+        transform: translateX(-50%) scale(1);
+    }
+
+    to {
+        transform: translateX(-50%) scale(1.035);
+    }
+}
+
+/* ---------- RUB KARTY – ČITELNĚJŠÍ SLUNCE ---------- */
+
+.card-back-sun {
+    width: 64%;
+    aspect-ratio: 1;
+
+    border: 2px solid rgba(230, 189, 99, 0.92);
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(212, 163, 63, 0.08) 0 31%,
+            transparent 32%
+        );
+
+    box-shadow:
+        0 0 18px rgba(212, 163, 63, 0.16);
+}
+
+.card-back-sun-core {
+    width: 48%;
+    height: 48%;
+
+    border: 2px solid var(--gold-soft);
+    border-radius: 50%;
+
+    background: rgba(10, 10, 12, 0.95);
+}
+
+.card-back-sun-ray {
+    left: 50%;
+    top: 50%;
+
+    width: 2px;
+    height: 55%;
+
+    background:
+        linear-gradient(
+            180deg,
+            var(--gold-soft) 0%,
+            rgba(212, 163, 63, 0.95) 60%,
+            rgba(212, 163, 63, 0) 100%
+        );
+
+    transform-origin: 50% 0;
+}
+
+/* ---------- GAME OVER ---------- */
+
+.modal-overlay:has(#modal-game-over:not([hidden])) {
+    z-index: 1500;
+}
+
+.game-over-image-wrap img {
+    object-position: top center;
+}
+
+/* ---------- MOBILE / TABLET ---------- */
+
+@media (max-width: 760px) {
+
+    .game-table {
+        grid-template-rows:
+            42px
+            minmax(96px, 0.75fr)
+            minmax(112px, 0.9fr)
+            auto
+            minmax(242px, 1.65fr);
+
+        gap: 2px;
+    }
+
+    .opponent-photo-wrap {
+        width: 92px;
+        height: 92px;
+
+        flex-basis: 92px;
+    }
+
+    .opponent-info-stack {
+        max-width: calc(100vw - 106px);
+    }
+
+    .opponent-info {
+        min-width: 92px;
+        padding: 7px 10px;
+    }
+
+    .opponent-info h2 {
+        font-size: 1.18rem;
+    }
+
+    .opponent-info span {
+        font-size: 0.76rem;
+    }
+
+    .opponent-speech {
+        max-width: min(245px, calc(100vw - 112px));
+
+        padding: 7px 10px;
+
+        font-size: 0.78rem;
+        line-height: 1.22;
+    }
+
+    .player-profile-row {
+        min-height: 68px;
+        gap: 8px;
+    }
+
+    .player-avatar-wrap {
+        width: 70px;
+        height: 70px;
+
+        flex-basis: 70px;
+    }
+
+    .player-info {
+        min-width: 84px;
+
+        padding: 6px 8px;
+    }
+
+    .player-info h2 {
+        font-size: 1.05rem;
+    }
+
+    .player-info span {
+        font-size: 0.7rem;
+    }
+
+    .player-speech {
+        padding: 7px 9px;
+
+        font-size: 0.74rem;
+        line-height: 1.22;
+    }
+
+    .player-area {
+        grid-template-rows:
+            auto
+            minmax(118px, 1fr)
+            auto;
+
+        gap: 3px;
+    }
+
+    .player-hand-zone,
+    .player-hand {
+        min-height: 86px;
+    }
+
+    .game-controls {
+        min-height: 36px;
+        gap: 5px;
+    }
+
+    .game-controls button {
+        min-height: 34px;
+
+        padding: 5px 8px;
+
+        font-size: 0.7rem;
+    }
+
+    .player-status-row {
+        min-height: 54px;
+
+        padding: 7px 10px;
+    }
+
+    .player-status-row .game-status {
+        font-size: 0.9rem;
+        line-height: 1.16;
+    }
+
+    .player-status-row .last-action-text {
+        font-size: 0.7rem;
+        line-height: 1.22;
+    }
+
+    .restore-color-choice-button {
+        bottom: max(64px, calc(env(safe-area-inset-bottom) + 52px));
+    }
+}
+
+/* ---------- iPHONE SE / ÚZKÝ MOBIL ---------- */
+
+@media (max-width: 390px) {
+
+    .menu-shell {
+        padding: 22px 18px;
+    }
+
+    .menu-brand-image-wrap {
+        width: min(270px, 82vw);
+        margin-bottom: 4px;
+    }
+
+    .game-logo h1 {
+        font-size: clamp(3.25rem, 17vw, 4.7rem);
+    }
+
+    .game-logo p {
+        margin-top: 10px;
+        font-size: 0.94rem;
+    }
+
+    .game-table {
+        grid-template-rows:
+            38px
+            84px
+            minmax(100px, 0.86fr)
+            auto
+            minmax(232px, 1.72fr);
+    }
+
+    .opponent-photo-wrap {
+        width: 78px;
+        height: 78px;
+
+        flex-basis: 78px;
+    }
+
+    .opponent-info-stack {
+        max-width: calc(100vw - 91px);
+    }
+
+    .opponent-info {
+        min-width: 76px;
+        padding: 5px 7px;
+    }
+
+    .opponent-info h2 {
+        font-size: 1rem;
+    }
+
+    .opponent-info span {
+        font-size: 0.64rem;
+    }
+
+    .opponent-speech {
+        max-width: min(216px, calc(100vw - 94px));
+
+        padding: 5px 7px;
+
+        font-size: 0.68rem;
+    }
+
+    .player-profile-row {
+        min-height: 60px;
+        gap: 6px;
+    }
+
+    .player-avatar-wrap {
+        width: 60px;
+        height: 60px;
+
+        flex-basis: 60px;
+    }
+
+    .player-info {
+        min-width: 72px;
+
+        padding: 5px 6px;
+    }
+
+    .player-info h2 {
+        font-size: 0.9rem;
+    }
+
+    .player-info span {
+        font-size: 0.59rem;
+    }
+
+    .player-speech {
+        padding: 5px 7px;
+
+        font-size: 0.64rem;
+    }
+
+    .player-hand-zone,
+    .player-hand {
+        min-height: 80px;
+    }
+
+    .game-controls {
+        gap: 3px;
+    }
+
+    .game-controls button {
+        min-height: 31px;
+
+        padding: 4px 6px;
+
+        font-size: 0.62rem;
+    }
+
+    .player-status-row {
+        min-height: 48px;
+
+        padding: 6px 7px;
+    }
+
+    .player-status-row .game-status {
+        font-size: 0.82rem;
+        line-height: 1.14;
+    }
+
+    .player-status-row .last-action-text {
+        font-size: 0.63rem;
+        line-height: 1.18;
+    }
+
+    .current-color-indicator,
+    .draw-penalty-indicator {
+        font-size: 0.95em;
+    }
+}
+
+/* ---------- KRÁTKÉ MOBILNÍ DISPLEJE ---------- */
+
+@media (max-height: 700px) and (max-width: 760px) {
+
+    .game-table {
+        grid-template-rows:
+            36px
+            72px
+            minmax(92px, 0.9fr)
+            auto
+            minmax(214px, 1.7fr);
+    }
+
+    .opponent-photo-wrap {
+        width: 68px;
+        height: 68px;
+
+        flex-basis: 68px;
+    }
+
+    .opponent-info h2 {
+        font-size: 0.92rem;
+    }
+
+    .opponent-info span {
+        font-size: 0.59rem;
+    }
+
+    .opponent-speech {
+        font-size: 0.63rem;
+    }
+
+    .player-profile-row {
+        min-height: 52px;
+    }
+
+    .player-avatar-wrap {
+        width: 52px;
+        height: 52px;
+
+        flex-basis: 52px;
+    }
+
+    .player-info h2 {
+        font-size: 0.82rem;
+    }
+
+    .player-info span {
+        font-size: 0.54rem;
+    }
+
+    .player-speech {
+        font-size: 0.59rem;
+    }
+
+    .player-hand-zone,
+    .player-hand {
+        min-height: 74px;
+    }
+
+    .game-controls button {
+        min-height: 29px;
+
+        font-size: 0.58rem;
+    }
+
+    .player-status-row {
+        min-height: 44px;
+    }
+
+    .player-status-row .game-status {
+        font-size: 0.76rem;
+    }
+
+    .player-status-row .last-action-text {
+        font-size: 0.58rem;
+    }
+}
