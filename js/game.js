@@ -513,6 +513,28 @@ function continueSavedGame(
    PRVNÍ BARVA
 ========================================================= */
 
+function waitForHandSwapReveal(
+    delayMs = 1000
+) {
+
+    return new Promise(
+        (resolve) => {
+
+            setTimeout(
+                resolve,
+                Math.max(
+                    0,
+                    Number(
+                        delayMs
+                    ) ||
+                    0
+                )
+            );
+        }
+    );
+}
+
+
 function getInitialColor(
     card
 ) {
@@ -1340,6 +1362,16 @@ async function playerPlayCards(
             cards[0]
         )
     ) {
+
+        saveGame();
+
+        emitStateChanged();
+
+
+        await waitForHandSwapReveal(
+            1000
+        );
+
 
         swapHands();
 
@@ -2897,6 +2929,16 @@ async function executeLukyDecision(
         )
     ) {
 
+        saveGame();
+
+        emitStateChanged();
+
+
+        await waitForHandSwapReveal(
+            1000
+        );
+
+
         swapHands();
 
 
@@ -2941,6 +2983,16 @@ async function executeLukyDecision(
                 state
             )
         ) {
+
+            saveGame();
+
+            emitStateChanged();
+
+
+            await waitForHandSwapReveal(
+                1000
+            );
+
 
             swapHands();
 
