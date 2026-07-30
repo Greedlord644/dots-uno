@@ -72,6 +72,9 @@ const GAME_RUNTIME = {
     characterReactionTimer:
         null,
 
+    situationQuoteTimer:
+        null,
+
     lukyEmoteSuppressedUntil:
         0,
 
@@ -5223,6 +5226,49 @@ function maybeTriggerHeavyDrawQuote(
 }
 
 /* =========================================================
+   BEZPEČNÉ VOLÁNÍ VOLITELNÝCH HLÁŠEK
+
+   Hlášky nesmí nikdy shodit herní engine. Pokud je quotes.js
+   starší, getter chybí nebo vrátí chybu, hra pokračuje bez hlášky.
+========================================================= */
+
+function safeOptionalQuoteGetter(
+    getterName
+) {
+
+    try {
+
+        const getter =
+            globalThis[
+                getterName
+            ];
+
+
+        if (
+            typeof getter !==
+                "function"
+        ) {
+
+            return null;
+        }
+
+
+        return getter();
+
+    } catch (error) {
+
+        console.warn(
+            `DOTS UNO: volitelnou hlášku ${getterName} se nepodařilo načíst.`,
+            error
+        );
+
+
+        return null;
+    }
+}
+
+
+/* =========================================================
    SPECIÁLNÍ SITUAČNÍ HLÁŠKY – DANY / LUKY
 ========================================================= */
 
@@ -5252,7 +5298,9 @@ function emitDanyBadSituationQuote() {
 
 
     const quote =
-        getDanyBadSituationQuote();
+        safeOptionalQuoteGetter(
+            "getDanyBadSituationQuote"
+        );
 
 
     if (
@@ -5308,35 +5356,62 @@ function emitDanyBadSituationQuote() {
         1
     ) {
 
-        setTimeout(
-            () => {
+        if (
+            GAME_RUNTIME
+                .situationQuoteTimer
+        ) {
 
-                if (
-                    !GAME_RUNTIME.state
-                ) {
+            clearTimeout(
+                GAME_RUNTIME
+                    .situationQuoteTimer
+            );
+        }
 
-                    return;
-                }
+
+        const sourceState =
+            GAME_RUNTIME.state;
 
 
-                emitGameEvent(
-                    "player-speech",
-                    {
-                        text:
-                            lines[1],
+        GAME_RUNTIME
+            .situationQuoteTimer =
+            setTimeout(
+                () => {
 
-                        duration:
-                            GAME_CONFIG
-                                .speech
-                                .defaultDurationMs,
+                    GAME_RUNTIME
+                        .situationQuoteTimer =
+                        null;
 
-                        priority:
-                            "character"
+
+                    if (
+                        !sourceState ||
+                        GAME_RUNTIME.state !==
+                            sourceState ||
+                        sourceState.status !==
+                            "playing"
+                    ) {
+
+                        return;
                     }
-                );
-            },
-            3200
-        );
+
+
+                    emitGameEvent(
+                        "player-speech",
+                        {
+                            text:
+                                lines[1],
+
+                            duration:
+                                GAME_CONFIG
+                                    .speech
+                                    .defaultDurationMs,
+
+                            priority:
+                                "character"
+                        }
+                    );
+                },
+                3200
+            );
     }
 
 
@@ -5347,7 +5422,9 @@ function emitDanyBadSituationQuote() {
 function emitLukyBadSituationQuote() {
 
     const text =
-        getLukyBadSituationQuote();
+        safeOptionalQuoteGetter(
+            "getLukyBadSituationQuote"
+        );
 
 
     if (!text) {
@@ -5977,6 +6054,21 @@ async function finishGame(
 
 
     /*
+        Volitelná hláška po Lukyho prohře je oddělená od kritické
+        logiky konce partie. I kdyby getter v quotes.js neexistoval
+        nebo selhal, game-over event se musí vždy odeslat.
+    */
+
+    const lukyDefeatQuote =
+        winner ===
+            "player"
+            ? safeOptionalQuoteGetter(
+                "getLukyDefeatQuote"
+            )
+            : null;
+
+
+    /*
         Game-over event posíláme až po finálním state-changed.
         UI tak vítěznou obrazovku otevře jako poslední krok
         a následný render ji už nepřekryje.
@@ -6012,25 +6104,22 @@ async function finishGame(
             history:
                 state.history,
 
-            lukyDefeatQuote:
-                winner ===
-                    "player"
-                    ? getLukyDefeatQuote()
-                    : null
+            lukyDefeatQuote
         }
     );
 
 
     if (
         winner ===
-        "player"
+            "player" &&
+        lukyDefeatQuote
     ) {
 
         emitGameEvent(
             "luky-speech",
             {
                 text:
-                    getLukyDefeatQuote(),
+                    lukyDefeatQuote,
 
                 duration:
                     GAME_CONFIG
@@ -6374,6 +6463,23 @@ function clearRuntimeTimers() {
 
         GAME_RUNTIME
             .characterReactionTimer =
+            null;
+    }
+
+
+    if (
+        GAME_RUNTIME
+            .situationQuoteTimer
+    ) {
+
+        clearTimeout(
+            GAME_RUNTIME
+                .situationQuoteTimer
+        );
+
+
+        GAME_RUNTIME
+            .situationQuoteTimer =
             null;
     }
 
