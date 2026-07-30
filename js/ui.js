@@ -68,6 +68,9 @@ const UI_STATE = {
         moved:
             false,
 
+        selectedOnPointerDown:
+            false,
+
         elements:
             []
     },
@@ -894,8 +897,7 @@ function selectCharacter(
                 card.classList.toggle(
                     "is-selected",
                     card.dataset
-                        .character ===
-                    characterId
+                        .character === characterId
                 );
             }
         );
@@ -994,6 +996,7 @@ function updateConfirmCharacterButton() {
             UI_STATE.selectedSkinId
         );
 }
+
 
 function clearNewCharacterSelection() {
 
@@ -1641,11 +1644,6 @@ function renderAchievements() {
                     achievement.title;
 
 
-                /*
-                    Fotografie odemykaného skinu je klikací
-                    a zobrazí se v plné velikosti.
-                */
-
                 if (visual) {
 
                     visual.disabled =
@@ -1793,102 +1791,42 @@ function createAchievementCardPreview(
 
 
     element.className =
-        "game-card";
+        "achievement-mini-card";
 
 
-    element.dataset.color =
-        preview.color ||
-        "yellow";
+    if (
+        preview.color
+    ) {
+
+        element.classList.add(
+            `achievement-mini-card-${preview.color}`
+        );
+    }
 
 
-    const cornerTop =
+    const value =
         document.createElement(
             "span"
         );
 
 
-    cornerTop.className =
-        "card-corner card-corner-top";
+    value.className =
+        "achievement-mini-card-value";
 
 
-    const cornerTopValue =
-        document.createElement(
-            "span"
-        );
+    value.textContent =
+        preview.value ||
+        "?";
 
 
-    cornerTopValue.className =
-        "card-corner-value";
-
-
-    cornerTopValue.textContent =
-        String(
-            preview.value ??
-            ""
-        );
-
-
-    cornerTop.appendChild(
-        cornerTopValue
-    );
-
-
-    const center =
-        document.createElement(
-            "span"
-        );
-
-
-    center.className =
-        "card-center";
-
-
-    const centerValue =
-        document.createElement(
-            "span"
-        );
-
-
-    centerValue.className =
-        "card-center-value";
-
-
-    centerValue.textContent =
-        String(
-            preview.value ??
-            ""
-        );
-
-
-    center.appendChild(
-        centerValue
-    );
-
-
-    const cornerBottom =
-        cornerTop.cloneNode(
-            true
-        );
-
-
-    cornerBottom.className =
-        "card-corner card-corner-bottom";
-
-
-    element.append(
-        cornerTop,
-        center,
-        cornerBottom
+    element.appendChild(
+        value
     );
 
 
     return element;
 }
 
-
-/* =========================================================
-   ACHIEVEMENT LIGHTBOX
-========================================================= */
 
 function setupAchievementLightboxControls() {
 
@@ -2065,9 +2003,11 @@ function startGameUI(
 
     UI_STATE.firstPlayerActionDone =
         false;
-      
+
+
     UI_STATE.suppressCardClickUntil =
         0;
+
 
     resetSpeechUI();
 
@@ -2177,19 +2117,6 @@ function setupGameControls() {
         );
 
 
-    /*
-        Celá zóna odhodu je klikací.
-
-        Díky CSS:
-        .discard-pile,
-        .discard-pile * {
-            pointer-events: none;
-        }
-
-        projde klik i přímo přes vrchní kartu
-        do #discard-zone.
-    */
-
     document
         .getElementById(
             "discard-zone"
@@ -2223,14 +2150,6 @@ function setupGameControls() {
         ?.addEventListener(
             "click",
             () => {
-
-                /*
-                    UNO tlačítko samo o sobě nebereme
-                    jako první tah karty.
-
-                    Hlavně se zde nesmí zobrazovat
-                    žádná nápověda hráči.
-                */
 
                 playerCallUno();
             }
@@ -2320,6 +2239,67 @@ function setupGameControls() {
 
     document
         .getElementById(
+            "surrender-game-button"
+        )
+        ?.addEventListener(
+            "click",
+            () => {
+
+                openModal(
+                    "modal-surrender-game"
+                );
+            }
+        );
+
+
+    document
+        .getElementById(
+            "cancel-surrender-game"
+        )
+        ?.addEventListener(
+            "click",
+            () => {
+
+                openModal(
+                    "modal-game-menu"
+                );
+            }
+        );
+
+
+    document
+        .getElementById(
+            "confirm-surrender-game"
+        )
+        ?.addEventListener(
+            "click",
+            async () => {
+
+                if (
+                    typeof surrenderGame !==
+                    "function"
+                ) {
+
+                    showToast(
+                        "Vzdání partie",
+                        "Funkce vzdání zatím není dostupná."
+                    );
+
+
+                    return;
+                }
+
+
+                closeModal();
+
+
+                await surrenderGame();
+            }
+        );
+
+
+    document
+        .getElementById(
             "save-and-menu-button"
         )
         ?.addEventListener(
@@ -2328,11 +2308,6 @@ function setupGameControls() {
 
                 saveAndLeaveGame();
 
-
-                /*
-                    Při skutečném opuštění partie
-                    už může být YouTube zastavený.
-                */
 
                 stopMusic();
 
@@ -2464,7 +2439,6 @@ function renderGame() {
     renderLukyHand(
         state
     );
-
 
     renderDiscardPile(
         state
@@ -3257,6 +3231,70 @@ function handleCardClick(
    KUŘ! HIGHLIGHT
 ========================================================= */
 
+function syncPlayerHandSelectionClasses(
+    state
+) {
+
+    const hand =
+        Array.isArray(
+            state?.playerHand
+        )
+            ? state.playerHand
+            : [];
+
+
+    document
+        .querySelectorAll(
+            "#player-hand .game-card[data-card-id]"
+        )
+        .forEach(
+            (element) => {
+
+                const cardId =
+                    element.dataset.cardId;
+
+
+                const card =
+                    hand.find(
+                        (item) =>
+                            item.id ===
+                            cardId
+                    );
+
+
+                const selected =
+                    UI_STATE
+                        .selectedCardIds
+                        .has(
+                            cardId
+                        );
+
+
+                element.classList.toggle(
+                    "is-selected",
+                    selected
+                );
+
+
+                element.classList.toggle(
+                    "is-same-card-option",
+                    Boolean(
+                        card &&
+                        shouldHighlightIdenticalCard(
+                            card,
+                            hand
+                        ) &&
+                        !selected
+                    )
+                );
+            }
+        );
+
+
+    updateDiscardPlayTarget();
+}
+
+
 function shouldHighlightIdenticalCard(
     card,
     hand
@@ -3335,6 +3373,7 @@ function sanitizeSelectedCards(
     );
 }
 
+
 /* =========================================================
    DISCARD TARGET
 ========================================================= */
@@ -3400,14 +3439,11 @@ function beginCardDrag(
 
 
     /*
-        DŮLEŽITÉ PRO MOBIL:
+        Gesto musí rovnou začít na aktuálním DOM elementu.
 
-        Jakmile gesto začne na kartě,
-        prohlížeč nesmí gesto použít
-        ke scrollování stránky.
-
-        CSS má navíc na .game-card:
-        touch-action: none;
+        Dříve se při prvním pointerdown provedl renderPlayerHand(),
+        čímž se původní karta nahradila a první pokus o tažení
+        se mohl přerušit. Teď měníme jen CSS třídy bez rerenderu.
     */
 
     if (
@@ -3416,6 +3452,10 @@ function beginCardDrag(
 
         event.preventDefault();
     }
+
+
+    let selectedOnPointerDown =
+        false;
 
 
     if (
@@ -3470,7 +3510,11 @@ function beginCardDrag(
         }
 
 
-        renderPlayerHand(
+        selectedOnPointerDown =
+            true;
+
+
+        syncPlayerHandSelectionClasses(
             state
         );
     }
@@ -3517,6 +3561,8 @@ function beginCardDrag(
 
         moved:
             false,
+
+        selectedOnPointerDown,
 
         elements:
             selectedElements
@@ -3684,8 +3730,7 @@ function endCardDrag(
     const deltaY =
         event.clientY -
         drag.startY;
-
-
+   
     const inDropZone =
         isPointInsideDropZone(
             event.clientX,
@@ -3718,7 +3763,8 @@ function endCardDrag(
     */
 
     if (
-        drag.moved
+        drag.moved ||
+        drag.selectedOnPointerDown
     ) {
 
         UI_STATE.suppressCardClickUntil =
@@ -3794,6 +3840,10 @@ function cleanupCardDrag() {
 
     UI_STATE.drag.cardId =
         null;
+
+
+    UI_STATE.drag.selectedOnPointerDown =
+        false;
 
 
     UI_STATE.drag.elements =
@@ -3951,15 +4001,6 @@ function renderGameIndicators(
 
     if (penalty) {
 
-        /*
-            Penalizaci ukazujeme jako informaci
-            jen když ji řeší hráč.
-
-            Když ji hráč právě poslal Lukymu,
-            nemá to vypadat jako tlačítko,
-            které má hráč stisknout.
-        */
-
         penalty.hidden =
             !(
                 state.drawPenalty >
@@ -4094,14 +4135,6 @@ function renderGameStatus(
         state.turn ===
         "player"
     ) {
-
-        /*
-            pendingPlayerUno se zde ZÁMĚRNĚ
-            vůbec nepoužívá.
-
-            Hra hráči nesmí napovědět,
-            že má jednu kartu nebo že má říct UNO.
-        */
 
         text =
             "Jsi na tahu.";
@@ -4681,6 +4714,7 @@ function closeHistory() {
     );
 }
 
+
 /* =========================================================
    HISTORY RENDER
 ========================================================= */
@@ -4911,7 +4945,7 @@ function renderHistory(
             container.appendChild(
                 fragment
             );
-        }
+                   }
     );
 }
 
@@ -5302,13 +5336,6 @@ function setupGameEvents() {
             );
 
 
-            /*
-                renderGame() sice přijde přes
-                state-changed, ale explicitní
-                render nevadí a zajistí okamžitou
-                aktualizaci statusu.
-            */
-
             renderGame();
         }
     );
@@ -5336,13 +5363,6 @@ function setupGameEvents() {
         }
     );
 
-
-    /*
-        Globální změna hudby z settings.js.
-
-        Během partie se player NErestartuje.
-        Jen se ztlumí / odtlumí.
-    */
 
     window.addEventListener(
         "dotsuno:music-setting-changed",
@@ -5461,8 +5481,29 @@ async function playOpeningQuote(
             normalized.text,
             GAME_CONFIG
                 .speech
-                .openingDurationMs
+                .openingMaxDurationMs
         );
+
+
+        await waitForUI(
+            Math.min(
+                GAME_CONFIG
+                    .speech
+                    .openingMaxDurationMs,
+                6000
+            )
+        );
+
+
+        if (
+            token ===
+            UI_STATE
+                .speechSequenceToken &&
+            UI_STATE.openingSpeechActive
+        ) {
+
+            hideLukySpeech();
+        }
 
 
         return;
@@ -5470,16 +5511,15 @@ async function playOpeningQuote(
 
 
     for (
-        const line of
-        normalized.lines
+        const part
+        of normalized.parts
     ) {
 
         if (
             token !==
             UI_STATE
                 .speechSequenceToken ||
-            !UI_STATE
-                .openingSpeechActive
+            !UI_STATE.openingSpeechActive
         ) {
 
             return;
@@ -5487,21 +5527,30 @@ async function playOpeningQuote(
 
 
         showLukySpeech(
-            line,
+            part,
+            0
+        );
+
+
+        await waitForUI(
             GAME_CONFIG
                 .speech
-                .openingDurationMs
+                .sequencePartDurationMs
         );
+    }
 
 
-        await uiSleep(
-            Math.min(
-                3200,
-                GAME_CONFIG
-                    .speech
-                    .openingDurationMs
-            )
-        );
+    if (
+        token ===
+        UI_STATE
+            .speechSequenceToken
+    ) {
+
+        hideLukySpeech();
+
+
+        UI_STATE.openingSpeechActive =
+            false;
     }
 }
 
@@ -5520,15 +5569,22 @@ function markFirstPlayerAction() {
         true;
 
 
-    UI_STATE.openingSpeechActive =
-        false;
+    if (
+        UI_STATE
+            .openingSpeechActive
+    ) {
+
+        UI_STATE.openingSpeechActive =
+            false;
 
 
-    UI_STATE.speechSequenceToken +=
-        1;
+        UI_STATE
+            .speechSequenceToken +=
+            1;
 
 
-    hideLukySpeech();
+        hideLukySpeech();
+    }
 }
 
 
@@ -5538,13 +5594,14 @@ function markFirstPlayerAction() {
 
 function showLukySpeech(
     text,
-    duration =
-        GAME_CONFIG
-            .speech
-            .defaultDurationMs
+    duration = null
 ) {
 
-    if (!text) {
+    if (
+        typeof text !==
+            "string" ||
+        !text.trim()
+    ) {
         return;
     }
 
@@ -5555,7 +5612,7 @@ function showLukySpeech(
         );
 
 
-    const element =
+    const content =
         document.getElementById(
             "luky-speech-text"
         );
@@ -5563,25 +5620,19 @@ function showLukySpeech(
 
     if (
         !bubble ||
-        !element
+        !content
     ) {
         return;
     }
 
 
-    if (
+    clearTimeout(
         UI_STATE
             .lukySpeechTimer
-    ) {
-
-        clearTimeout(
-            UI_STATE
-                .lukySpeechTimer
-        );
-    }
+    );
 
 
-    element.textContent =
+    content.textContent =
         text;
 
 
@@ -5590,20 +5641,43 @@ function showLukySpeech(
 
 
     if (
-        duration >
+        duration ===
         0
     ) {
 
-        UI_STATE.lukySpeechTimer =
-            setTimeout(
-                hideLukySpeech,
-                duration
-            );
+        return;
     }
+
+
+    const finalDuration =
+        Number.isFinite(
+            duration
+        )
+            ? duration
+            : GAME_CONFIG
+                .speech
+                .defaultDurationMs;
+
+
+    UI_STATE.lukySpeechTimer =
+        setTimeout(
+            hideLukySpeech,
+            finalDuration
+        );
 }
 
 
 function hideLukySpeech() {
+
+    clearTimeout(
+        UI_STATE
+            .lukySpeechTimer
+    );
+
+
+    UI_STATE.lukySpeechTimer =
+        null;
+
 
     const bubble =
         document.getElementById(
@@ -5611,6 +5685,12 @@ function hideLukySpeech() {
         );
 
 
+    const content =
+        document.getElementById(
+            "luky-speech-text"
+        );
+
+
     if (bubble) {
 
         bubble.hidden =
@@ -5618,32 +5698,24 @@ function hideLukySpeech() {
     }
 
 
-    if (
-        UI_STATE
-            .lukySpeechTimer
-    ) {
+    if (content) {
 
-        clearTimeout(
-            UI_STATE
-                .lukySpeechTimer
-        );
+        content.textContent =
+            "";
     }
-
-
-    UI_STATE.lukySpeechTimer =
-        null;
 }
 
 
 function showPlayerSpeech(
     text,
-    duration =
-        GAME_CONFIG
-            .speech
-            .defaultDurationMs
+    duration = null
 ) {
 
-    if (!text) {
+    if (
+        typeof text !==
+            "string" ||
+        !text.trim()
+    ) {
         return;
     }
 
@@ -5654,7 +5726,7 @@ function showPlayerSpeech(
         );
 
 
-    const element =
+    const content =
         document.getElementById(
             "player-speech-text"
         );
@@ -5662,25 +5734,19 @@ function showPlayerSpeech(
 
     if (
         !bubble ||
-        !element
+        !content
     ) {
         return;
     }
 
 
-    if (
+    clearTimeout(
         UI_STATE
             .playerSpeechTimer
-    ) {
-
-        clearTimeout(
-            UI_STATE
-                .playerSpeechTimer
-        );
-    }
+    );
 
 
-    element.textContent =
+    content.textContent =
         text;
 
 
@@ -5688,25 +5754,45 @@ function showPlayerSpeech(
         false;
 
 
-    if (
-        duration >
-        0
-    ) {
+    const finalDuration =
+        Number.isFinite(
+            duration
+        )
+            ? duration
+            : GAME_CONFIG
+                .speech
+                .defaultDurationMs;
 
-        UI_STATE.playerSpeechTimer =
-            setTimeout(
-                hidePlayerSpeech,
-                duration
-            );
-    }
+
+    UI_STATE.playerSpeechTimer =
+        setTimeout(
+            hidePlayerSpeech,
+            finalDuration
+        );
 }
 
 
 function hidePlayerSpeech() {
 
+    clearTimeout(
+        UI_STATE
+            .playerSpeechTimer
+    );
+
+
+    UI_STATE.playerSpeechTimer =
+        null;
+
+
     const bubble =
         document.getElementById(
             "player-speech"
+        );
+
+
+    const content =
+        document.getElementById(
+            "player-speech-text"
         );
 
 
@@ -5717,70 +5803,30 @@ function hidePlayerSpeech() {
     }
 
 
-    if (
-        UI_STATE
-            .playerSpeechTimer
-    ) {
+    if (content) {
 
-        clearTimeout(
-            UI_STATE
-                .playerSpeechTimer
-        );
+        content.textContent =
+            "";
     }
-
-
-    UI_STATE.playerSpeechTimer =
-        null;
 }
 
 
 function resetSpeechUI() {
+
+    UI_STATE.openingSpeechActive =
+        false;
+
 
     UI_STATE
         .speechSequenceToken +=
         1;
 
 
-    UI_STATE.openingSpeechActive =
-        false;
-
-
-    if (
-        UI_STATE
-            .lukySpeechTimer
-    ) {
-
-        clearTimeout(
-            UI_STATE
-                .lukySpeechTimer
-        );
-    }
-
-
-    if (
-        UI_STATE
-            .playerSpeechTimer
-    ) {
-
-        clearTimeout(
-            UI_STATE
-                .playerSpeechTimer
-        );
-    }
-
-
-    UI_STATE.lukySpeechTimer =
-        null;
-
-
-    UI_STATE.playerSpeechTimer =
-        null;
-
-
     hideLukySpeech();
 
     hidePlayerSpeech();
 }
+
 
 /* =========================================================
    EMOTES
@@ -5791,8 +5837,9 @@ function startUIEmote(
 ) {
 
     if (
-        !detail?.actor ||
-        !detail?.image
+        !detail ||
+        !detail.actor ||
+        !detail.image
     ) {
         return;
     }
@@ -5804,24 +5851,24 @@ function startUIEmote(
     ) {
 
         UI_STATE.activeLukyEmote =
-            true;
+            detail.image;
 
 
-        const image =
-            document.getElementById(
-                "luky-photo"
-            );
+        setImageWithFallback({
+            imageId:
+                "luky-photo",
 
+            fallbackId:
+                "luky-photo-fallback",
 
-        if (image) {
+            src:
+                detail.image,
 
-            image.hidden =
-                false;
-
-
-            image.src =
-                detail.image;
-        }
+            fallback:
+                GAME_CONFIG
+                    .opponent
+                    .fallback
+        });
 
 
         return;
@@ -5834,24 +5881,38 @@ function startUIEmote(
     ) {
 
         UI_STATE.activePlayerEmote =
-            true;
+            detail.image;
 
 
-        const image =
-            document.getElementById(
-                "player-avatar"
-            );
+        const slotIndex =
+            getActiveSlotIndex();
 
 
-        if (image) {
+        const slot =
+            slotIndex ===
+                null
+                ? null
+                : getSaveSlot(
+                    slotIndex
+                );
 
-            image.hidden =
-                false;
 
+        setImageWithFallback({
+            imageId:
+                "player-avatar",
 
-            image.src =
-                detail.image;
-        }
+            fallbackId:
+                "player-avatar-fallback",
+
+            src:
+                detail.image,
+
+            fallback:
+                getCharacterConfig(
+                    slot?.characterId
+                )?.fallback ||
+                "?"
+        });
     }
 }
 
@@ -5860,6 +5921,19 @@ function endUIEmote(
     actor
 ) {
 
+    const slotIndex =
+        getActiveSlotIndex();
+
+
+    const slot =
+        slotIndex ===
+            null
+            ? null
+            : getSaveSlot(
+                slotIndex
+            );
+
+
     if (
         actor ===
         "luky"
@@ -5869,7 +5943,24 @@ function endUIEmote(
             false;
 
 
-        restoreLukyImage();
+        setImageWithFallback({
+            imageId:
+                "luky-photo",
+
+            fallbackId:
+                "luky-photo-fallback",
+
+            src:
+                GAME_CONFIG
+                    .opponent
+                    .defaultImage,
+
+            fallback:
+                GAME_CONFIG
+                    .opponent
+                    .fallback
+        });
+
 
         return;
     }
@@ -5884,76 +5975,30 @@ function endUIEmote(
             false;
 
 
-        restorePlayerImage();
+        if (!slot) {
+            return;
+        }
+
+
+        setImageWithFallback({
+            imageId:
+                "player-avatar",
+
+            fallbackId:
+                "player-avatar-fallback",
+
+            src:
+                getSlotCharacterImage(
+                    slot
+                ),
+
+            fallback:
+                getCharacterConfig(
+                    slot.characterId
+                )?.fallback ||
+                "?"
+        });
     }
-}
-
-
-function restoreLukyImage() {
-
-    setImageWithFallback({
-        imageId:
-            "luky-photo",
-
-        fallbackId:
-            "luky-photo-fallback",
-
-        src:
-            GAME_CONFIG
-                .opponent
-                .defaultImage,
-
-        fallback:
-            GAME_CONFIG
-                .opponent
-                .fallback
-    });
-}
-
-
-function restorePlayerImage() {
-
-    const slotIndex =
-        getActiveSlotIndex();
-
-
-    if (
-        slotIndex ===
-        null
-    ) {
-        return;
-    }
-
-
-    const slot =
-        getSaveSlot(
-            slotIndex
-        );
-
-
-    if (!slot) {
-        return;
-    }
-
-
-    setImageWithFallback({
-        imageId:
-            "player-avatar",
-
-        fallbackId:
-            "player-avatar-fallback",
-
-        src:
-            getSlotCharacterImage(
-                slot
-            ),
-
-        fallback:
-            getCharacterConfig(
-                slot.characterId
-            )?.fallback ||
-            "?"
-    });
 }
 
 
@@ -5976,72 +6021,40 @@ function showGameOver(
     detail
 ) {
 
-    if (!detail) {
+    const slotIndex =
+        UI_STATE
+            .selectedSlotIndex;
+
+
+    const slot =
+        slotIndex ===
+            null
+            ? null
+            : getSaveSlot(
+                slotIndex
+            );
+
+
+    if (!slot) {
         return;
     }
 
 
+    const winner =
+        detail?.winner ||
+        "luky";
+
+
     const playerWon =
-        detail.winner ===
+        winner ===
         "player";
 
 
-    setText(
-        "game-over-title",
-        playerWon
-            ? "Vyhrál jsi!"
-            : "Luky vyhrál!"
-    );
-
-
-    setText(
-        "game-over-player-name",
-        getCharacterName(
-            detail.characterId
-        )
-    );
-
-
-    const playerImage =
-        document.getElementById(
-            "game-over-player-image"
+    const character =
+        getCharacterConfig(
+            slot.characterId
         );
 
-
-    const lukyImage =
-        document.getElementById(
-            "game-over-luky-image"
-        );
-
-
-    if (
-        playerImage &&
-        detail.playerImage
-    ) {
-
-        playerImage.src =
-            detail.playerImage;
-    }
-
-
-    if (
-        lukyImage &&
-        detail.lukyImage
-    ) {
-
-        lukyImage.src =
-            detail.lukyImage;
-    }
-
-
-    /*
-        Vítěz má zelené ohraničení,
-        poražený červené.
-
-        CSS umí obě varianty:
-        .winner / .loser na celé postavě
-        i .is-winner / .is-loser na image-wrap.
-    */
 
     const playerCharacter =
         document.getElementById(
@@ -6067,97 +6080,106 @@ function showGameOver(
         );
 
 
-    [
-        playerCharacter,
-        lukyCharacter
-    ].forEach(
-        (element) => {
-
-            element?.classList.remove(
-                "winner",
-                "loser"
-            );
-        }
-    );
-
-
-    [
-        playerImageWrap,
-        lukyImageWrap
-    ].forEach(
-        (element) => {
-
-            element?.classList.remove(
-                "is-winner",
-                "is-loser"
-            );
-        }
-    );
-
-
-    if (playerWon) {
-
-        playerCharacter
-            ?.classList.add(
-                "winner"
-            );
-
-
-        playerImageWrap
-            ?.classList.add(
-                "is-winner"
-            );
-
-
-        lukyCharacter
-            ?.classList.add(
-                "loser"
-            );
-
-
-        lukyImageWrap
-            ?.classList.add(
-                "is-loser"
-            );
-
-    } else {
-
-        playerCharacter
-            ?.classList.add(
-                "loser"
-            );
-
-
-        playerImageWrap
-            ?.classList.add(
-                "is-loser"
-            );
-
-
-        lukyCharacter
-            ?.classList.add(
-                "winner"
-            );
-
-
-        lukyImageWrap
-            ?.classList.add(
-                "is-winner"
-            );
-    }
-
-
-    if (
-        detail.slot
-    ) {
-
-        setText(
-            "game-over-score",
-            getSlotRecordText(
-                detail.slot
-            )
+    playerCharacter
+        ?.classList.toggle(
+            "winner",
+            playerWon
         );
-    }
+
+
+    playerCharacter
+        ?.classList.toggle(
+            "loser",
+            !playerWon
+        );
+
+
+    lukyCharacter
+        ?.classList.toggle(
+            "winner",
+            !playerWon
+        );
+
+
+    lukyCharacter
+        ?.classList.toggle(
+            "loser",
+            playerWon
+        );
+
+
+    playerImageWrap
+        ?.classList.toggle(
+            "is-winner",
+            playerWon
+        );
+
+
+    playerImageWrap
+        ?.classList.toggle(
+            "is-loser",
+            !playerWon
+        );
+
+
+    lukyImageWrap
+        ?.classList.toggle(
+            "is-winner",
+            !playerWon
+        );
+
+
+    lukyImageWrap
+        ?.classList.toggle(
+            "is-loser",
+            playerWon
+        );
+
+
+    setText(
+        "game-over-title",
+        playerWon
+            ? "Vyhrál jsi!"
+            : "Luky vyhrál."
+    );
+
+
+    setText(
+        "game-over-player-name",
+        character?.name ||
+        slot.characterId
+    );
+
+
+    setText(
+        "game-over-score",
+        getSlotRecordText(
+            slot
+        )
+    );
+
+
+    setSimpleImage(
+        "game-over-player-image",
+        getCharacterEndImage(
+            slot.characterId,
+            playerWon
+                ? "win"
+                : "lose"
+        )
+    );
+
+
+    setSimpleImage(
+        "game-over-luky-image",
+        playerWon
+            ? GAME_CONFIG
+                .opponent
+                .loseImage
+            : GAME_CONFIG
+                .opponent
+                .winImage
+    );
 
 
     renderMainMenuStats();
@@ -6167,7 +6189,6 @@ function showGameOver(
         "modal-game-over"
     );
 }
-
 
 /* =========================================================
    MUSIC SETTINGS
@@ -7054,6 +7075,7 @@ function stopMusic() {
         );
     }
 }
+
 
 /* =========================================================
    IMAGE FALLBACKS
