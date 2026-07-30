@@ -286,9 +286,9 @@ const GAME_CONFIG = {
 
 
     /* =====================================================
-       LOGO
+       BRANDING / LOGO
 
-       Použijeme na rubu karet.
+       Logo se používá v hlavním menu.
     ===================================================== */
 
     branding: {
