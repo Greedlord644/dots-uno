@@ -711,8 +711,25 @@ function getAchievementProgress(
 
         case "win_streak": {
 
+            /*
+                Dokud Hat-trick není odemčený, progres ukazuje
+                AKTUÁLNÍ sérii výher. Prohra tedy vrátí progres
+                na 0/3.
+
+                Jakmile byl achievement jednou odemčený, zůstává
+                trvale dokončený a UI už ukazuje 3/3.
+            */
+
+            const unlocked =
+                data.unlocked.includes(
+                    definition.id
+                );
+
+
             const current =
-                data.bestWinStreak;
+                unlocked
+                    ? definition.target
+                    : data.currentWinStreak;
 
 
             return {
@@ -727,8 +744,9 @@ function getAchievementProgress(
                     definition.target,
 
                 completed:
+                    unlocked ||
                     current >=
-                    definition.target
+                        definition.target
             };
         }
 
