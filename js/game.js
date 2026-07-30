@@ -994,6 +994,7 @@ function invalidPlay(
     };
 }
 
+
 /* =========================================================
    HRÁČ ZAHRÁL KARTY
 ========================================================= */
@@ -1115,7 +1116,6 @@ async function playerPlayCards(
         color:
             state.currentColor
     });
-
 
     if (
         effect.isKur
@@ -1420,14 +1420,6 @@ async function resolvePlayerSevenChoice(
         .pendingSevenChoice =
         false;
 
-
-    /*
-        Případné "..." z Lukyho přemýšlení
-        tady vždy schováme.
-
-        Odmítnutí výměny karet nesmí způsobit,
-        že Luky následně jen řekne "...".
-    */
 
     emitGameEvent(
         "luky-thinking-end",
@@ -2823,6 +2815,14 @@ async function handlePlayerUnoAfterPlay() {
 
 
     if (
+        !state
+    ) {
+
+        return;
+    }
+
+
+    if (
         state.playerUnoDeferred
     ) {
 
@@ -2837,6 +2837,38 @@ async function handlePlayerUnoAfterPlay() {
 
         state.pendingPlayerUno =
             false;
+
+
+        state.playerUnoSaid =
+            false;
+
+
+        cancelPlayerUnoTimer(
+            true
+        );
+
+
+        return;
+    }
+
+
+    /*
+        Pokud už byl tap na UNO zaregistrován,
+        nesmí se následně otevřít nové penalizační
+        okno ani hráče potrestat.
+    */
+
+    if (
+        state.playerUnoSaid
+    ) {
+
+        state.pendingPlayerUno =
+            false;
+
+
+        cancelPlayerUnoTimer(
+            true
+        );
 
 
         return;
@@ -2871,8 +2903,13 @@ async function handlePlayerUnoAfterPlay() {
 
 
                         if (
-                            !state.pendingPlayerUno
+                            !state.pendingPlayerUno ||
+                            state.playerUnoSaid
                         ) {
+
+                            state.pendingPlayerUno =
+                                false;
+
 
                             resolve();
 
@@ -2902,6 +2939,10 @@ async function handlePlayerUnoAfterPlay() {
                             "player",
                             penalty
                         );
+
+
+                        state.playerUnoSaid =
+                            false;
 
 
                         addHistory({
@@ -2951,7 +2992,9 @@ async function handlePlayerUnoAfterPlay() {
 
                         saveGame();
 
+
                         emitStateChanged();
+
 
                         resolve();
 
@@ -2983,7 +3026,11 @@ function playerCallUno() {
         GAME_RUNTIME.state;
 
 
-    if (!state) {
+    if (
+        !state ||
+        state.status !==
+            "playing"
+    ) {
 
         return false;
     }
@@ -2994,22 +3041,27 @@ function playerCallUno() {
         1
     ) {
 
+        /*
+            Jeden úspěšný tap je definitivní.
+            Opakovaný event z touch/click už nic
+            dalšího neprovede, ale stále vrací true.
+        */
+
         if (
-            !state.pendingPlayerUno
+            state.playerUnoSaid
         ) {
 
-            return false;
+            return true;
         }
+
+
+        state.playerUnoSaid =
+            true;
 
 
         state.pendingPlayerUno =
             false;
 
-
-        /*
-            Pokud měl Luky zrovna "..." z přemýšlení,
-            po správném UNO ho okamžitě schováme.
-        */
 
         emitGameEvent(
             "luky-thinking-end",
@@ -3052,6 +3104,7 @@ function playerCallUno() {
 
 
         saveGame();
+
 
         emitStateChanged();
 
@@ -3137,6 +3190,7 @@ function cancelPlayerUnoTimer(
         resolver();
     }
 }
+
 
 /* =========================================================
    RESET LUKY UNO
@@ -3725,7 +3779,8 @@ function restorePendingUnoState() {
     if (
         state.pendingPlayerUno &&
         state.playerHand.length ===
-            1
+            1 &&
+        !state.playerUnoSaid
     ) {
 
         state.pendingPlayerUno =
@@ -3762,7 +3817,6 @@ function restorePendingUnoState() {
     }
 }
 
-
 /* =========================================================
    PRVNÍ POUŽITÍ ŽLUTÉHO EVENTU
 ========================================================= */
@@ -3776,14 +3830,6 @@ function getYellowFirstUseStorageKey(
             slotIndex
         );
 
-
-    /*
-        createdAt je součást klíče záměrně.
-
-        Když se slot smaže a založí znovu,
-        nová postava dostane znovu svůj
-        první garantovaný yellow event.
-    */
 
     return (
         `${GAME_CONFIG.storage.rootKey}.yellowFirstUse.` +
@@ -3903,6 +3949,152 @@ function shouldGameUseRegularYellowEvent(
 }
 
 
+/* =========================================================
+   MŮŽE SE TEĎ NABÍDNOUT ŽLUTÝ EVENT?
+========================================================= */
+
+function canOfferYellowEventNow(
+    state = GAME_RUNTIME.state
+) {
+
+    return Boolean(
+
+        state &&
+
+        state.status ===
+            "playing" &&
+
+        state.turn ===
+            "luky" &&
+
+        !GAME_RUNTIME.paused &&
+
+        !GAME_RUNTIME
+            .pendingSevenChoice &&
+
+        !state.pendingPlayerUno &&
+
+        !state.playerUnoDeferred &&
+
+        !state.pendingLukyUno
+    );
+}
+
+
+/* =========================================================
+   ZOBRAZENÍ ŽLUTÉHO EVENTU
+========================================================= */
+
+function activateYellowEvent({
+    firstUse = false,
+    duration = null
+} = {}) {
+
+    const state =
+        GAME_RUNTIME.state;
+
+
+    if (
+        !state ||
+        state.status !==
+            "playing" ||
+        state.yellowEventUsed ||
+        state.yellowEventAvailable ||
+        !canOfferYellowEventNow(
+            state
+        )
+    ) {
+
+        return false;
+    }
+
+
+    state.yellowEventAvailable =
+        true;
+
+
+    emitGameEvent(
+        "yellow-event-available",
+        {
+            firstUse,
+
+            duration
+        }
+    );
+
+
+    saveGame();
+
+
+    emitStateChanged();
+
+
+    if (
+        firstUse &&
+        Number(duration) >
+            0
+    ) {
+
+        if (
+            GAME_RUNTIME
+                .yellowEventHideTimer
+        ) {
+
+            clearTimeout(
+                GAME_RUNTIME
+                    .yellowEventHideTimer
+            );
+        }
+
+
+        GAME_RUNTIME
+            .yellowEventHideTimer =
+            setTimeout(
+                () => {
+
+                    GAME_RUNTIME
+                        .yellowEventHideTimer =
+                        null;
+
+
+                    const activeState =
+                        GAME_RUNTIME.state;
+
+
+                    if (
+                        !activeState ||
+                        activeState.status !==
+                            "playing" ||
+                        activeState.yellowEventUsed
+                    ) {
+
+                        return;
+                    }
+
+
+                    activeState
+                        .yellowEventAvailable =
+                        false;
+
+
+                    saveGame();
+
+
+                    emitStateChanged();
+                },
+                duration
+            );
+    }
+
+
+    return true;
+}
+
+
+/* =========================================================
+   PRVNÍ GARANTOVANÝ ŽLUTÝ EVENT
+========================================================= */
+
 function scheduleFirstUseYellowEventIfNeeded() {
 
     clearYellowEventTimers();
@@ -3945,98 +4137,64 @@ function scheduleFirstUseYellowEventIfNeeded() {
     GAME_RUNTIME
         .yellowEventTimer =
         setTimeout(
-            () => {
-
-                GAME_RUNTIME
-                    .yellowEventTimer =
-                    null;
-
-
-                const currentState =
-                    GAME_RUNTIME.state;
-
-
-                if (
-                    !currentState ||
-                    currentState.status !==
-                        "playing" ||
-                    currentState.yellowEventUsed ||
-                    hasUsedYellowEventInSlot(
-                        GAME_RUNTIME.slotIndex
-                    )
-                ) {
-
-                    return;
-                }
-
-
-                currentState
-                    .yellowEventAvailable =
-                    true;
-
-
-                emitGameEvent(
-                    "yellow-event-available",
-                    {
-                        firstUse:
-                            true,
-
-                        duration:
-                            GAME_CONFIG
-                                .yellowEvent
-                                .firstUseWindowMs
-                    }
-                );
-
-
-                saveGame();
-
-
-                emitStateChanged();
-
-
-                GAME_RUNTIME
-                    .yellowEventHideTimer =
-                    setTimeout(
-                        () => {
-
-                            GAME_RUNTIME
-                                .yellowEventHideTimer =
-                                null;
-
-
-                            const activeState =
-                                GAME_RUNTIME.state;
-
-
-                            if (
-                                !activeState ||
-                                activeState.status !==
-                                    "playing" ||
-                                activeState.yellowEventUsed
-                            ) {
-
-                                return;
-                            }
-
-
-                            activeState
-                                .yellowEventAvailable =
-                                false;
-
-
-                            saveGame();
-
-
-                            emitStateChanged();
-                        },
-                        GAME_CONFIG
-                            .yellowEvent
-                            .firstUseWindowMs
-                    );
-            },
+            tryActivateFirstUseYellowEvent,
             delay
         );
+}
+
+
+function tryActivateFirstUseYellowEvent() {
+
+    GAME_RUNTIME
+        .yellowEventTimer =
+        null;
+
+
+    const state =
+        GAME_RUNTIME.state;
+
+
+    if (
+        !state ||
+        state.status !==
+            "playing" ||
+        state.yellowEventUsed ||
+        hasUsedYellowEventInSlot(
+            GAME_RUNTIME.slotIndex
+        )
+    ) {
+
+        return;
+    }
+
+
+    if (
+        !canOfferYellowEventNow(
+            state
+        )
+    ) {
+
+        GAME_RUNTIME
+            .yellowEventTimer =
+            setTimeout(
+                tryActivateFirstUseYellowEvent,
+                700
+            );
+
+
+        return;
+    }
+
+
+    activateYellowEvent({
+        firstUse:
+            true,
+
+        duration:
+            GAME_CONFIG
+                .yellowEvent
+                .firstUseWindowMs
+    });
 }
 
 
@@ -4091,7 +4249,10 @@ function maybeActivateYellowEvent() {
         !state ||
         !state.yellowEventEligible ||
         state.yellowEventAvailable ||
-        state.yellowEventUsed
+        state.yellowEventUsed ||
+        !canOfferYellowEventNow(
+            state
+        )
     ) {
 
         return;
@@ -4113,17 +4274,10 @@ function maybeActivateYellowEvent() {
         )
     ) {
 
-        state.yellowEventAvailable =
-            true;
-
-
-        emitGameEvent(
-            "yellow-event-available",
-            {
-                firstUse:
-                    false
-            }
-        );
+        activateYellowEvent({
+            firstUse:
+                false
+        });
     }
 }
 
@@ -4158,14 +4312,6 @@ function askLukyAboutYellow() {
     state.yellowEventAvailable =
         false;
 
-
-    /*
-        Jakmile hráč otázku skutečně použije,
-        slot už má první yellow event splněný.
-
-        Od příštích partií se používá běžná
-        logika každé páté hry.
-    */
 
     markYellowEventUsedInSlot(
         GAME_RUNTIME.slotIndex
@@ -4409,11 +4555,6 @@ function triggerAmbientSpeech() {
     }
 
 
-    /*
-        Během citlivých stavů Luky nepřekrývá
-        důležitou herní hlášku vlastní hláškou.
-    */
-
     if (
         state.pendingPlayerUno ||
         state.pendingLukyUno ||
@@ -4499,11 +4640,6 @@ function triggerAmbientSpeech() {
             );
     }
 
-
-    /*
-        V rámci jedné partie se snažíme
-        neopakovat už použitou hlášku.
-    */
 
     const unused =
         candidates.filter(
@@ -4624,12 +4760,6 @@ function ambientQuoteToText(
             quote.lines
         )
     ) {
-
-        /*
-            U dvoudílné hlášky zachováme oba
-            výroky, pouze je během průběžné
-            reakce zobrazíme jako jeden celek.
-        */
 
         return quote.lines
             .filter(
