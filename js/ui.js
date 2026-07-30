@@ -1231,6 +1231,19 @@ function openExistingSkinSelection(
         "default";
 
 
+    const saveSkinButton =
+        document.getElementById(
+            "save-skin-button"
+        );
+
+
+    if (saveSkinButton) {
+
+        saveSkinButton.hidden =
+            true;
+    }
+
+
     setText(
         "existing-skin-title",
         `Vyber skin – ${getCharacterName(slot.characterId)}`
@@ -1290,13 +1303,28 @@ function renderExistingSkinGrid() {
         onSelect:
             (skinId) => {
 
+                if (
+                    !isSkinUnlocked(
+                        slot.characterId,
+                        skinId
+                    )
+                ) {
+
+                    return;
+                }
+
+
                 UI_STATE.existingSlotSkinId =
                     skinId;
 
 
-                renderExistingSkinGrid();
+                setSlotSkin(
+                    slotIndex,
+                    skinId
+                );
 
-                updateSaveSkinButton();
+
+                renderExistingSkinGrid();
             }
     });
 }
@@ -6663,71 +6691,6 @@ function showGameOver(
             slot
         )
     );
-
-
-    /*
-        Hláška Lukyho po prohře patří přímo na výsledkovou obrazovku.
-        Vytvoříme ji dynamicky pod jeho jménem, takže kvůli tomu
-        nemusí být měněn index.html. Při Lukyho výhře zůstane skrytá.
-    */
-
-    let lukyDefeatQuoteElement =
-        document.getElementById(
-            "game-over-luky-defeat-quote"
-        );
-
-
-    const lukyNameElement =
-        document.getElementById(
-            "game-over-luky-name"
-        );
-
-
-    if (
-        !lukyDefeatQuoteElement &&
-        lukyNameElement
-    ) {
-
-        lukyDefeatQuoteElement =
-            document.createElement(
-                "div"
-            );
-
-
-        lukyDefeatQuoteElement.id =
-            "game-over-luky-defeat-quote";
-
-
-        lukyDefeatQuoteElement.className =
-            "game-over-defeat-quote";
-
-
-        lukyNameElement.insertAdjacentElement(
-            "afterend",
-            lukyDefeatQuoteElement
-        );
-    }
-
-
-    const lukyDefeatQuote =
-        playerWon &&
-        typeof detail?.lukyDefeatQuote ===
-            "string"
-            ? detail.lukyDefeatQuote.trim()
-            : "";
-
-
-    if (
-        lukyDefeatQuoteElement
-    ) {
-
-        lukyDefeatQuoteElement.textContent =
-            lukyDefeatQuote;
-
-
-        lukyDefeatQuoteElement.hidden =
-            !lukyDefeatQuote;
-    }
 
 
     const playerEndImage =
