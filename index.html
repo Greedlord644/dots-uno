@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="cs">
-
 <head>
     <meta charset="UTF-8">
 
@@ -27,14 +26,12 @@
     >
 </head>
 
-
 <body>
 
 <div
     id="app"
     class="app"
 >
-
 
     <!-- =====================================================
          HLAVNÍ MENU
@@ -46,9 +43,6 @@
     >
 
         <div class="menu-shell">
-
-
-            <!-- LOGO -->
 
             <header class="game-logo">
 
@@ -81,8 +75,6 @@
             </header>
 
 
-            <!-- MENU -->
-
             <div class="menu-actions">
 
                 <button
@@ -104,8 +96,6 @@
 
             </div>
 
-
-            <!-- HUDBA -->
 
             <div class="menu-settings">
 
@@ -135,8 +125,6 @@
 
             </div>
 
-
-            <!-- CELKOVÉ SKÓRE -->
 
             <div class="global-score">
 
@@ -268,9 +256,6 @@
                 class="character-grid"
             >
 
-
-                <!-- DANY -->
-
                 <button
                     type="button"
                     class="character-card"
@@ -305,9 +290,6 @@
                 </button>
 
 
-
-                <!-- FILIP -->
-
                 <button
                     type="button"
                     class="character-card"
@@ -341,9 +323,6 @@
 
                 </button>
 
-
-
-                <!-- 96 -->
 
                 <button
                     type="button"
@@ -386,9 +365,6 @@
             </div>
 
 
-
-            <!-- VÝBĚR SKINU -->
-
             <section
                 id="skin-selection"
                 class="skin-selection"
@@ -429,11 +405,19 @@
                 </div>
 
 
-                <div class="skin-selection-actions">
+                <!--
+                    CSS z tohoto udělá na PC stále viditelnou
+                    spodní/sticky lištu po výběru postavy.
+                -->
+
+                <div
+                    id="character-start-actions"
+                    class="skin-selection-actions character-start-actions"
+                >
 
                     <button
                         type="button"
-                        class="menu-button menu-button-primary"
+                        class="menu-button menu-button-primary character-start-button"
                         id="confirm-character-button"
                         disabled
                     >
@@ -583,7 +567,7 @@
 
 
     <!-- =====================================================
-         ZMĚNA SKINU EXISTUJÍCÍHO SLOTU
+         ZMĚNA SKINU
     ====================================================== -->
 
     <section
@@ -713,9 +697,7 @@
         <div class="game-table">
 
 
-            <!-- =================================================
-                 HORNÍ LIŠTA
-            ================================================== -->
+            <!-- HORNÍ LIŠTA -->
 
             <header class="game-topbar">
 
@@ -748,9 +730,6 @@
 
                 <div class="game-topbar-actions">
 
-
-                    <!-- HISTORIE -->
-
                     <button
                         type="button"
                         class="game-history-button"
@@ -762,8 +741,6 @@
                         Historie
                     </button>
 
-
-                    <!-- HUDBA -->
 
                     <button
                         type="button"
@@ -804,11 +781,6 @@
                 </div>
 
 
-                <!--
-                    Profil je nad kartami.
-                    Karty smějí zajet POD profil, ne přes text.
-                -->
-
                 <div class="opponent-profile">
 
                     <div class="opponent-photo-wrap">
@@ -832,28 +804,37 @@
                     </div>
 
 
-                    <div class="opponent-info">
+                    <!--
+                        Hláška je ve stejném stacku jako jméno.
+                        CSS ji umístí NAD informační box.
+                    -->
 
-                        <h2>
-                            Luky
-                        </h2>
+                    <div class="opponent-info-stack">
+
+                        <div
+                            id="luky-speech"
+                            class="speech-bubble opponent-speech"
+                            hidden
+                        >
+                            <span id="luky-speech-text"></span>
+                        </div>
 
 
-                        <span id="luky-card-count">
-                            7 karet
-                        </span>
+                        <div class="opponent-info">
+
+                            <h2>
+                                Luky
+                            </h2>
+
+
+                            <span id="luky-card-count">
+                                7 karet
+                            </span>
+
+                        </div>
 
                     </div>
 
-                </div>
-
-
-                <div
-                    id="luky-speech"
-                    class="speech-bubble opponent-speech"
-                    hidden
-                >
-                    <span id="luky-speech-text"></span>
                 </div>
 
             </section>
@@ -867,8 +848,6 @@
             <section class="table-center">
 
 
-                <!-- DOBÍRACÍ BALÍČEK -->
-
                 <button
                     type="button"
                     class="draw-pile"
@@ -879,12 +858,6 @@
                     <div class="card-back">
 
                         <div class="card-back-inner">
-
-                            <!--
-                                Logo PNG už na rubu není.
-
-                                Slunce bude vykreslené čistě pomocí CSS.
-                            -->
 
                             <div
                                 class="card-back-sun"
@@ -901,6 +874,10 @@
                                 <span class="card-back-sun-ray ray-6"></span>
                                 <span class="card-back-sun-ray ray-7"></span>
                                 <span class="card-back-sun-ray ray-8"></span>
+                                <span class="card-back-sun-ray ray-9"></span>
+                                <span class="card-back-sun-ray ray-10"></span>
+                                <span class="card-back-sun-ray ray-11"></span>
+                                <span class="card-back-sun-ray ray-12"></span>
 
                             </div>
 
@@ -911,10 +888,6 @@
                 </button>
 
 
-
-                <!-- ODHOD
-                     Celý button včetně samotné karty je klikací.
-                -->
 
                 <button
                     type="button"
@@ -939,8 +912,6 @@
 
 
 
-                <!-- AKTUÁLNÍ BARVA -->
-
                 <div
                     id="current-color-indicator"
                     class="current-color-indicator"
@@ -958,8 +929,6 @@
                 </div>
 
 
-
-                <!-- PENALIZACE -->
 
                 <div
                     id="draw-penalty-indicator"
@@ -989,6 +958,7 @@
             <div
                 id="yellow-event"
                 class="yellow-event"
+                aria-live="polite"
                 hidden
             >
 
@@ -1000,29 +970,40 @@
                     Má někdo žlutou?
                 </button>
 
+
+                <!--
+                    UI později může zobrazit zbývající čas.
+                    Pro samotnou funkčnost countdown text není nutný.
+                -->
+
+                <span
+                    id="yellow-event-timer"
+                    class="yellow-event-timer"
+                    aria-hidden="true"
+                    hidden
+                ></span>
+
             </div>
 
 
 
             <!-- =================================================
-                 SPODNÍ ČÁST HRÁČE
+                 HRÁČ
 
-                 Desktop:
-                 profil/status | karty | akce
+                 1. řádek = profil
+                 2. řádek = ruka + ovládání
+                 3. řádek = stav hry
 
-                 Mobil:
-                 profil + status vedle sebe
-                 potom celá ruka přes šířku
-                 potom tlačítka
+                 Díky tomu se karty nikdy nemusí překrývat
+                 s profilem, jménem nebo počtem karet.
             ================================================== -->
 
             <section class="player-area">
 
 
-                <!-- PROFIL + STATUS -->
+                <!-- PROFIL -->
 
-                <div class="player-side-info">
-
+                <div class="player-profile-row">
 
                     <div class="player-profile">
 
@@ -1063,28 +1044,6 @@
                     </div>
 
 
-
-                    <!-- STATUS JE SOUČÁSTÍ PLAYER SIDE -->
-
-                    <section class="game-status-panel">
-
-                        <strong
-                            id="game-status"
-                            class="game-status"
-                            aria-live="polite"
-                        >
-                            Připravuji hru...
-                        </strong>
-
-
-                        <span
-                            id="last-action-text"
-                            class="last-action-text"
-                        ></span>
-
-                    </section>
-
-
                     <div
                         id="player-speech"
                         class="speech-bubble player-speech"
@@ -1097,65 +1056,77 @@
 
 
 
-                <!-- RUKA -->
+                <!-- RUKA + OVLÁDÁNÍ -->
 
-                <div class="player-hand-zone">
+                <div class="player-play-row">
 
-                    <div
-                        id="player-hand"
-                        class="player-hand"
-                        aria-label="Tvoje karty"
-                    >
-                        <!-- JavaScript -->
+                    <div class="player-hand-zone">
+
+                        <div
+                            id="player-hand"
+                            class="player-hand"
+                            aria-label="Tvoje karty"
+                        >
+                            <!-- JavaScript -->
+                        </div>
+
                     </div>
+
+
+                    <section class="game-controls">
+
+                        <button
+                            type="button"
+                            class="skip-accept-button game-control-context"
+                            id="accept-skip-button"
+                            hidden
+                        >
+                            Stojím
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="uno-button"
+                            id="uno-button"
+                        >
+                            UNO!
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="catch-uno-button"
+                            id="catch-uno-button"
+                        >
+                            Neřekl jsi UNO!
+                        </button>
+
+                    </section>
 
                 </div>
 
 
 
-                <!-- AKCE
+                <!-- STATUS POD KARTAMI A TLAČÍTKY -->
 
-                     PC:
-                     napravo od ruky.
+                <section
+                    class="game-status-panel player-status-row"
+                >
 
-                     Mobil:
-                     CSS je přesune pod ruku.
-                -->
-
-                <section class="game-controls">
-
-
-                    <!-- Situační tlačítko je nejblíž kartám -->
-
-                    <button
-                        type="button"
-                        class="skip-accept-button game-control-context"
-                        id="accept-skip-button"
-                        hidden
+                    <strong
+                        id="game-status"
+                        class="game-status"
+                        aria-live="polite"
                     >
-                        Stojím
-                    </button>
+                        Připravuji hru...
+                    </strong>
 
 
-
-                    <!-- UNO akce dál napravo -->
-
-                    <button
-                        type="button"
-                        class="uno-button"
-                        id="uno-button"
-                    >
-                        UNO!
-                    </button>
-
-
-                    <button
-                        type="button"
-                        class="catch-uno-button"
-                        id="catch-uno-button"
-                    >
-                        Neřekl jsi UNO!
-                    </button>
+                    <span
+                        id="last-action-text"
+                        class="last-action-text"
+                    ></span>
 
                 </section>
 
@@ -1218,9 +1189,6 @@
         </aside>
 
 
-
-        <!-- BACKDROP HISTORIE -->
-
         <button
             type="button"
             id="history-backdrop"
@@ -1244,9 +1212,7 @@
     >
 
 
-        <!-- =================================================
-             VÝBĚR BARVY
-        ================================================== -->
+        <!-- VÝBĚR BARVY -->
 
         <section
             id="modal-color"
@@ -1322,9 +1288,7 @@
 
 
 
-        <!-- =================================================
-             SEDMIČKA
-        ================================================== -->
+        <!-- SEDMIČKA -->
 
         <section
             id="modal-seven"
@@ -1365,9 +1329,7 @@
 
 
 
-        <!-- =================================================
-             RESET SLOTU
-        ================================================== -->
+        <!-- RESET SLOTU -->
 
         <section
             id="modal-reset-slot"
@@ -1418,9 +1380,7 @@
 
 
 
-        <!-- =================================================
-             KONEC PARTIE
-        ================================================== -->
+        <!-- KONEC PARTIE -->
 
         <section
             id="modal-game-over"
@@ -1442,9 +1402,6 @@
 
 
             <div class="game-over-characters">
-
-
-                <!-- HRÁČ -->
 
                 <div
                     class="game-over-character"
@@ -1472,14 +1429,10 @@
                 </div>
 
 
-
                 <div class="game-over-versus">
                     VS
                 </div>
 
-
-
-                <!-- LUKY -->
 
                 <div
                     class="game-over-character"
@@ -1573,10 +1526,72 @@
 
                 <button
                     type="button"
+                    class="modal-button modal-button-danger"
+                    id="surrender-game-button"
+                >
+                    Vzdát se
+                </button>
+
+
+                <button
+                    type="button"
                     class="modal-button"
                     id="save-and-menu-button"
                 >
                     Uložit a odejít
+                </button>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             POTVRZENÍ VZDÁNÍ
+        ================================================== -->
+
+        <section
+            id="modal-surrender-game"
+            class="modal"
+            hidden
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="surrender-game-title"
+        >
+
+            <h2 id="surrender-game-title">
+                Vzdát se?
+            </h2>
+
+
+            <p>
+                Opravdu se přejete vzdát?
+            </p>
+
+
+            <p class="modal-note">
+                Vzdání se započítá jako jedna prohra.
+            </p>
+
+
+            <div class="modal-actions">
+
+                <button
+                    type="button"
+                    class="modal-button modal-button-danger"
+                    id="confirm-surrender-game"
+                >
+                    Ano
+                </button>
+
+
+                <button
+                    type="button"
+                    class="modal-button"
+                    id="cancel-surrender-game"
+                >
+                    Ne
                 </button>
 
             </div>
@@ -1681,9 +1696,6 @@
 
     <!-- =====================================================
          YOUTUBE PLAYER
-
-         CSS ho umístí mimo viditelnou část stránky,
-         ale zachová fyzickou velikost playeru.
     ====================================================== -->
 
     <div
@@ -1712,23 +1724,17 @@
     >
 
         <span class="card-corner card-corner-top">
-
             <span class="card-corner-value"></span>
-
         </span>
 
 
         <span class="card-center">
-
             <span class="card-center-value"></span>
-
         </span>
 
 
         <span class="card-corner card-corner-bottom">
-
             <span class="card-corner-value"></span>
-
         </span>
 
     </button>
@@ -1739,9 +1745,6 @@
 
 <!-- =========================================================
      TEMPLATE RUBU KARTY
-
-     Černá + zlaté CSS slunce.
-     Žádný logo.png.
 ========================================================= -->
 
 <template id="card-back-template">
@@ -1765,6 +1768,10 @@
                 <span class="card-back-sun-ray ray-6"></span>
                 <span class="card-back-sun-ray ray-7"></span>
                 <span class="card-back-sun-ray ray-8"></span>
+                <span class="card-back-sun-ray ray-9"></span>
+                <span class="card-back-sun-ray ray-10"></span>
+                <span class="card-back-sun-ray ray-11"></span>
+                <span class="card-back-sun-ray ray-12"></span>
 
             </div>
 
@@ -1885,12 +1892,6 @@
 
     <article class="achievement-card">
 
-
-        <!--
-            U skin achievementů bude vizuál klikací
-            a otevře fullscreen náhled.
-        -->
-
         <button
             type="button"
             class="achievement-visual"
@@ -1932,9 +1933,7 @@
             >
 
                 <div class="achievement-progress-track">
-
                     <div class="achievement-progress-value"></div>
-
                 </div>
 
 
@@ -2010,29 +2009,17 @@
 ========================================================= -->
 
 <script src="js/config.js"></script>
-
 <script src="js/settings.js"></script>
-
 <script src="js/cards.js"></script>
-
 <script src="js/quotes.js"></script>
-
 <script src="js/saves.js"></script>
-
 <script src="js/achievements.js"></script>
-
 <script src="js/ai.js"></script>
-
 <script src="js/game.js"></script>
 
-
-<!-- YouTube IFrame API -->
-
 <script src="https://www.youtube.com/iframe_api"></script>
-
 
 <script src="js/ui.js"></script>
 
 </body>
-
 </html>
