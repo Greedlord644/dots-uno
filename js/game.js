@@ -69,6 +69,12 @@ const GAME_RUNTIME = {
     emoteTimer:
         null,
 
+    characterReactionTimer:
+        null,
+
+    lukyEmoteSuppressedUntil:
+        0,
+
     mildEmoteTimestamps:
         [],
 
@@ -4591,13 +4597,37 @@ function triggerOpeningQuote() {
     );
 
 
+    const normalizedQuote =
+        normalizeQuote(
+            selection.quote
+        );
+
+
     emitGameEvent(
         "luky-opening-quote",
         {
             quote:
-                normalizeQuote(
-                    selection.quote
-                )
+                normalizedQuote
+        }
+    );
+
+
+    scheduleQuoteCharacterReaction(
+        normalizedQuote,
+        {
+            delayMs:
+                normalizedQuote?.type ===
+                    "sequence"
+                    ? (
+                        Math.min(
+                            3200,
+                            GAME_CONFIG
+                                .speech
+                                .openingDurationMs
+                        ) +
+                        2000
+                    )
+                    : 2000
         }
     );
 }
@@ -4879,6 +4909,15 @@ function triggerAmbientSpeech() {
     );
 
 
+    scheduleQuoteCharacterReaction(
+        normalized,
+        {
+            delayMs:
+                2000
+        }
+    );
+
+
     return true;
 }
 
@@ -4929,6 +4968,139 @@ function ambientQuoteToText(
    REAKCE NA SILNOU PENALIZACI OD HRÁČE
 ========================================================= */
 
+function isSlipknotClownQuote(
+    quote
+) {
+
+    const normalized =
+        normalizeQuote(
+            quote
+        );
+
+
+    const text =
+        ambientQuoteToText(
+            normalized
+        )
+            .toLocaleLowerCase(
+                "cs-CZ"
+            );
+
+
+    return (
+        text.includes(
+            "slipknot"
+        ) &&
+        text.includes(
+            "klaun"
+        )
+    );
+}
+
+
+function scheduleQuoteCharacterReaction(
+    quote,
+    {
+        delayMs = 2000
+    } = {}
+) {
+
+    const slot =
+        getSaveSlot(
+            GAME_RUNTIME.slotIndex
+        );
+
+
+    if (
+        !slot ||
+        slot.characterId !==
+            "96" ||
+        !isSlipknotClownQuote(
+            quote
+        )
+    ) {
+
+        return false;
+    }
+
+
+    if (
+        GAME_RUNTIME
+            .characterReactionTimer
+    ) {
+
+        clearTimeout(
+            GAME_RUNTIME
+                .characterReactionTimer
+        );
+    }
+
+
+    GAME_RUNTIME
+        .characterReactionTimer =
+        setTimeout(
+            () => {
+
+                GAME_RUNTIME
+                    .characterReactionTimer =
+                    null;
+
+
+                const state =
+                    GAME_RUNTIME.state;
+
+
+                const currentSlot =
+                    GAME_RUNTIME.slotIndex ===
+                        null
+                        ? null
+                        : getSaveSlot(
+                            GAME_RUNTIME.slotIndex
+                        );
+
+
+                if (
+                    !state ||
+                    state.status !==
+                        "playing" ||
+                    currentSlot?.characterId !==
+                        "96"
+                ) {
+
+                    return;
+                }
+
+
+                showTemporaryEmote(
+                    "player",
+                    getConfiguredCharacterEmote(
+                        "96",
+                        "angry"
+                    ),
+                    {
+                        force:
+                            true
+                    }
+                );
+            },
+            Math.max(
+                0,
+                Number(
+                    delayMs
+                ) ||
+                0
+            )
+        );
+
+
+    return true;
+}
+
+
+/* =========================================================
+   REAKCE NA SILNOU PENALIZACI OD HRÁČE
+========================================================= */
+
 function maybeTriggerHeavyDrawQuote(
     amount
 ) {
@@ -4963,6 +5135,28 @@ function maybeTriggerHeavyDrawQuote(
     if (!text) {
 
         return;
+    }
+
+
+    if (
+        slot.characterId ===
+            "96" &&
+        /^PAVLE+/i.test(
+            text.trim()
+        )
+    ) {
+
+        GAME_RUNTIME
+            .lukyEmoteSuppressedUntil =
+            Math.max(
+                GAME_RUNTIME
+                    .lukyEmoteSuppressedUntil,
+                Date.now() +
+                    GAME_CONFIG
+                        .speech
+                        .defaultDurationMs +
+                    250
+            );
     }
 
 
@@ -5333,6 +5527,13 @@ function showTemporaryEmote(
 
     if (
         !image ||
+        (
+            actor ===
+                "luky" &&
+            Date.now() <
+                GAME_RUNTIME
+                    .lukyEmoteSuppressedUntil
+        ) ||
         (
             !force &&
             isEmoteCooldownActive()
@@ -5868,6 +6069,28 @@ function clearRuntimeTimers() {
             .emoteTimer =
             null;
     }
+
+
+    if (
+        GAME_RUNTIME
+            .characterReactionTimer
+    ) {
+
+        clearTimeout(
+            GAME_RUNTIME
+                .characterReactionTimer
+        );
+
+
+        GAME_RUNTIME
+            .characterReactionTimer =
+            null;
+    }
+
+
+    GAME_RUNTIME
+        .lukyEmoteSuppressedUntil =
+        0;
 
 
     GAME_RUNTIME
