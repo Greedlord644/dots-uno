@@ -96,8 +96,14 @@ const UI_STATE = {
     youtubePlayer:
         null,
 
+    youtubeInitializing:
+        false,
+
     musicPlaying:
         false,
+
+    musicMuted:
+        true,
 
     activeMusicTrack:
         null
@@ -176,6 +182,15 @@ function showScreen(screenId) {
     ) {
 
         closeHistory();
+    }
+
+
+    if (
+        screenId ===
+        "screen-menu"
+    ) {
+
+        prepareMusicPlayerInMenu();
     }
 
 
@@ -2047,7 +2062,9 @@ function startGameUI(
 
     UI_STATE.firstPlayerActionDone =
         false;
-
+      
+    suppressCardClickUntil:
+        0,
 
     resetSpeechUI();
 
