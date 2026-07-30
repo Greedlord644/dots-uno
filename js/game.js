@@ -48,6 +48,21 @@ const GAME_RUNTIME = {
     lukyPhraseTimer:
         null,
 
+    ambientSpeechTimer:
+        null,
+
+    ambientSpecificUsed:
+        0,
+
+    ambientUsedKeys:
+        new Set(),
+
+    yellowEventTimer:
+        null,
+
+    yellowEventHideTimer:
+        null,
+
     emoteCooldownUntil:
         0,
 
@@ -252,15 +267,10 @@ function startNewGame(
             null,
 
         yellowEventEligible:
-            GAME_CONFIG
-                .yellowEvent
-                .enabled &&
-            (
-                gameNumber %
-                GAME_CONFIG
-                    .yellowEvent
-                    .everyNthGame
-            ) === 0,
+            shouldGameUseRegularYellowEvent(
+                slotIndex,
+                gameNumber
+            ),
 
         yellowEventAvailable:
             false,
@@ -308,6 +318,13 @@ function startNewGame(
 
 
     triggerOpeningQuote();
+
+
+    resetAmbientSpeechState();
+
+    scheduleAmbientSpeech();
+
+    scheduleFirstUseYellowEventIfNeeded();
 
 
     emitStateChanged();
@@ -425,6 +442,13 @@ function continueSavedGame(
 
 
     restorePendingUnoState();
+
+
+    resetAmbientSpeechState();
+
+    scheduleAmbientSpeech();
+
+    scheduleFirstUseYellowEventIfNeeded();
 
 
     if (
@@ -970,7 +994,6 @@ function invalidPlay(
     };
 }
 
-
 /* =========================================================
    HRÁČ ZAHRÁL KARTY
 ========================================================= */
@@ -1396,6 +1419,20 @@ async function resolvePlayerSevenChoice(
     GAME_RUNTIME
         .pendingSevenChoice =
         false;
+
+
+    /*
+        Případné "..." z Lukyho přemýšlení
+        tady vždy schováme.
+
+        Odmítnutí výměny karet nesmí způsobit,
+        že Luky následně jen řekne "...".
+    */
+
+    emitGameEvent(
+        "luky-thinking-end",
+        {}
+    );
 
 
     if (wantsSwap) {
@@ -2177,7 +2214,6 @@ function isPlayableColor(
     );
 }
 
-
 /* =========================================================
    LUKYHO TAH
 ========================================================= */
@@ -2807,19 +2843,6 @@ async function handlePlayerUnoAfterPlay() {
     }
 
 
-    /*
-        UNO okno je záměrně zcela skryté.
-
-        Hra hráči NESMÍ napovídat, že má jednu kartu
-        a že má říct UNO.
-
-        Nepřidává se systémový záznam,
-        neposílá se UI odpočet
-        a UI se nijak nepřepíná.
-
-        Běží pouze interní timer.
-    */
-
     state.pendingPlayerUno =
         true;
 
@@ -2852,7 +2875,6 @@ async function handlePlayerUnoAfterPlay() {
                         ) {
 
                             resolve();
-
 
                             return;
                         }
@@ -2929,9 +2951,7 @@ async function handlePlayerUnoAfterPlay() {
 
                         saveGame();
 
-
                         emitStateChanged();
-
 
                         resolve();
 
@@ -2969,13 +2989,6 @@ function playerCallUno() {
     }
 
 
-    /*
-        Jedna karta = hráč nelže.
-
-        Pokud běží skryté UNO okno,
-        UNO se přijme bez reakce Lukyho.
-    */
-
     if (
         state.playerHand.length ===
         1
@@ -2991,6 +3004,17 @@ function playerCallUno() {
 
         state.pendingPlayerUno =
             false;
+
+
+        /*
+            Pokud měl Luky zrovna "..." z přemýšlení,
+            po správném UNO ho okamžitě schováme.
+        */
+
+        emitGameEvent(
+            "luky-thinking-end",
+            {}
+        );
 
 
         addHistory({
@@ -3029,7 +3053,6 @@ function playerCallUno() {
 
         saveGame();
 
-
         emitStateChanged();
 
 
@@ -3045,10 +3068,6 @@ function playerCallUno() {
         return true;
     }
 
-
-    /*
-        Falešné UNO pouze se 2+ kartami.
-    */
 
     if (
         state.playerHand.length >=
@@ -3118,7 +3137,6 @@ function cancelPlayerUnoTimer(
         resolver();
     }
 }
-
 
 /* =========================================================
    RESET LUKY UNO
@@ -3207,14 +3225,6 @@ function registerLukyUnoAnnouncement() {
                 true
         });
 
-
-    /*
-        Poslední akce zachová zahranou kartu
-        a následné UNO.
-
-        Např.:
-        Luky změnil barvu na modrou. Luky řekl UNO!
-    */
 
     if (
         previousPlayText &&
@@ -3754,7 +3764,321 @@ function restorePendingUnoState() {
 
 
 /* =========================================================
-   ŽLUTÝ EVENT
+   PRVNÍ POUŽITÍ ŽLUTÉHO EVENTU
+========================================================= */
+
+function getYellowFirstUseStorageKey(
+    slotIndex
+) {
+
+    const slot =
+        getSaveSlot(
+            slotIndex
+        );
+
+
+    /*
+        createdAt je součást klíče záměrně.
+
+        Když se slot smaže a založí znovu,
+        nová postava dostane znovu svůj
+        první garantovaný yellow event.
+    */
+
+    return (
+        `${GAME_CONFIG.storage.rootKey}.yellowFirstUse.` +
+        `${slotIndex}.` +
+        `${slot?.createdAt || "unknown"}`
+    );
+}
+
+
+function hasUsedYellowEventInSlot(
+    slotIndex
+) {
+
+    if (
+        slotIndex ===
+        null ||
+        slotIndex ===
+        undefined
+    ) {
+
+        return false;
+    }
+
+
+    try {
+
+        return (
+            localStorage.getItem(
+                getYellowFirstUseStorageKey(
+                    slotIndex
+                )
+            ) ===
+            "1"
+        );
+
+    } catch (error) {
+
+        console.warn(
+            "Nepodařilo se načíst stav prvního yellow eventu.",
+            error
+        );
+
+
+        return false;
+    }
+}
+
+
+function markYellowEventUsedInSlot(
+    slotIndex
+) {
+
+    if (
+        slotIndex ===
+        null ||
+        slotIndex ===
+        undefined
+    ) {
+
+        return;
+    }
+
+
+    try {
+
+        localStorage.setItem(
+            getYellowFirstUseStorageKey(
+                slotIndex
+            ),
+            "1"
+        );
+
+    } catch (error) {
+
+        console.warn(
+            "Nepodařilo se uložit stav prvního yellow eventu.",
+            error
+        );
+    }
+}
+
+
+function shouldGameUseRegularYellowEvent(
+    slotIndex,
+    gameNumber
+) {
+
+    if (
+        !GAME_CONFIG
+            .yellowEvent
+            .enabled
+    ) {
+
+        return false;
+    }
+
+
+    if (
+        GAME_CONFIG
+            .yellowEvent
+            .firstUseGuaranteed &&
+        !hasUsedYellowEventInSlot(
+            slotIndex
+        )
+    ) {
+
+        return false;
+    }
+
+
+    return (
+        gameNumber %
+        GAME_CONFIG
+            .yellowEvent
+            .everyNthGame
+    ) === 0;
+}
+
+
+function scheduleFirstUseYellowEventIfNeeded() {
+
+    clearYellowEventTimers();
+
+
+    const state =
+        GAME_RUNTIME.state;
+
+
+    const slotIndex =
+        GAME_RUNTIME.slotIndex;
+
+
+    if (
+        !state ||
+        state.status !==
+            "playing" ||
+        slotIndex ===
+            null ||
+        !GAME_CONFIG
+            .yellowEvent
+            .enabled ||
+        !GAME_CONFIG
+            .yellowEvent
+            .firstUseGuaranteed ||
+        hasUsedYellowEventInSlot(
+            slotIndex
+        ) ||
+        state.yellowEventUsed
+    ) {
+
+        return;
+    }
+
+
+    const delay =
+        getRandomFirstYellowEventDelay();
+
+
+    GAME_RUNTIME
+        .yellowEventTimer =
+        setTimeout(
+            () => {
+
+                GAME_RUNTIME
+                    .yellowEventTimer =
+                    null;
+
+
+                const currentState =
+                    GAME_RUNTIME.state;
+
+
+                if (
+                    !currentState ||
+                    currentState.status !==
+                        "playing" ||
+                    currentState.yellowEventUsed ||
+                    hasUsedYellowEventInSlot(
+                        GAME_RUNTIME.slotIndex
+                    )
+                ) {
+
+                    return;
+                }
+
+
+                currentState
+                    .yellowEventAvailable =
+                    true;
+
+
+                emitGameEvent(
+                    "yellow-event-available",
+                    {
+                        firstUse:
+                            true,
+
+                        duration:
+                            GAME_CONFIG
+                                .yellowEvent
+                                .firstUseWindowMs
+                    }
+                );
+
+
+                saveGame();
+
+
+                emitStateChanged();
+
+
+                GAME_RUNTIME
+                    .yellowEventHideTimer =
+                    setTimeout(
+                        () => {
+
+                            GAME_RUNTIME
+                                .yellowEventHideTimer =
+                                null;
+
+
+                            const activeState =
+                                GAME_RUNTIME.state;
+
+
+                            if (
+                                !activeState ||
+                                activeState.status !==
+                                    "playing" ||
+                                activeState.yellowEventUsed
+                            ) {
+
+                                return;
+                            }
+
+
+                            activeState
+                                .yellowEventAvailable =
+                                false;
+
+
+                            saveGame();
+
+
+                            emitStateChanged();
+                        },
+                        GAME_CONFIG
+                            .yellowEvent
+                            .firstUseWindowMs
+                    );
+            },
+            delay
+        );
+}
+
+
+function clearYellowEventTimers() {
+
+    if (
+        GAME_RUNTIME
+            .yellowEventTimer
+    ) {
+
+        clearTimeout(
+            GAME_RUNTIME
+                .yellowEventTimer
+        );
+
+
+        GAME_RUNTIME
+            .yellowEventTimer =
+            null;
+    }
+
+
+    if (
+        GAME_RUNTIME
+            .yellowEventHideTimer
+    ) {
+
+        clearTimeout(
+            GAME_RUNTIME
+                .yellowEventHideTimer
+        );
+
+
+        GAME_RUNTIME
+            .yellowEventHideTimer =
+            null;
+    }
+}
+
+
+/* =========================================================
+   BĚŽNÝ ŽLUTÝ EVENT
 ========================================================= */
 
 function maybeActivateYellowEvent() {
@@ -3795,7 +4119,10 @@ function maybeActivateYellowEvent() {
 
         emitGameEvent(
             "yellow-event-available",
-            {}
+            {
+                firstUse:
+                    false
+            }
         );
     }
 }
@@ -3821,12 +4148,28 @@ function askLukyAboutYellow() {
     }
 
 
+    clearYellowEventTimers();
+
+
     state.yellowEventUsed =
         true;
 
 
     state.yellowEventAvailable =
         false;
+
+
+    /*
+        Jakmile hráč otázku skutečně použije,
+        slot už má první yellow event splněný.
+
+        Od příštích partií se používá běžná
+        logika každé páté hry.
+    */
+
+    markYellowEventUsedInSlot(
+        GAME_RUNTIME.slotIndex
+    );
 
 
     const hasYellow =
@@ -3965,6 +4308,344 @@ function triggerOpeningQuote() {
 
 
 /* =========================================================
+   PRŮBĚŽNÉ LUKYHO HLÁŠKY
+========================================================= */
+
+function resetAmbientSpeechState() {
+
+    if (
+        GAME_RUNTIME
+            .ambientSpeechTimer
+    ) {
+
+        clearTimeout(
+            GAME_RUNTIME
+                .ambientSpeechTimer
+        );
+    }
+
+
+    GAME_RUNTIME
+        .ambientSpeechTimer =
+        null;
+
+
+    GAME_RUNTIME
+        .ambientSpecificUsed =
+        0;
+
+
+    GAME_RUNTIME
+        .ambientUsedKeys =
+        new Set();
+}
+
+
+function scheduleAmbientSpeech() {
+
+    const state =
+        GAME_RUNTIME.state;
+
+
+    if (
+        !state ||
+        state.status !==
+            "playing" ||
+        !GAME_CONFIG
+            .speech
+            .ambientEnabled
+    ) {
+
+        return;
+    }
+
+
+    if (
+        GAME_RUNTIME
+            .ambientSpeechTimer
+    ) {
+
+        clearTimeout(
+            GAME_RUNTIME
+                .ambientSpeechTimer
+        );
+    }
+
+
+    GAME_RUNTIME
+        .ambientSpeechTimer =
+        setTimeout(
+            () => {
+
+                GAME_RUNTIME
+                    .ambientSpeechTimer =
+                    null;
+
+
+                triggerAmbientSpeech();
+
+
+                scheduleAmbientSpeech();
+            },
+            getRandomAmbientSpeechDelay()
+        );
+}
+
+
+function triggerAmbientSpeech() {
+
+    const state =
+        GAME_RUNTIME.state;
+
+
+    if (
+        !state ||
+        state.status !==
+            "playing" ||
+        GAME_RUNTIME.paused
+    ) {
+
+        return false;
+    }
+
+
+    /*
+        Během citlivých stavů Luky nepřekrývá
+        důležitou herní hlášku vlastní hláškou.
+    */
+
+    if (
+        state.pendingPlayerUno ||
+        state.pendingLukyUno ||
+        state.skipChainCount >
+            0 ||
+        state.drawPenalty >
+            0 ||
+        GAME_RUNTIME
+            .pendingSevenChoice
+    ) {
+
+        return false;
+    }
+
+
+    const slot =
+        getSaveSlot(
+            GAME_RUNTIME.slotIndex
+        );
+
+
+    if (!slot) {
+
+        return false;
+    }
+
+
+    const specificQuotes =
+        getCharacterOpeningQuotes(
+            slot.characterId
+        );
+
+
+    const generalQuotes =
+        getGeneralOpeningQuotes();
+
+
+    let candidates =
+        [];
+
+
+    if (
+        GAME_RUNTIME
+            .ambientSpecificUsed <
+        GAME_CONFIG
+            .speech
+            .specificAmbientMaxPerGame &&
+        specificQuotes.length >
+            0
+    ) {
+
+        candidates =
+            specificQuotes.map(
+                (quote, index) => ({
+                    type:
+                        "specific",
+
+                    key:
+                        `specific-${slot.characterId}-${index}`,
+
+                    quote
+                })
+            );
+
+    } else {
+
+        candidates =
+            generalQuotes.map(
+                (text, index) => ({
+                    type:
+                        "general",
+
+                    key:
+                        `general-${index}`,
+
+                    quote: {
+                        type:
+                            "single",
+
+                        text
+                    }
+                })
+            );
+    }
+
+
+    /*
+        V rámci jedné partie se snažíme
+        neopakovat už použitou hlášku.
+    */
+
+    const unused =
+        candidates.filter(
+            (candidate) =>
+                !GAME_RUNTIME
+                    .ambientUsedKeys
+                    .has(
+                        candidate.key
+                    )
+        );
+
+
+    const pool =
+        unused.length >
+            0
+            ? unused
+            : candidates;
+
+
+    if (
+        pool.length ===
+        0
+    ) {
+
+        return false;
+    }
+
+
+    const selected =
+        pool[
+            randomInteger(
+                0,
+                pool.length - 1
+            )
+        ];
+
+
+    const normalized =
+        normalizeQuote(
+            selected.quote
+        );
+
+
+    const text =
+        ambientQuoteToText(
+            normalized
+        );
+
+
+    if (!text) {
+
+        return false;
+    }
+
+
+    GAME_RUNTIME
+        .ambientUsedKeys
+        .add(
+            selected.key
+        );
+
+
+    if (
+        selected.type ===
+        "specific"
+    ) {
+
+        GAME_RUNTIME
+            .ambientSpecificUsed +=
+            1;
+    }
+
+
+    emitGameEvent(
+        "luky-speech",
+        {
+            text,
+
+            duration:
+                GAME_CONFIG
+                    .speech
+                    .defaultDurationMs,
+
+            ambient:
+                true
+        }
+    );
+
+
+    return true;
+}
+
+
+function ambientQuoteToText(
+    quote
+) {
+
+    if (!quote) {
+
+        return "";
+    }
+
+
+    if (
+        quote.type ===
+        "single"
+    ) {
+
+        return quote.text ||
+            "";
+    }
+
+
+    if (
+        quote.type ===
+            "sequence" &&
+        Array.isArray(
+            quote.lines
+        )
+    ) {
+
+        /*
+            U dvoudílné hlášky zachováme oba
+            výroky, pouze je během průběžné
+            reakce zobrazíme jako jeden celek.
+        */
+
+        return quote.lines
+            .filter(
+                Boolean
+            )
+            .join(
+                " "
+            );
+    }
+
+
+    return "";
+}
+
+
+/* =========================================================
    REAKCE NA SILNOU PENALIZACI OD HRÁČE
 ========================================================= */
 
@@ -4020,7 +4701,6 @@ function maybeTriggerHeavyDrawQuote(
         }
     );
 }
-
 
 /* =========================================================
    EMOTE COOLDOWN
@@ -4508,6 +5188,47 @@ async function finishGame(
 
 
 /* =========================================================
+   VZDÁT SE
+========================================================= */
+
+async function surrenderGame() {
+
+    const state =
+        GAME_RUNTIME.state;
+
+
+    if (
+        !state ||
+        state.status !==
+            "playing"
+    ) {
+
+        return false;
+    }
+
+
+    addHistory({
+        actor:
+            "player",
+
+        type:
+            "surrender",
+
+        text:
+            `${getCurrentPlayerName()} se vzdal.`
+    });
+
+
+    await finishGame(
+        "luky"
+    );
+
+
+    return true;
+}
+
+
+/* =========================================================
    ACHIEVEMENT EVENTY
 ========================================================= */
 
@@ -4743,6 +5464,26 @@ function clearRuntimeTimers() {
             .lukyPhraseTimer =
             null;
     }
+
+
+    if (
+        GAME_RUNTIME
+            .ambientSpeechTimer
+    ) {
+
+        clearTimeout(
+            GAME_RUNTIME
+                .ambientSpeechTimer
+        );
+
+
+        GAME_RUNTIME
+            .ambientSpeechTimer =
+            null;
+    }
+
+
+    clearYellowEventTimers();
 
 
     if (
