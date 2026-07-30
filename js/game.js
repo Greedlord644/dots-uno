@@ -254,6 +254,9 @@ function startNewGame(
         playerUnoDeferred:
             false,
 
+        playerUnoSaid:
+            false,
+
         playerForcedDrawStreak:
             0,
 
@@ -405,6 +408,11 @@ function continueSavedGame(
         playerUnoDeferred:
             Boolean(
                 saved.playerUnoDeferred
+            ),
+
+        playerUnoSaid:
+            Boolean(
+                saved.playerUnoSaid
             ),
 
         playerForcedDrawStreak:
