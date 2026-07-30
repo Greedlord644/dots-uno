@@ -5844,3 +5844,193 @@ body {
         font-size: 0.58rem;
     }
 }
+
+/* =========================================================
+   FINAL TEST FIXES — 2026-07-30
+========================================================= */
+
+/* Lukyho profil musí být vždy vidět celý, bez ořezu obličeje. */
+.opponent-photo {
+    object-fit: contain;
+    object-position: center center;
+    background: #18181d;
+}
+
+/* UNO zůstává zlaté; hover/press pouze velmi jemně reaguje. */
+.uno-button:hover {
+    color: #17120a;
+    border-color: transparent;
+    background:
+        linear-gradient(
+            180deg,
+            var(--gold-soft),
+            var(--gold)
+        );
+    filter: brightness(0.97);
+}
+
+.uno-button:active {
+    color: #17120a;
+    border-color: transparent;
+    background:
+        linear-gradient(
+            180deg,
+            var(--gold-soft),
+            var(--gold)
+        );
+    filter: brightness(0.93);
+}
+
+/*
+   Žlutý event má vlastní stabilní řádek.
+   Jeho zobrazení už neposune zbytek herní obrazovky.
+*/
+.game-table {
+    grid-template-rows:
+        52px
+        minmax(170px, 0.9fr)
+        minmax(200px, 1.08fr)
+        42px
+        minmax(300px, 1.55fr);
+}
+
+.yellow-event {
+    width: 100%;
+    min-height: 42px;
+    align-items: center;
+    justify-content: center;
+}
+
+/*
+   Přesouvaná karta je vždy nad kartou na stole.
+   Zároveň ji nesmí oříznout hráčova část layoutu.
+*/
+.player-area,
+.player-play-row,
+.player-hand-zone,
+.player-hand {
+    overflow: visible;
+}
+
+button.game-card.is-dragging {
+    position: relative;
+    z-index: 2500;
+}
+
+/* Mobilní layout: spodní stav musí zůstat celý viditelný. */
+@media (max-width: 760px) {
+
+    .game-table {
+        grid-template-rows:
+            42px
+            minmax(96px, 0.75fr)
+            minmax(112px, 0.9fr)
+            36px
+            minmax(258px, 1.72fr);
+    }
+
+    .yellow-event {
+        position: relative;
+        left: auto;
+        top: auto;
+        z-index: 100;
+        min-height: 36px;
+        transform: none;
+    }
+
+    .player-area {
+        min-height: 0;
+        overflow: visible;
+        padding-bottom:
+            max(
+                4px,
+                env(safe-area-inset-bottom)
+            );
+    }
+
+    .player-status-row {
+        min-height: 58px;
+        overflow: visible;
+    }
+
+    .player-status-row .game-status,
+    .player-status-row .last-action-text {
+        overflow: visible;
+        white-space: normal;
+    }
+}
+
+/* iPhone SE / úzký mobil */
+@media (max-width: 390px) {
+
+    .game-table {
+        grid-template-rows:
+            38px
+            84px
+            minmax(100px, 0.86fr)
+            34px
+            minmax(252px, 1.78fr);
+    }
+
+    .yellow-event {
+        min-height: 34px;
+    }
+
+    .player-status-row {
+        min-height: 54px;
+        padding: 6px 7px;
+    }
+
+    .player-status-row .game-status {
+        font-size: 0.84rem;
+        line-height: 1.16;
+    }
+
+    .player-status-row .last-action-text {
+        font-size: 0.64rem;
+        line-height: 1.2;
+    }
+}
+
+/* Krátké mobilní displeje včetně iPhone SE. */
+@media (max-height: 700px) and (max-width: 760px) {
+
+    .game-table {
+        grid-template-rows:
+            36px
+            72px
+            minmax(92px, 0.9fr)
+            32px
+            minmax(246px, 1.76fr);
+    }
+
+    .yellow-event {
+        min-height: 32px;
+    }
+
+    .player-status-row {
+        min-height: 50px;
+    }
+
+    .player-status-row .game-status {
+        font-size: 0.78rem;
+        line-height: 1.16;
+    }
+
+    .player-status-row .last-action-text {
+        font-size: 0.59rem;
+        line-height: 1.2;
+    }
+}
+
+/* Krátký landscape: žlutý event nesmí být absolutně přes obsah. */
+@media (max-height: 520px) and (orientation: landscape) {
+
+    .yellow-event {
+        position: relative;
+        left: auto;
+        top: auto;
+        transform: none;
+    }
+}
+
