@@ -1791,36 +1791,92 @@ function createAchievementCardPreview(
 
 
     element.className =
-        "achievement-mini-card";
+        "game-card";
 
 
-    if (
-        preview.color
-    ) {
-
-        element.classList.add(
-            `achievement-mini-card-${preview.color}`
-        );
-    }
+    element.dataset.color =
+        preview.color ||
+        "yellow";
 
 
-    const value =
+    const cornerTop =
         document.createElement(
             "span"
         );
 
 
-    value.className =
-        "achievement-mini-card-value";
+    cornerTop.className =
+        "card-corner card-corner-top";
 
 
-    value.textContent =
-        preview.value ||
-        "?";
+    const cornerTopValue =
+        document.createElement(
+            "span"
+        );
 
 
-    element.appendChild(
-        value
+    cornerTopValue.className =
+        "card-corner-value";
+
+
+    cornerTopValue.textContent =
+        String(
+            preview.value ??
+            ""
+        );
+
+
+    cornerTop.appendChild(
+        cornerTopValue
+    );
+
+
+    const center =
+        document.createElement(
+            "span"
+        );
+
+
+    center.className =
+        "card-center";
+
+
+    const centerValue =
+        document.createElement(
+            "span"
+        );
+
+
+    centerValue.className =
+        "card-center-value";
+
+
+    centerValue.textContent =
+        String(
+            preview.value ??
+            ""
+        );
+
+
+    center.appendChild(
+        centerValue
+    );
+
+
+    const cornerBottom =
+        cornerTop.cloneNode(
+            true
+        );
+
+
+    cornerBottom.className =
+        "card-corner card-corner-bottom";
+
+
+    element.append(
+        cornerTop,
+        center,
+        cornerBottom
     );
 
 
@@ -5481,29 +5537,8 @@ async function playOpeningQuote(
             normalized.text,
             GAME_CONFIG
                 .speech
-                .openingMaxDurationMs
+                .openingDurationMs
         );
-
-
-        await waitForUI(
-            Math.min(
-                GAME_CONFIG
-                    .speech
-                    .openingMaxDurationMs,
-                6000
-            )
-        );
-
-
-        if (
-            token ===
-            UI_STATE
-                .speechSequenceToken &&
-            UI_STATE.openingSpeechActive
-        ) {
-
-            hideLukySpeech();
-        }
 
 
         return;
@@ -5511,15 +5546,16 @@ async function playOpeningQuote(
 
 
     for (
-        const part
-        of normalized.parts
+        const line of
+        normalized.lines
     ) {
 
         if (
             token !==
             UI_STATE
                 .speechSequenceToken ||
-            !UI_STATE.openingSpeechActive
+            !UI_STATE
+                .openingSpeechActive
         ) {
 
             return;
@@ -5527,30 +5563,21 @@ async function playOpeningQuote(
 
 
         showLukySpeech(
-            part,
-            0
-        );
-
-
-        await waitForUI(
+            line,
             GAME_CONFIG
                 .speech
-                .sequencePartDurationMs
+                .openingDurationMs
         );
-    }
 
 
-    if (
-        token ===
-        UI_STATE
-            .speechSequenceToken
-    ) {
-
-        hideLukySpeech();
-
-
-        UI_STATE.openingSpeechActive =
-            false;
+        await uiSleep(
+            Math.min(
+                3200,
+                GAME_CONFIG
+                    .speech
+                    .openingDurationMs
+            )
+        );
     }
 }
 
