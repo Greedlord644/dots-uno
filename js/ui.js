@@ -6613,6 +6613,9 @@ function showGameOver(
     const lukyNameElement =
         document.getElementById(
             "game-over-luky-name"
+        ) ||
+        document.querySelector(
+            "#game-over-luky strong"
         );
 
 
@@ -6642,12 +6645,55 @@ function showGameOver(
     }
 
 
-    const lukyDefeatQuote =
-        playerWon &&
-        typeof detail?.lukyDefeatQuote ===
-            "string"
-            ? detail.lukyDefeatQuote.trim()
-            : "";
+    let lukyDefeatQuote =
+        "";
+
+
+    if (playerWon) {
+
+        if (
+            typeof detail?.lukyDefeatQuote ===
+                "string" &&
+            detail.lukyDefeatQuote.trim()
+        ) {
+
+            lukyDefeatQuote =
+                detail.lukyDefeatQuote.trim();
+
+        } else if (
+            typeof getLukyDefeatQuote ===
+                "function"
+        ) {
+
+            try {
+
+                lukyDefeatQuote =
+                    String(
+                        getLukyDefeatQuote() ||
+                        ""
+                    ).trim();
+
+            } catch (error) {
+
+                console.warn(
+                    "DOTS UNO: nepodařilo se načíst Lukyho proherní hlášku.",
+                    error
+                );
+            }
+        }
+
+
+        /*
+            Poslední bezpečnostní fallback.
+            Výsledková obrazovka nesmí být závislá na runtime hlášce.
+        */
+
+        if (!lukyDefeatQuote) {
+
+            lukyDefeatQuote =
+                "Pusinko, jdeme trénovat!";
+        }
+    }
 
 
     if (
