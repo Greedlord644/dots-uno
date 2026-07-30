@@ -39,6 +39,9 @@ const UI_STATE = {
     firstPlayerActionDone:
         false,
 
+    suppressCardClickUntil:
+        0,
+
     drag: {
 
         active:
@@ -2063,8 +2066,8 @@ function startGameUI(
     UI_STATE.firstPlayerActionDone =
         false;
       
-    suppressCardClickUntil:
-        0,
+    UI_STATE.suppressCardClickUntil =
+        0;
 
     resetSpeechUI();
 
