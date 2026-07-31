@@ -90,6 +90,13 @@ const GAME_RUNTIME = {
     lukyTurnRunning:
         false,
 
+    /*
+        Čas posledního hráčova zahrání karty.
+        Luky díky tomu nezačne lízat současně s animací zahrané karty.
+    */
+    lastPlayerCardPlayedAt:
+        0,
+
     paused:
         false
 };
@@ -185,6 +192,11 @@ function startNewGame(
 
     GAME_RUNTIME
         .lukySpeechProtectedUntil =
+        0;
+
+
+    GAME_RUNTIME
+        .lastPlayerCardPlayedAt =
         0;
 
 
@@ -499,6 +511,11 @@ function continueSavedGame(
 
     GAME_RUNTIME
         .lukySpeechProtectedUntil =
+        0;
+
+
+    GAME_RUNTIME
+        .lastPlayerCardPlayedAt =
         0;
 
 
@@ -1317,6 +1334,11 @@ async function playerPlayCards(
     );
 
 
+    GAME_RUNTIME
+        .lastPlayerCardPlayedAt =
+        Date.now();
+
+
     /* =====================================================
        VÝHRA
     ===================================================== */
@@ -1402,16 +1424,10 @@ async function playerPlayCards(
         CARD_TYPES.SKIP
     ) {
 
-        if (
-            previousSkipChain >
-            0
-        ) {
-
-            emitSkipCounterQuote(
-                "player",
-                previousSkipChain
-            );
-        }
+        emitSkipPlayQuote(
+            "player",
+            previousSkipChain
+        );
 
 
         handleSkipPlay(
@@ -1458,10 +1474,9 @@ async function playerPlayCards(
         emitStateChanged();
 
 
-        await waitForHandSwapReveal(
-            1000
-        );
-
+        /*
+            Hráčova nula mění ruce okamžitě.
+        */
 
         swapHands();
 
@@ -2150,6 +2165,43 @@ function clearSkipChain() {
    STŮJ HLÁŠKY
 ========================================================= */
 
+function emitSkipPlayQuote(
+    actor,
+    previousSkipChain
+) {
+
+    if (
+        previousSkipChain >
+        0
+    ) {
+
+        emitSkipCounterQuote(
+            actor,
+            previousSkipChain
+        );
+
+        return;
+    }
+
+
+    emitGameEvent(
+        actor ===
+            "luky"
+            ? "luky-speech"
+            : "player-speech",
+        {
+            text:
+                "Stojíš!",
+
+            duration:
+                GAME_CONFIG
+                    .speech
+                    .shortDurationMs
+        }
+    );
+}
+
+
 function emitSkipCounterQuote(
     actor,
     counterNumber
@@ -2620,6 +2672,45 @@ function waitForFastLukySkipResponse() {
    LUKYHO ROZHODNUTÍ
 ========================================================= */
 
+async function waitBeforeLukyDrawAfterPlayerPlay() {
+
+    const playedAt =
+        Number(
+            GAME_RUNTIME
+                .lastPlayerCardPlayedAt
+        ) ||
+        0;
+
+
+    if (
+        playedAt <=
+        0
+    ) {
+
+        return;
+    }
+
+
+    const remainingMs =
+        1000 -
+        (
+            Date.now() -
+            playedAt
+        );
+
+
+    if (
+        remainingMs >
+        0
+    ) {
+
+        await sleep(
+            remainingMs
+        );
+    }
+}
+
+
 async function executeLukyDecision(
     decision
 ) {
@@ -2646,6 +2737,9 @@ async function executeLukyDecision(
 
         const amount =
             state.drawPenalty;
+
+
+        await waitBeforeLukyDrawAfterPlayerPlay();
 
 
         drawCards(
@@ -2772,6 +2866,9 @@ async function executeLukyDecision(
         decision.action ===
         "draw"
     ) {
+
+        await waitBeforeLukyDrawAfterPlayerPlay();
+
 
         drawCards(
             "luky",
@@ -3024,16 +3121,10 @@ async function executeLukyDecision(
         CARD_TYPES.SKIP
     ) {
 
-        if (
-            previousSkipChain >
-            0
-        ) {
-
-            emitSkipCounterQuote(
-                "luky",
-                previousSkipChain
-            );
-        }
+        emitSkipPlayQuote(
+            "luky",
+            previousSkipChain
+        );
 
 
         handleSkipPlay(
@@ -3069,7 +3160,7 @@ async function executeLukyDecision(
 
 
         await waitForHandSwapReveal(
-            1000
+            2000
         );
 
 
@@ -6295,6 +6386,33 @@ async function finishGame(
             registerLukyWin(
                 slotIndex
             );
+    }
+
+
+    /*
+        Historie dokončených partií je oddělená od historie tahů.
+        Ukládá se až při skutečném ukončení partie, takže rozehrané
+        hry se v přehledu nikdy neobjeví.
+    */
+
+    if (
+        typeof registerCompletedGameHistory ===
+        "function"
+    ) {
+
+        registerCompletedGameHistory({
+            winner,
+
+            characterId,
+
+            durationMs,
+
+            startedAt:
+                state.startedAt,
+
+            finishedAt:
+                getSaveTimestamp()
+        });
     }
 
 
