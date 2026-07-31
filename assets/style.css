@@ -2476,6 +2476,7 @@ button.game-card.is-dragging {
     height: 100%;
 
     object-fit: cover;
+    object-position: top center;
 }
 
 .history-entry-avatar-fallback {
