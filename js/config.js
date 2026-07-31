@@ -473,7 +473,7 @@ const GAME_CONFIG = {
         */
 
         danyPlanSequencePauseMs:
-            450,
+            2000,
 
         /*
             Průběžné Lukyho hlášky během partie.
