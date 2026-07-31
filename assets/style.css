@@ -463,6 +463,25 @@ img {
 }
 
 
+/*
+    Časové statistiky jsou vkládané z ui.js pod hlavní W/L box.
+    Mezi všemi třemi řádky necháváme přibližně jeden řádek prostoru.
+*/
+
+.global-time-stats {
+    display: grid;
+
+    gap: 1em;
+
+    margin-top: 1em;
+
+    color: var(--text-soft);
+
+    font-size: 0.98rem;
+    line-height: 1.35;
+}
+
+
 /* =========================================================
    GENERIC PANELS
 ========================================================= */
