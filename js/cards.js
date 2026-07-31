@@ -823,7 +823,7 @@ function isDrawFourSelection(cards) {
    Celková nasčítaná penalizace a hodnota, kterou je potřeba
    aktuálně přehodit, jsou dvě různé věci.
 
-   Přehazuje se přesně hodnota POSLEDNÍHO zahraného stacku.
+   Přehodit lze stejnou nebo vyšší hodnotou než má POSLEDNÍ zahraný stack.
 ========================================================= */
 
 function canCounterDrawStack(
@@ -864,21 +864,20 @@ function canCounterDrawStack(
 
 
     /*
-        Přehazuje se vždy přesně hodnota POSLEDNÍHO stacku.
+        Přehodit lze stejnou nebo vyšší hodnotou než má
+        POSLEDNÍ zahraný stack.
 
         Příklady:
-        +2                 -> musí přijít +2
-        +4                 -> musí přijít +4
-        2× +2 přes Kuř!    -> poslední stack je +4
-        3× +2 přes Kuř!    -> poslední stack je +6
-        2× +4 přes Kuř!    -> poslední stack je +8
+        +2 lze přebít +2, 2× +2, +4, 2× +4 atd.
+        +4 lze přebít 2× +2, +4, 3× +2, 2× +4 atd.
+        +6 lze přebít 3× +2, 2× +4 atd.
 
         Celková nasčítaná penalizace se řeší zvlášť v game.js
         a může být libovolně vysoká.
     */
 
     return (
-        selectedPenalty ===
+        selectedPenalty >=
         requiredCounterAmount
     );
 }
