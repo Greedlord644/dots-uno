@@ -934,7 +934,7 @@ function getSkipCounterQuote(
 
     if (
         counterNumber <=
-        1
+        0
     ) {
 
         return GAME_QUOTES
@@ -961,7 +961,7 @@ function getPlayerSkipCounterQuote(
 
     if (
         counterNumber <=
-        1
+        0
     ) {
 
         return GAME_QUOTES
