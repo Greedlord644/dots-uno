@@ -6474,25 +6474,108 @@ async function surrenderGame() {
    ve stejném slotu.
 ========================================================= */
 
-async function surrenderAndStartNewGame() {
+async function surrenderAndStartNewGame(
+    requestedSlotIndex =
+        GAME_RUNTIME.slotIndex
+) {
+
+    const slotIndex =
+        Number.isInteger(
+            requestedSlotIndex
+        )
+            ? requestedSlotIndex
+            : GAME_RUNTIME.slotIndex;
+
+
+    if (
+        slotIndex ===
+            null ||
+        slotIndex ===
+            undefined
+    ) {
+
+        return false;
+    }
+
+
+    const slot =
+        getSaveSlot(
+            slotIndex
+        );
+
+
+    if (
+        !slot ||
+        isSaveSlotEmpty(
+            slot
+        )
+    ) {
+
+        return false;
+    }
+
+
+    /*
+        Důležité:
+        Tlačítko "Hrát novou partii" může být použito i po návratu
+        do menu nebo po reloadu stránky. V takové chvíli může být
+        rozehraná partie uložená ve slotu, ale nemusí být právě
+        načtená v GAME_RUNTIME.
+
+        Proto si před vzdáním zajistíme, že runtime opravdu obsahuje
+        rozehranou partii z požadovaného slotu.
+    */
+
+    const runtimeMatchesSlot =
+        GAME_RUNTIME.slotIndex ===
+            slotIndex &&
+        GAME_RUNTIME.state &&
+        GAME_RUNTIME.state.status ===
+            "playing";
+
+
+    if (
+        !runtimeMatchesSlot
+    ) {
+
+        const savedGame =
+            loadCurrentGame(
+                slotIndex
+            );
+
+
+        if (savedGame) {
+
+            continueSavedGame(
+                slotIndex
+            );
+        }
+    }
+
 
     const state =
         GAME_RUNTIME.state;
 
 
-    const slotIndex =
-        GAME_RUNTIME.slotIndex;
-
+    /*
+        Pokud už mezitím rozehraná partie neexistuje, není co
+        započítávat jako prohru. Novou partii ale stále bezpečně
+        spustíme, aby UI nikdy nezůstalo na "Připravuje se partie".
+    */
 
     if (
         !state ||
         state.status !==
             "playing" ||
-        slotIndex ===
-            null
+        GAME_RUNTIME.slotIndex !==
+            slotIndex
     ) {
 
-        return false;
+        startNewGame(
+            slotIndex
+        );
+
+        return true;
     }
 
 
@@ -6517,14 +6600,16 @@ async function surrenderAndStartNewGame() {
     );
 
 
-    startNewGame(
-        slotIndex
+    const newState =
+        startNewGame(
+            slotIndex
+        );
+
+
+    return Boolean(
+        newState
     );
-
-
-    return true;
 }
-
 
 /* =========================================================
    ACHIEVEMENT EVENTY
