@@ -89,6 +89,15 @@
                     Achievementy
                 </button>
 
+
+                <button
+                    type="button"
+                    class="menu-button"
+                    id="open-game-history-button"
+                >
+                    Historie partií
+                </button>
+
             </div>
 
 
@@ -671,6 +680,62 @@
                 class="achievements-list"
             >
                 <!-- JavaScript -->
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         HISTORIE PARTIÍ
+    ====================================================== -->
+
+    <section
+        id="screen-game-history"
+        class="screen"
+        hidden
+    >
+
+        <div class="panel-shell">
+
+            <header class="panel-header">
+
+                <button
+                    type="button"
+                    class="icon-button back-button"
+                    data-go-screen="screen-menu"
+                    aria-label="Zpět"
+                >
+                    ←
+                </button>
+
+
+                <div>
+
+                    <span class="panel-kicker">
+                        Přehled
+                    </span>
+
+                    <h2>
+                        Historie partií
+                    </h2>
+
+                </div>
+
+            </header>
+
+
+            <div
+                id="completed-game-history-list"
+                class="completed-game-history-list"
+            >
+
+                <div class="completed-game-history-empty">
+                    Zatím zde nejsou žádné dokončené partie.
+                </div>
+
             </div>
 
         </div>

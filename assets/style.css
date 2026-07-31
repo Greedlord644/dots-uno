@@ -463,6 +463,25 @@ img {
 }
 
 
+/*
+    Časové statistiky jsou vkládané z ui.js pod hlavní W/L box.
+    Mezi všemi třemi řádky necháváme přibližně jeden řádek prostoru.
+*/
+
+.global-time-stats {
+    display: grid;
+
+    gap: 1em;
+
+    margin-top: 1em;
+
+    color: var(--text-soft);
+
+    font-size: 0.98rem;
+    line-height: 1.35;
+}
+
+
 /* =========================================================
    GENERIC PANELS
 ========================================================= */
@@ -6229,3 +6248,119 @@ button.game-card.is-dragging {
     }
 }
 
+/* =========================================================
+   TEST BUILD LABEL
+========================================================= */
+
+.test-build-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 24px;
+    padding: 3px 8px;
+
+    color: #17120a;
+
+    border: 1px solid rgba(240, 206, 131, 0.75);
+    border-radius: 999px;
+
+    background:
+        linear-gradient(
+            180deg,
+            var(--gold-bright),
+            var(--gold)
+        );
+
+    font-size: 0.72rem;
+    font-weight: 950;
+    line-height: 1;
+    letter-spacing: 0.09em;
+}
+
+@media (max-width: 760px) {
+
+    .test-build-badge {
+        min-height: 20px;
+        padding: 2px 6px;
+
+        font-size: 0.62rem;
+    }
+}
+
+
+
+/* =========================================================
+   COMPLETED GAME HISTORY
+========================================================= */
+
+.completed-game-history-list{
+display:grid;
+gap:16px;
+}
+
+.completed-game-history-empty{
+padding:28px;
+text-align:center;
+color:var(--text-muted);
+border:1px solid var(--border);
+border-radius:18px;
+background:var(--panel);
+}
+
+.completed-game-card{
+display:grid;
+grid-template-columns:140px 1fr 140px;
+align-items:center;
+gap:18px;
+padding:18px;
+border:1px solid var(--border-gold);
+border-radius:20px;
+background:var(--panel);
+}
+
+.completed-game-profile{
+display:grid;
+justify-items:center;
+gap:10px;
+}
+
+.completed-game-avatar-wrap{
+width:96px;
+height:96px;
+overflow:hidden;
+border-radius:18px;
+border:1px solid var(--border-gold);
+background:#18181d;
+}
+
+.completed-game-avatar,
+.completed-game-avatar-fallback{
+width:100%;
+height:100%;
+}
+
+.completed-game-avatar{object-fit:cover;}
+.completed-game-avatar-fallback{
+display:grid;place-items:center;
+font-size:2rem;font-weight:900;color:var(--gold-soft);
+}
+
+.completed-game-result{
+display:grid;
+justify-items:center;
+gap:8px;
+text-align:center;
+}
+.completed-game-outcome.is-win{color:var(--win);}
+.completed-game-outcome.is-loss{color:var(--lose);}
+.completed-game-date,.completed-game-duration,.completed-game-profile-name{
+color:var(--text-soft);
+}
+.uno-button.is-pressed{
+transform:scale(.96);
+filter:brightness(1.08);
+}
+@media (max-width:700px){
+.completed-game-card{grid-template-columns:1fr;gap:14px;}
+}

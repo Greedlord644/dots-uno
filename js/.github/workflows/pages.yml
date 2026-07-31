@@ -335,61 +335,42 @@ const GAME_CONFIG = {
     /* =====================================================
        LUKYHO PŘEMÝŠLENÍ
 
-       Cíl: hra má odsýpat a Luky má působit lidsky.
-       Jasný / vynucený tah je rychlý, více reálných možností
-       znamená delší přemýšlení. Větší ruka může přidat čas,
-       menší ruka naopak reakci zrychluje.
+       Standardně 2–4 sekundy.
+       Občas 6–8 sekund.
+       S velkou rukou trochu rychleji.
     ===================================================== */
 
     aiThinking: {
 
-        obviousMinMs:
-            650,
-
-        obviousMaxMs:
+        normalMinMs:
             1000,
 
-        normalMinMs:
-            900,
-
         normalMaxMs:
-            2100,
-
-        complexMinMs:
-            1400,
-
-        complexMaxMs:
             3000,
 
-        absoluteMaxMs:
-            3200,
+        slowChance:
+            0.16,
 
-        smallHandThreshold:
-            3,
+        slowMinMs:
+            5000,
 
-        smallHandReductionMs:
-            350,
+        slowMaxMs:
+            7000,
 
         largeHandThreshold:
-            10,
+            12,
 
-        largeHandBonusPerCardMs:
-            90,
+        largeHandMinMs:
+            500,
 
-        largeHandMaxBonusMs:
-            720,
-
-        repeatedForcedDrawMinMs:
-            220,
-
-        repeatedForcedDrawMaxMs:
-            480,
+        largeHandMaxMs:
+            2000,
 
         showThinkingDotsChance:
-            0.34,
+            0.48,
 
         thinkingDotsMinMs:
-            850
+            900
     },
 
 
@@ -466,13 +447,6 @@ const GAME_CONFIG = {
 
         sequencePauseMs:
             850,
-
-        /*
-            Interval v rámci Danyho hlášky „Žádný strach...“.
-        */
-
-        danyPlanSequencePauseMs:
-            2000,
 
         /*
             Průběžné Lukyho hlášky během partie.
@@ -1051,16 +1025,7 @@ const GAME_CONFIG = {
             30,
 
         noLifeWinsTarget:
-            50,
-
-        noLifeWasNotEnoughWinsTarget:
-            100,
-
-        wtfWinsTarget:
-            200,
-
-        stopWinsTarget:
-            300
+            50
     },
 
 
@@ -1080,15 +1045,7 @@ const GAME_CONFIG = {
             360,
 
         handSwapMs:
-            700,
-
-        /*
-            Po Lukyho poslední kartě necháme výsledek chvíli
-            „doznít“, aby hráč skutečně viděl vítězný tah.
-        */
-
-        lukyWinRevealMs:
-            2000
+            700
     }
 };
 
@@ -1368,6 +1325,61 @@ function randomChance(
     return (
         Math.random() <
         chance
+    );
+}
+
+
+/* =========================================================
+   AI – DÉLKA PŘEMÝŠLENÍ
+========================================================= */
+
+function getRandomAiThinkingTime(
+    handCount = null
+) {
+
+    const config =
+        GAME_CONFIG.aiThinking;
+
+
+    /*
+        Hodně karet = trochu rychlejší Luky.
+    */
+
+    if (
+        Number.isFinite(
+            handCount
+        ) &&
+        handCount >=
+            config.largeHandThreshold
+    ) {
+
+        return randomInteger(
+            config.largeHandMinMs,
+            config.largeHandMaxMs
+        );
+    }
+
+
+    /*
+        Občas přemýšlí déle.
+    */
+
+    if (
+        randomChance(
+            config.slowChance
+        )
+    ) {
+
+        return randomInteger(
+            config.slowMinMs,
+            config.slowMaxMs
+        );
+    }
+
+
+    return randomInteger(
+        config.normalMinMs,
+        config.normalMaxMs
     );
 }
 

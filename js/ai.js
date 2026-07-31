@@ -8,10 +8,189 @@
    Cíl:
    - rozumný, ale ne dokonalý soupeř
    - lidské prodlevy
-   - občas delší přemýšlení
-   - s velkou rukou trochu rychlejší tah
+   - přemýšlení jen tam, kde má skutečně více možností
+   - jasné / vynucené tahy jsou rychlé
+   - malá ruka zrychluje, velká může lehce přidat čas
    - žádné vlastní generované hlášky
 ========================================================= */
+
+
+const LUKY_THINKING_MEMORY = {
+
+    gameStartedAt:
+        null,
+
+    lastHandIds:
+        new Set(),
+
+    lastHandCount:
+        0,
+
+    deliberateThinkCount:
+        0,
+
+    fastMode:
+        false
+};
+
+
+function syncLukyThinkingMemory(
+    gameState
+) {
+
+    const hand =
+        Array.isArray(
+            gameState?.lukyHand
+        )
+            ? gameState.lukyHand
+            : [];
+
+
+    const currentIds =
+        new Set(
+            hand.map(
+                (card) =>
+                    card.id
+            )
+        );
+
+
+    const startedAt =
+        gameState?.startedAt ||
+        null;
+
+
+    if (
+        LUKY_THINKING_MEMORY.gameStartedAt !==
+        startedAt
+    ) {
+
+        LUKY_THINKING_MEMORY.gameStartedAt =
+            startedAt;
+
+        LUKY_THINKING_MEMORY.deliberateThinkCount =
+            0;
+
+        LUKY_THINKING_MEMORY.fastMode =
+            false;
+
+        LUKY_THINKING_MEMORY.lastHandIds =
+            currentIds;
+
+        LUKY_THINKING_MEMORY.lastHandCount =
+            hand.length;
+
+        return;
+    }
+
+
+    const previousIds =
+        LUKY_THINKING_MEMORY
+            .lastHandIds;
+
+
+    const previousCount =
+        LUKY_THINKING_MEMORY
+            .lastHandCount;
+
+
+    let overlapCount =
+        0;
+
+
+    currentIds.forEach(
+        (id) => {
+
+            if (
+                previousIds.has(
+                    id
+                )
+            ) {
+
+                overlapCount +=
+                    1;
+            }
+        }
+    );
+
+
+    const comparableCount =
+        Math.max(
+            1,
+            Math.min(
+                previousCount,
+                hand.length
+            )
+        );
+
+
+    const overlapRatio =
+        overlapCount /
+        comparableCount;
+
+
+    const drewSeveralCards =
+        hand.length -
+        previousCount >=
+        2;
+
+
+    const handWasReplaced =
+        previousCount >=
+            3 &&
+        hand.length >=
+            3 &&
+        overlapRatio <
+            0.4;
+
+
+    if (
+        drewSeveralCards ||
+        handWasReplaced
+    ) {
+
+        LUKY_THINKING_MEMORY.deliberateThinkCount =
+            0;
+
+        LUKY_THINKING_MEMORY.fastMode =
+            false;
+    }
+
+
+    LUKY_THINKING_MEMORY.lastHandIds =
+        currentIds;
+
+
+    LUKY_THINKING_MEMORY.lastHandCount =
+        hand.length;
+}
+
+
+function registerLukyThinkingProfile(
+    profile
+) {
+
+    if (
+        profile?.mode ===
+            "normal" ||
+        profile?.mode ===
+            "complex"
+    ) {
+
+        LUKY_THINKING_MEMORY.deliberateThinkCount +=
+            1;
+
+
+        if (
+            LUKY_THINKING_MEMORY.deliberateThinkCount >=
+            2
+        ) {
+
+            LUKY_THINKING_MEMORY.fastMode =
+                true;
+        }
+    }
+}
 
 
 /* =========================================================
@@ -51,14 +230,19 @@ function getLukyDecision(gameState) {
     ===================================================== */
 
     if (
-        gameState.drawPenalty > 0 &&
-        gameState.topPenaltyType
+        gameState.drawPenalty > 0
     ) {
+
+        const requiredCounterAmount =
+            getAiRequiredDrawCounterAmount(
+                gameState
+            );
+
 
         const counter =
             chooseDrawStackCounter(
                 hand,
-                gameState.topPenaltyType
+                requiredCounterAmount
             );
 
 
@@ -208,38 +392,46 @@ async function waitForLukyThinking(
     } = {}
 ) {
 
-    const handCount =
-        Array.isArray(
-            gameState?.lukyHand
-        )
-            ? gameState.lukyHand.length
-            : null;
+    const config =
+        GAME_CONFIG.aiThinking;
 
 
-    const baseDelay =
-        getRandomAiThinkingTime(
-            handCount
+    syncLukyThinkingMemory(
+        gameState
+    );
+
+
+    const profile =
+        getLukyThinkingProfile(
+            gameState
         );
+
+
+    const totalDelay =
+        getLukyThinkingDelay(
+            profile,
+            gameState
+        );
+
+
+    registerLukyThinkingProfile(
+        profile
+    );
 
 
     /*
-        Luky reaguje svižněji než dřív.
-        Zachováme náhodnost z configu, ale běžné
-        přemýšlení zkrátíme přibližně o 1 sekundu.
+        "..." dává smysl jen tehdy, když Luky skutečně vybírá
+        mezi více možnostmi. U jasného / vynuceného tahu by
+        působilo uměle a jen zdržovalo hru.
     */
 
-    const totalDelay =
-        Math.max(
-            300,
-            baseDelay - 1000
-        );
-
-
     const showDots =
+        profile.mode !==
+            "obvious" &&
+        totalDelay >=
+            config.thinkingDotsMinMs &&
         randomChance(
-            GAME_CONFIG
-                .aiThinking
-                .showThinkingDotsChance
+            config.showThinkingDotsChance
         );
 
 
@@ -255,50 +447,9 @@ async function waitForLukyThinking(
     }
 
 
-    /*
-        Pokud ukazujeme "...", necháme je viditelné
-        aspoň minimální dobu.
-
-        Při dlouhém tahu ale zůstávají klidně déle.
-    */
-
-    if (showDots) {
-
-        const minimumDotsTime =
-            Math.min(
-                GAME_CONFIG
-                    .aiThinking
-                    .thinkingDotsMinMs,
-
-                totalDelay
-            );
-
-
-        await sleep(
-            minimumDotsTime
-        );
-
-
-        const remaining =
-            totalDelay -
-            minimumDotsTime;
-
-
-        if (
-            remaining > 0
-        ) {
-
-            await sleep(
-                remaining
-            );
-        }
-
-    } else {
-
-        await sleep(
-            totalDelay
-        );
-    }
+    await sleep(
+        totalDelay
+    );
 
 
     if (
@@ -310,6 +461,391 @@ async function waitForLukyThinking(
     }
 }
 
+
+/* =========================================================
+   PROFIL PŘEMÝŠLENÍ
+
+   obvious:
+   - vynucené líznutí
+   - vynucené Stůj
+   - právě jedna reálná možnost
+
+   normal:
+   - dvě reálné možnosti
+
+   complex:
+   - tři a více možností
+========================================================= */
+
+function getLukyThinkingProfile(
+    gameState
+) {
+
+    const hand =
+        Array.isArray(
+            gameState?.lukyHand
+        )
+            ? gameState.lukyHand
+            : [];
+
+
+    if (
+        !gameState ||
+        hand.length ===
+            0
+    ) {
+
+        return {
+            mode:
+                "obvious",
+
+            optionCount:
+                0,
+
+            forcedDraw:
+                true
+        };
+    }
+
+
+    /*
+        Aktivní dobírací stack.
+    */
+
+    if (
+        gameState.drawPenalty >
+        0
+    ) {
+
+        const requiredAmount =
+            getAiRequiredDrawCounterAmount(
+                gameState
+            );
+
+
+        const counterOptions =
+            getDrawStackCounterOptions(
+                hand,
+                requiredAmount
+            );
+
+
+        if (
+            counterOptions.length ===
+            0
+        ) {
+
+            return {
+                mode:
+                    "obvious",
+
+                optionCount:
+                    1,
+
+                forcedDraw:
+                    true
+            };
+        }
+
+
+        return {
+            mode:
+                counterOptions.length === 1
+                    ? "obvious"
+                    : counterOptions.length === 2
+                        ? "normal"
+                        : "complex",
+
+            optionCount:
+                counterOptions.length,
+
+            forcedDraw:
+                false
+        };
+    }
+
+
+    /*
+        Aktivní Stůj řetězec.
+    */
+
+    if (
+        gameState.skipChainCount >
+        0
+    ) {
+
+        const skipOptions =
+            groupIdenticalCardsByType(
+                hand,
+                CARD_TYPES.SKIP
+            );
+
+
+        return {
+            mode:
+                skipOptions.length <= 1
+                    ? "obvious"
+                    : "normal",
+
+            optionCount:
+                Math.max(
+                    1,
+                    skipOptions.length
+                ),
+
+            forcedDraw:
+                false
+        };
+    }
+
+
+    const playableGroups =
+        getPlayableGroups(
+            hand,
+            gameState
+        );
+
+
+    if (
+        playableGroups.length ===
+        0
+    ) {
+
+        return {
+            mode:
+                "obvious",
+
+            optionCount:
+                1,
+
+            forcedDraw:
+                true
+        };
+    }
+
+
+    if (
+        playableGroups.length ===
+        1
+    ) {
+
+        return {
+            mode:
+                "obvious",
+
+            optionCount:
+                1,
+
+            forcedDraw:
+                false
+        };
+    }
+
+
+    if (
+        playableGroups.length ===
+        2
+    ) {
+
+        return {
+            mode:
+                "normal",
+
+            optionCount:
+                2,
+
+            forcedDraw:
+                false
+        };
+    }
+
+
+    return {
+        mode:
+            "complex",
+
+        optionCount:
+            playableGroups.length,
+
+        forcedDraw:
+            false
+    };
+}
+
+
+function getLukyThinkingDelay(
+    profile,
+    gameState
+) {
+
+    const config =
+        GAME_CONFIG.aiThinking;
+
+
+    const handCount =
+        Array.isArray(
+            gameState?.lukyHand
+        )
+            ? gameState.lukyHand.length
+            : 0;
+
+
+    /*
+        Když je jasné, že Luky pouze lízne, hra má odsýpat.
+        Týká se to i několika po sobě jdoucích neúspěšných kol.
+    */
+
+    if (
+        profile?.forcedDraw
+    ) {
+
+        return randomInteger(
+            config.repeatedForcedDrawMinMs,
+            config.repeatedForcedDrawMaxMs
+        );
+    }
+
+
+    let minMs;
+    let maxMs;
+
+
+    switch (
+        profile?.mode
+    ) {
+
+        case "complex":
+
+            minMs =
+                config.complexMinMs;
+
+            maxMs =
+                config.complexMaxMs;
+
+            break;
+
+
+        case "normal":
+
+            minMs =
+                config.normalMinMs;
+
+            maxMs =
+                config.normalMaxMs;
+
+            break;
+
+
+        case "obvious":
+        default:
+
+            minMs =
+                config.obviousMinMs;
+
+            maxMs =
+                config.obviousMaxMs;
+
+            break;
+    }
+
+
+    /*
+        Čím méně karet Luky má, tím méně má co analyzovat.
+    */
+
+    if (
+        handCount > 0 &&
+        handCount <=
+            config.smallHandThreshold
+    ) {
+
+        minMs -=
+            config.smallHandReductionMs;
+
+        maxMs -=
+            config.smallHandReductionMs;
+    }
+
+
+    /*
+        Větší ruka může přidat trochu času, protože existuje
+        více kombinací, ale nikdy nepřekročí absolutní limit.
+    */
+
+    if (
+        handCount >
+        config.largeHandThreshold
+    ) {
+
+        const bonus =
+            Math.min(
+                config.largeHandMaxBonusMs,
+                (
+                    handCount -
+                    config.largeHandThreshold
+                ) *
+                config.largeHandBonusPerCardMs
+            );
+
+
+        minMs +=
+            Math.round(
+                bonus *
+                0.45
+            );
+
+        maxMs +=
+            bonus;
+    }
+
+
+    if (
+        LUKY_THINKING_MEMORY.fastMode &&
+        (
+            profile?.mode ===
+                "normal" ||
+            profile?.mode ===
+                "complex"
+        )
+    ) {
+
+        minMs =
+            Math.round(
+                minMs *
+                0.58
+            );
+
+
+        maxMs =
+            Math.round(
+                maxMs *
+                0.62
+            );
+    }
+
+
+    minMs =
+        Math.max(
+            250,
+            minMs
+        );
+
+
+    maxMs =
+        Math.max(
+            minMs,
+            Math.min(
+                config.absoluteMaxMs,
+                maxMs
+            )
+        );
+
+
+    return randomInteger(
+        minMs,
+        maxMs
+    );
+}
 
 /* =========================================================
    SLEEP
@@ -1059,129 +1595,217 @@ function shouldLukySwapOnSeven(
    +2 / +4 COUNTER
 ========================================================= */
 
-function chooseDrawStackCounter(
-    hand,
-    topPenaltyType
+function getAiRequiredDrawCounterAmount(
+    gameState
 ) {
 
-    const drawFours =
-        groupIdenticalCardsByType(
-            hand,
-            CARD_TYPES
-                .WILD_DRAW_FOUR
+    const explicitAmount =
+        Number(
+            gameState
+                ?.topPenaltyAmount
         );
+
+
+    if (
+        Number.isFinite(
+            explicitAmount
+        ) &&
+        explicitAmount >
+            0
+    ) {
+
+        return explicitAmount;
+    }
+
+
+    /*
+        Kompatibilita se starší rozehranou partií.
+    */
+
+    if (
+        gameState?.topPenaltyType ===
+        CARD_TYPES.DRAW_TWO
+    ) {
+
+        return 2;
+    }
+
+
+    if (
+        gameState?.topPenaltyType ===
+        CARD_TYPES.WILD_DRAW_FOUR
+    ) {
+
+        return 4;
+    }
+
+
+    return 0;
+}
+
+
+function getDrawStackCounterOptions(
+    hand,
+    requiredCounterAmount
+) {
+
+    const required =
+        Number(
+            requiredCounterAmount
+        );
+
+
+    if (
+        !Array.isArray(
+            hand
+        ) ||
+        !Number.isFinite(
+            required
+        ) ||
+        required <=
+            0
+    ) {
+
+        return [];
+    }
+
+
+    const options =
+        [];
 
 
     const drawTwos =
         groupIdenticalCardsByType(
             hand,
-            CARD_TYPES
-                .DRAW_TWO
+            CARD_TYPES.DRAW_TWO
         );
 
 
-    /* =====================================================
-       NAVRCHU +4
-    ===================================================== */
+    const drawFours =
+        groupIdenticalCardsByType(
+            hand,
+            CARD_TYPES.WILD_DRAW_FOUR
+        );
+
+
+    drawTwos.forEach(
+        (group) => {
+
+            for (
+                let count = 1;
+                count <=
+                    group.length;
+                count += 1
+            ) {
+
+                if (
+                    count *
+                    2 >=
+                    required
+                ) {
+
+                    options.push(
+                        group.slice(
+                            0,
+                            count
+                        )
+                    );
+                }
+            }
+        }
+    );
+
+
+    drawFours.forEach(
+        (group) => {
+
+            for (
+                let count = 1;
+                count <=
+                    group.length;
+                count += 1
+            ) {
+
+                if (
+                    count *
+                    4 >=
+                    required
+                ) {
+
+                    options.push(
+                        group.slice(
+                            0,
+                            count
+                        )
+                    );
+                }
+            }
+        }
+    );
+
+
+    return options;
+}
+
+function chooseDrawStackCounter(
+    hand,
+    requiredCounterAmount
+) {
+
+    const options =
+        getDrawStackCounterOptions(
+            hand,
+            requiredCounterAmount
+        );
+
 
     if (
-        topPenaltyType ===
-        CARD_TYPES
-            .WILD_DRAW_FOUR
+        options.length ===
+        0
     ) {
-
-        /*
-            Jedna nebo více +4 stačí
-            bez ohledu na velikost aktuálního součtu.
-        */
-
-        if (
-            drawFours.length >
-            0
-        ) {
-
-            return chooseDrawCardGroup(
-                drawFours
-            );
-        }
-
-
-        /*
-            Na +4 lze použít minimálně 2× +2.
-        */
-
-        const validDrawTwos =
-            drawTwos.filter(
-                (group) =>
-                    group.length >=
-                    GAME_CONFIG
-                        .drawStacking
-                        .minimumDrawTwosAgainstDrawFour
-            );
-
-
-        if (
-            validDrawTwos.length >
-            0
-        ) {
-
-            return chooseDrawCardGroup(
-                validDrawTwos,
-                GAME_CONFIG
-                    .drawStacking
-                    .minimumDrawTwosAgainstDrawFour
-            );
-        }
-
 
         return null;
     }
 
 
-    /* =====================================================
-       NAVRCHU +2
-    ===================================================== */
+    /*
+        Když je více platných možností, preferuje Luky menší počet
+        odhozených karet jen lehce. Může tedy občas použít i silnější
+        stack, než je nezbytně nutné. Není dokonalý.
+    */
+
+    const sorted =
+        [
+            ...options
+        ].sort(
+            (
+                first,
+                second
+            ) =>
+                first.length -
+                second.length
+        );
+
 
     if (
-        topPenaltyType ===
-        CARD_TYPES
-            .DRAW_TWO
+        sorted.length >
+            1 &&
+        randomChance(
+            0.22
+        )
     ) {
 
-        /*
-            Preferuje +2.
-        */
-
-        if (
-            drawTwos.length >
-            0
-        ) {
-
-            return chooseDrawCardGroup(
-                drawTwos
-            );
-        }
-
-
-        /*
-            +4 je také možné.
-        */
-
-        if (
-            drawFours.length >
-            0
-        ) {
-
-            return chooseDrawCardGroup(
-                drawFours
-            );
-        }
+        return sorted[
+            randomInteger(
+                1,
+                sorted.length - 1
+            )
+        ];
     }
 
 
-    return null;
+    return sorted[0];
 }
-
 
 /* =========================================================
    IDENTICKÉ DOBÍRACÍ KARTY

@@ -20,6 +20,13 @@
    - žlutý event
    - turnCount
    - nucené dobírání
+   - přesnou hodnotu posledního + stacku
+
+   Globální statistiky navíc ukládají:
+   - čas odehraný od zavedení měření
+   - počet časově změřených partií
+   - datum prvního hraní
+   - historii dokončených partií
 
    Achievementy a globální nastavení jsou mimo sloty.
 ========================================================= */
@@ -168,6 +175,614 @@ function getSaveTimestamp() {
 
     return new Date()
         .toISOString();
+}
+
+
+/* =========================================================
+   GLOBÁLNÍ ČASOVÉ STATISTIKY
+
+   Poznámka k migraci:
+   - staré dokončené partie nemají známou délku
+   - jejich počet zůstává zachován ve stávajících statistikách
+   - totalDurationMs proto počítá jen partie dokončené od zavedení
+     této funkce
+========================================================= */
+
+function createDefaultGlobalStats() {
+
+    return {
+
+        version:
+            GAME_CONFIG.storageVersion,
+
+        totalDurationMs:
+            0,
+
+        timedGames:
+            0,
+
+        firstPlayedAt:
+            null,
+
+        completedGames:
+            [],
+
+        updatedAt:
+            null
+    };
+}
+
+
+function normalizeGlobalStats(
+    rawStats
+) {
+
+    const fallback =
+        createDefaultGlobalStats();
+
+
+    if (
+        !rawStats ||
+        typeof rawStats !==
+            "object"
+    ) {
+
+        return fallback;
+    }
+
+
+    return {
+
+        version:
+            normalizeNonNegativeInteger(
+                rawStats.version
+            ) ||
+            GAME_CONFIG.storageVersion,
+
+        totalDurationMs:
+            normalizeNonNegativeInteger(
+                rawStats.totalDurationMs
+            ),
+
+        timedGames:
+            normalizeNonNegativeInteger(
+                rawStats.timedGames
+            ),
+
+        firstPlayedAt:
+            normalizeOptionalString(
+                rawStats.firstPlayedAt
+            ),
+
+        /*
+            Starší save toto pole nemá. V takovém případě se použije
+            prázdná historie a všechny dosavadní statistiky zůstanou
+            beze změny.
+        */
+
+        completedGames:
+            normalizeCompletedGameHistory(
+                rawStats.completedGames
+            ),
+
+        updatedAt:
+            normalizeOptionalString(
+                rawStats.updatedAt
+            )
+    };
+}
+
+
+function getEarliestSlotCreatedAt(
+    slots =
+        null
+) {
+
+    const source =
+        Array.isArray(
+            slots
+        )
+            ? slots
+            : loadSaveSlots();
+
+
+    const timestamps =
+        source
+            .map(
+                (slot) =>
+                    Date.parse(
+                        slot?.createdAt ||
+                        ""
+                    )
+            )
+            .filter(
+                Number.isFinite
+            );
+
+
+    if (
+        timestamps.length ===
+        0
+    ) {
+
+        return null;
+    }
+
+
+    return new Date(
+        Math.min(
+            ...timestamps
+        )
+    ).toISOString();
+}
+
+
+function saveGlobalStats(
+    stats
+) {
+
+    const normalized =
+        normalizeGlobalStats(
+            stats
+        );
+
+
+    normalized.updatedAt =
+        getSaveTimestamp();
+
+
+    writeJsonToStorage(
+        GAME_CONFIG
+            .storage
+            .globalStatsKey,
+        normalized
+    );
+
+
+    return normalized;
+}
+
+
+function loadGlobalStats() {
+
+    const raw =
+        readJsonFromStorage(
+            GAME_CONFIG
+                .storage
+                .globalStatsKey,
+            null
+        );
+
+
+    const stats =
+        normalizeGlobalStats(
+            raw
+        );
+
+
+    /*
+        U existujících hráčů zpětně neznáme přesný okamžik úplně
+        prvního spuštění hry. Nejlepší bezpečný údaj je nejstarší
+        createdAt některého existujícího slotu.
+    */
+
+    if (
+        !stats.firstPlayedAt
+    ) {
+
+        const migratedFirstPlayedAt =
+            getEarliestSlotCreatedAt();
+
+
+        if (
+            migratedFirstPlayedAt
+        ) {
+
+            stats.firstPlayedAt =
+                migratedFirstPlayedAt;
+
+
+            return saveGlobalStats(
+                stats
+            );
+        }
+    }
+
+
+    return stats;
+}
+
+
+function ensureFirstPlayedAt(
+    timestamp =
+        null
+) {
+
+    const stats =
+        loadGlobalStats();
+
+
+    if (
+        stats.firstPlayedAt
+    ) {
+
+        return stats;
+    }
+
+
+    const parsed =
+        Date.parse(
+            timestamp ||
+            ""
+        );
+
+
+    stats.firstPlayedAt =
+        Number.isFinite(
+            parsed
+        )
+            ? new Date(
+                parsed
+            ).toISOString()
+            : getSaveTimestamp();
+
+
+    return saveGlobalStats(
+        stats
+    );
+}
+
+
+/* =========================================================
+   HISTORIE DOKONČENÝCH PARTIÍ
+
+   Tato historie je oddělená od historie tahů uvnitř rozehrané hry.
+   Ukládají se pouze skutečně dokončené partie.
+========================================================= */
+
+function normalizeCompletedGameHistory(
+    rawHistory
+) {
+
+    if (
+        !Array.isArray(
+            rawHistory
+        )
+    ) {
+
+        return [];
+    }
+
+
+    return rawHistory
+        .map(
+            normalizeCompletedGameEntry
+        )
+        .filter(
+            Boolean
+        )
+        .sort(
+            (
+                first,
+                second
+            ) =>
+                Date.parse(
+                    second.finishedAt ||
+                    ""
+                ) -
+                Date.parse(
+                    first.finishedAt ||
+                    ""
+                )
+        );
+}
+
+
+function normalizeCompletedGameEntry(
+    rawEntry
+) {
+
+    if (
+        !rawEntry ||
+        typeof rawEntry !==
+            "object"
+    ) {
+
+        return null;
+    }
+
+
+    const winner =
+        rawEntry.winner ===
+            "player"
+            ? "player"
+            : rawEntry.winner ===
+                "luky"
+                ? "luky"
+                : null;
+
+
+    const characterId =
+        normalizeOptionalString(
+            rawEntry.characterId
+        );
+
+
+    const finishedAt =
+        normalizeOptionalString(
+            rawEntry.finishedAt
+        );
+
+
+    if (
+        !winner ||
+        !characterId ||
+        !finishedAt
+    ) {
+
+        return null;
+    }
+
+
+    return {
+
+        id:
+            normalizeOptionalString(
+                rawEntry.id
+            ) ||
+            createCompletedGameId({
+                startedAt:
+                    rawEntry.startedAt,
+
+                finishedAt,
+
+                characterId
+            }),
+
+        winner,
+
+        result:
+            winner ===
+                "player"
+                ? "win"
+                : "loss",
+
+        characterId,
+
+        skinId:
+            normalizeOptionalString(
+                rawEntry.skinId
+            ),
+
+        playerImage:
+            normalizeOptionalString(
+                rawEntry.playerImage
+            ),
+
+        lukyImage:
+            normalizeOptionalString(
+                rawEntry.lukyImage
+            ),
+
+        durationMs:
+            normalizeNonNegativeInteger(
+                rawEntry.durationMs
+            ),
+
+        startedAt:
+            normalizeOptionalString(
+                rawEntry.startedAt
+            ),
+
+        finishedAt
+    };
+}
+
+
+function createCompletedGameId({
+    startedAt = null,
+    finishedAt = null,
+    characterId = null
+} = {}) {
+
+    const base =
+        [
+            startedAt ||
+                "",
+            finishedAt ||
+                "",
+            characterId ||
+                ""
+        ]
+            .join(
+                "|"
+            )
+            .replace(
+                /[^a-zA-Z0-9_-]+/g,
+                "-"
+            )
+            .slice(
+                0,
+                90
+            );
+
+
+    return (
+        `completed-${base || Date.now()}`
+    );
+}
+
+
+function getCompletedGameHistory() {
+
+    return [
+        ...loadGlobalStats()
+            .completedGames
+    ];
+}
+
+
+function registerCompletedGameHistory({
+    winner,
+    characterId,
+    durationMs = 0,
+    startedAt = null,
+    finishedAt = null
+} = {}) {
+
+    const safeFinishedAt =
+        normalizeOptionalString(
+            finishedAt
+        ) ||
+        getSaveTimestamp();
+
+
+    const activeSlotIndex =
+        typeof getActiveSlotIndex ===
+            "function"
+            ? getActiveSlotIndex()
+            : null;
+
+
+    const slot =
+        Number.isInteger(
+            activeSlotIndex
+        )
+            ? getSaveSlot(
+                activeSlotIndex
+            )
+            : null;
+
+
+    const entry =
+        normalizeCompletedGameEntry({
+
+            id:
+                createCompletedGameId({
+                    startedAt,
+                    finishedAt:
+                        safeFinishedAt,
+                    characterId
+                }),
+
+            winner,
+
+            characterId,
+
+            skinId:
+                slot?.skinId ||
+                null,
+
+            playerImage:
+                slot
+                    ? getSlotCharacterImage(
+                        slot
+                    )
+                    : (
+                        typeof getCharacterImage ===
+                            "function"
+                            ? getCharacterImage(
+                                characterId
+                            )
+                            : null
+                    ),
+
+            lukyImage:
+                typeof getConfiguredLukyEndImage ===
+                    "function"
+                    ? getConfiguredLukyEndImage(
+                        winner ===
+                            "luky"
+                            ? "win"
+                            : "lose"
+                    )
+                    : null,
+
+            durationMs,
+
+            startedAt,
+
+            finishedAt:
+                safeFinishedAt
+        });
+
+
+    if (!entry) {
+
+        return null;
+    }
+
+
+    const stats =
+        loadGlobalStats();
+
+
+    /*
+        Pojistka proti dvojímu zápisu stejné partie.
+        ID vychází z času začátku/konce a postavy.
+    */
+
+    if (
+        stats.completedGames
+            .some(
+                (game) =>
+                    game.id ===
+                    entry.id
+            )
+    ) {
+
+        return entry;
+    }
+
+
+    stats.completedGames.unshift(
+        entry
+    );
+
+
+    stats.completedGames =
+        normalizeCompletedGameHistory(
+            stats.completedGames
+        );
+
+
+    saveGlobalStats(
+        stats
+    );
+
+
+    return entry;
+}
+
+
+function registerFinishedGameTiming({
+    durationMs = 0,
+    startedAt = null
+} = {}) {
+
+    const stats =
+        ensureFirstPlayedAt(
+            startedAt
+        );
+
+
+    const safeDurationMs =
+        normalizeNonNegativeInteger(
+            durationMs
+        );
+
+
+    stats.totalDurationMs +=
+        safeDurationMs;
+
+
+    stats.timedGames +=
+        1;
+
+
+    return saveGlobalStats(
+        stats
+    );
 }
 
 
@@ -409,6 +1024,17 @@ function normalizeSavedGame(
         topPenaltyType:
             normalizeOptionalString(
                 rawGame.topPenaltyType
+            ),
+
+
+        /*
+            Hodnota POSLEDNÍHO dobíracího stacku.
+            Starší save ji nemá; game.js má fallback podle typu +2/+4.
+        */
+
+        topPenaltyAmount:
+            normalizeNonNegativeInteger(
+                rawGame.topPenaltyAmount
             ),
 
 
@@ -1468,6 +2094,12 @@ function serializeSavedGame(
             null,
 
 
+        topPenaltyAmount:
+            normalizeNonNegativeInteger(
+                game.topPenaltyAmount
+            ),
+
+
         skipChainCount:
             normalizeNonNegativeInteger(
                 game.skipChainCount
@@ -1671,6 +2303,11 @@ function createNewCharacterSlot(
 
     const timestamp =
         getSaveTimestamp();
+
+
+    ensureFirstPlayedAt(
+        timestamp
+    );
 
 
     return {
@@ -2306,43 +2943,68 @@ function getCombinedSlotStats() {
         loadSaveSlots();
 
 
-    return slots.reduce(
-        (
-            stats,
-            slot
-        ) => {
-
-            stats.playerWins +=
-                normalizeNonNegativeInteger(
-                    slot.wins
-                );
+    const timing =
+        loadGlobalStats();
 
 
-            stats.lukyWins +=
-                normalizeNonNegativeInteger(
-                    slot.losses
-                );
+    const stats =
+        slots.reduce(
+            (
+                result,
+                slot
+            ) => {
+
+                result.playerWins +=
+                    normalizeNonNegativeInteger(
+                        slot.wins
+                    );
 
 
-            stats.gamesPlayed +=
-                getSlotGamesPlayed(
-                    slot
-                );
+                result.lukyWins +=
+                    normalizeNonNegativeInteger(
+                        slot.losses
+                    );
 
 
-            return stats;
-        },
-        {
-            playerWins:
-                0,
+                result.gamesPlayed +=
+                    getSlotGamesPlayed(
+                        slot
+                    );
 
-            lukyWins:
-                0,
 
-            gamesPlayed:
-                0
-        }
-    );
+                return result;
+            },
+            {
+                playerWins:
+                    0,
+
+                lukyWins:
+                    0,
+
+                gamesPlayed:
+                    0
+            }
+        );
+
+
+    return {
+
+        ...stats,
+
+        totalDurationMs:
+            timing.totalDurationMs,
+
+        timedGames:
+            timing.timedGames,
+
+        firstPlayedAt:
+            timing.firstPlayedAt,
+
+        completedGames:
+            [
+                ...timing.completedGames
+            ]
+    };
 }
 
 
@@ -2388,7 +3050,10 @@ function exportSaveData() {
             loadSaveSlots()
                 .map(
                     serializeSaveSlot
-                )
+                ),
+
+        globalStats:
+            loadGlobalStats()
     };
 }
 
@@ -2436,6 +3101,18 @@ function importSaveData(
     saveAllSlots(
         slots
     );
+
+
+    if (
+        data.globalStats &&
+        typeof data.globalStats ===
+            "object"
+    ) {
+
+        saveGlobalStats(
+            data.globalStats
+        );
+    }
 
 
     return slots;

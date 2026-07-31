@@ -10,11 +10,15 @@
 /* =========================================================
    DEFINICE ACHIEVEMENTŮ
 
-   Pořadí:
+   Základní pořadí:
    1) skiny
    2) Hat-trick
-   3) výhry 10–50
+   3) výhry 10–300
    4) speciální achievementy
+
+   V UI mají vždy prioritu NESPLNĚNÉ achievementy.
+   Uvnitř nesplněných i splněných se zachovává toto
+   základní pořadí definic.
 ========================================================= */
 
 const ACHIEVEMENT_DEFINITIONS = [
@@ -251,6 +255,66 @@ const ACHIEVEMENT_DEFINITIONS = [
             GAME_CONFIG
                 .achievements
                 .noLifeWinsTarget
+    },
+
+
+    {
+        id:
+            "no_life_was_not_enough",
+
+        title:
+            "No Life nestačil, takže je tu tohle",
+
+        description:
+            "Vyhraj 100 her.",
+
+        type:
+            "total_wins",
+
+        target:
+            GAME_CONFIG
+                .achievements
+                .noLifeWasNotEnoughWinsTarget
+    },
+
+
+    {
+        id:
+            "wtf",
+
+        title:
+            "WTF?",
+
+        description:
+            "Vyhraj 200 her.",
+
+        type:
+            "total_wins",
+
+        target:
+            GAME_CONFIG
+                .achievements
+                .wtfWinsTarget
+    },
+
+
+    {
+        id:
+            "stop",
+
+        title:
+            "Stop!",
+
+        description:
+            "Vyhraj 300 her.",
+
+        type:
+            "total_wins",
+
+        target:
+            GAME_CONFIG
+                .achievements
+                .stopWinsTarget
     },
 
 
@@ -1138,8 +1202,22 @@ function getSkinUnlockInfo(
 
 function registerFinishedGameForAchievements({
     winner,
-    characterId
+    characterId,
+    durationMs = 0,
+    startedAt = null
 }) {
+
+    /*
+        Časové statistiky jsou oddělené od achievement dat.
+        Staré dokončené hry se zpětně nedopočítávají; od této
+        verze se každá nově dokončená partie zapíše právě jednou.
+    */
+
+    registerFinishedGameTiming({
+        durationMs,
+        startedAt
+    });
+
 
     const data =
         loadAchievementData();
@@ -1314,7 +1392,7 @@ function getAchievementViewData() {
 
     return ACHIEVEMENT_DEFINITIONS
         .map(
-            (definition) => {
+            (definition, originalIndex) => {
 
                 const progress =
                     getAchievementProgress(
@@ -1323,16 +1401,19 @@ function getAchievementViewData() {
                     );
 
 
+                const unlocked =
+                    data
+                        .unlocked
+                        .includes(
+                            definition.id
+                        );
+
+
                 return {
 
                     ...definition,
 
-                    unlocked:
-                        data
-                            .unlocked
-                            .includes(
-                                definition.id
-                            ),
+                    unlocked,
 
                     current:
                         progress.current,
@@ -1341,9 +1422,51 @@ function getAchievementViewData() {
                         progress.target,
 
                     completed:
-                        progress.completed
+                        progress.completed,
+
+                    /*
+                        Interní pořadí je použito jen pro stabilní sort.
+                        Do UI se nijak nevypisuje.
+                    */
+
+                    _originalIndex:
+                        originalIndex
                 };
             }
+        )
+        .sort(
+            (a, b) => {
+
+                /*
+                    Všechny nesplněné achievementy jsou vždy nahoře.
+                    Jakmile se achievement odemkne, přesune se mezi
+                    splněné. Uvnitř obou skupin zůstává původní
+                    pořadí ACHIEVEMENT_DEFINITIONS.
+                */
+
+                if (
+                    a.unlocked !==
+                    b.unlocked
+                ) {
+
+                    return a.unlocked
+                        ? 1
+                        : -1;
+                }
+
+
+                return (
+                    a._originalIndex -
+                    b._originalIndex
+                );
+            }
+        )
+        .map(
+            ({
+                _originalIndex,
+                ...achievement
+            }) =>
+                achievement
         );
 }
 

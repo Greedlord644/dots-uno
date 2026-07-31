@@ -81,6 +81,14 @@ const UI_STATE = {
     playerSpeechTimer:
         null,
 
+    /*
+        Po stisku UNO musí být reakce na mobilu viditelná.
+        Krátké ochranné okno zabrání okamžitému přepsání hlášky.
+    */
+
+    unoFeedbackProtectedUntil:
+        0,
+
     speechSequenceToken:
         0,
 
@@ -118,6 +126,9 @@ const UI_STATE = {
         0,
 
     yellowEventHideTimer:
+        null,
+
+    surrenderMode:
         null
 };
 
@@ -133,6 +144,8 @@ document.addEventListener(
 
 
 function initializeUI() {
+
+    applyEnvironmentLabels();
 
     setupNavigation();
 
@@ -162,6 +175,86 @@ function initializeUI() {
 
     showScreen(
         "screen-menu"
+    );
+}
+
+
+function applyEnvironmentLabels() {
+
+    const isTestBuild =
+        Boolean(
+            GAME_CONFIG
+                ?.isTestBuild
+        );
+
+
+    const menuTitle =
+        document.querySelector(
+            ".game-logo h1"
+        );
+
+
+    if (menuTitle) {
+
+        menuTitle.textContent =
+            isTestBuild
+                ? "TEST"
+                : "UNO";
+    }
+
+
+    const slotInfo =
+        document.querySelector(
+            ".game-slot-info"
+        );
+
+
+    if (!slotInfo) {
+
+        return;
+    }
+
+
+    const existingBadge =
+        document.getElementById(
+            "test-build-badge"
+        );
+
+
+    if (!isTestBuild) {
+
+        existingBadge?.remove();
+
+        return;
+    }
+
+
+    if (existingBadge) {
+
+        return;
+    }
+
+
+    const badge =
+        document.createElement(
+            "span"
+        );
+
+
+    badge.id =
+        "test-build-badge";
+
+
+    badge.className =
+        "test-build-badge";
+
+
+    badge.textContent =
+        "TEST";
+
+
+    slotInfo.appendChild(
+        badge
     );
 }
 
@@ -261,6 +354,23 @@ function setupNavigation() {
 
 
     document
+        .getElementById(
+            "open-game-history-button"
+        )
+        ?.addEventListener(
+            "click",
+            () => {
+
+                renderCompletedGameHistory();
+
+                showScreen(
+                    "screen-game-history"
+                );
+            }
+        );
+
+
+    document
         .querySelectorAll(
             "[data-go-screen]"
         )
@@ -299,6 +409,15 @@ function setupNavigation() {
                         ) {
 
                             renderSaveSlots();
+                        }
+
+
+                        if (
+                            target ===
+                            "screen-game-history"
+                        ) {
+
+                            renderCompletedGameHistory();
                         }
 
 
@@ -385,6 +504,712 @@ function renderMainMenuStats() {
     setText(
         "global-luky-wins",
         stats.totalLosses
+    );
+
+
+    renderMainMenuTimeStats();
+}
+
+
+function renderMainMenuTimeStats() {
+
+    if (
+        typeof getCombinedSlotStats !==
+        "function"
+    ) {
+
+        return;
+    }
+
+
+    const stats =
+        getCombinedSlotStats();
+
+
+    const winsElement =
+        document.getElementById(
+            "global-luky-wins"
+        );
+
+
+    const statsHost =
+        winsElement?.parentElement
+            ?.parentElement ||
+        winsElement?.parentElement;
+
+
+    if (!statsHost) {
+
+        return;
+    }
+
+
+    let container =
+        document.getElementById(
+            "global-time-stats"
+        );
+
+
+    if (!container) {
+
+        container =
+            document.createElement(
+                "div"
+            );
+
+
+        container.id =
+            "global-time-stats";
+
+
+        container.className =
+            "global-time-stats";
+
+
+        statsHost.insertAdjacentElement(
+            "afterend",
+            container
+        );
+    }
+
+
+    const gamesPlayed =
+        Math.max(
+            0,
+            Number(
+                stats.gamesPlayed ||
+                0
+            )
+        );
+
+
+    const totalDurationMs =
+        Math.max(
+            0,
+            Number(
+                stats.totalDurationMs ||
+                0
+            )
+        );
+
+
+    const firstPlayedAt =
+        stats.firstPlayedAt
+            ? formatCzechDate(
+                stats.firstPlayedAt
+            )
+            : null;
+
+
+    container.innerHTML =
+        "";
+
+
+    const summary =
+        document.createElement(
+            "div"
+        );
+
+
+    summary.textContent =
+        `Celkově ${formatGameCount(gamesPlayed)} a stráveno ${formatTotalPlayTime(totalDurationMs)}`;
+
+
+    container.appendChild(
+        summary
+    );
+
+
+    if (firstPlayedAt) {
+
+        const since =
+            document.createElement(
+                "div"
+            );
+
+
+        since.textContent =
+            `Hraje UNO od ${firstPlayedAt}`;
+
+
+        container.appendChild(
+            since
+        );
+    }
+}
+
+
+function formatGameCount(
+    count
+) {
+
+    const safeCount =
+        Math.max(
+            0,
+            Math.floor(
+                Number(
+                    count ||
+                    0
+                )
+            )
+        );
+
+
+    const lastTwo =
+        safeCount %
+        100;
+
+
+    const last =
+        safeCount %
+        10;
+
+
+    let noun =
+        "her";
+
+
+    if (
+        lastTwo < 11 ||
+        lastTwo > 14
+    ) {
+
+        if (
+            last ===
+            1
+        ) {
+
+            noun =
+                "hra";
+
+        } else if (
+            last >=
+                2 &&
+            last <=
+                4
+        ) {
+
+            noun =
+                "hry";
+        }
+    }
+
+
+    return `${safeCount} ${noun}`;
+}
+
+
+/* =========================================================
+   HISTORIE DOKONČENÝCH PARTIÍ
+========================================================= */
+
+function renderCompletedGameHistory() {
+
+    const container =
+        document.getElementById(
+            "completed-game-history-list"
+        );
+
+
+    if (!container) {
+
+        return;
+    }
+
+
+    const history =
+        typeof getCompletedGameHistory ===
+            "function"
+            ? getCompletedGameHistory()
+            : [];
+
+
+    container.innerHTML =
+        "";
+
+
+    if (
+        history.length ===
+        0
+    ) {
+
+        const empty =
+            document.createElement(
+                "div"
+            );
+
+
+        empty.className =
+            "completed-game-history-empty";
+
+
+        empty.textContent =
+            "Zatím zde nejsou žádné dokončené partie.";
+
+
+        container.appendChild(
+            empty
+        );
+
+
+        return;
+    }
+
+
+    history.forEach(
+        (game) => {
+
+            container.appendChild(
+                createCompletedGameHistoryCard(
+                    game
+                )
+            );
+        }
+    );
+}
+
+
+function createCompletedGameHistoryCard(
+    game
+) {
+
+    const card =
+        document.createElement(
+            "article"
+        );
+
+
+    card.className =
+        "completed-game-card";
+
+
+    const player =
+        createCompletedGameProfile({
+            className:
+                "completed-game-player",
+
+            image:
+                game.playerImage,
+
+            fallback:
+                getCharacterConfig(
+                    game.characterId
+                )?.fallback ||
+                "?",
+
+            name:
+                getCharacterName(
+                    game.characterId
+                ) ||
+                "Hráč"
+        });
+
+
+    const middle =
+        document.createElement(
+            "div"
+        );
+
+
+    middle.className =
+        "completed-game-result";
+
+
+    const result =
+        document.createElement(
+            "strong"
+        );
+
+
+    const playerWon =
+        game.winner ===
+        "player";
+
+
+    result.className =
+        playerWon
+            ? "completed-game-outcome is-win"
+            : "completed-game-outcome is-loss";
+
+
+    result.textContent =
+        playerWon
+            ? "Výhra"
+            : "Prohra";
+
+
+    const date =
+        document.createElement(
+            "span"
+        );
+
+
+    date.className =
+        "completed-game-date";
+
+
+    date.textContent =
+        formatCzechDate(
+            game.finishedAt
+        );
+
+
+    const duration =
+        document.createElement(
+            "span"
+        );
+
+
+    duration.className =
+        "completed-game-duration";
+
+
+    duration.textContent =
+        `Délka: ${formatCompletedGameDuration(game.durationMs)}`;
+
+
+    middle.append(
+        result,
+        date,
+        duration
+    );
+
+
+    const luky =
+        createCompletedGameProfile({
+            className:
+                "completed-game-luky",
+
+            image:
+                game.lukyImage ||
+                GAME_CONFIG
+                    .opponent
+                    .defaultImage,
+
+            fallback:
+                GAME_CONFIG
+                    .opponent
+                    .fallback,
+
+            name:
+                GAME_CONFIG
+                    .opponent
+                    .name ||
+                "Luky"
+        });
+
+
+    card.append(
+        player,
+        middle,
+        luky
+    );
+
+
+    return card;
+}
+
+
+function createCompletedGameProfile({
+    className,
+    image,
+    fallback,
+    name
+}) {
+
+    const profile =
+        document.createElement(
+            "div"
+        );
+
+
+    profile.className =
+        `completed-game-profile ${className}`;
+
+
+    const imageWrap =
+        document.createElement(
+            "div"
+        );
+
+
+    imageWrap.className =
+        "completed-game-avatar-wrap";
+
+
+    const img =
+        document.createElement(
+            "img"
+        );
+
+
+    img.className =
+        "completed-game-avatar";
+
+
+    img.alt =
+        name;
+
+
+    const fallbackElement =
+        document.createElement(
+            "span"
+        );
+
+
+    fallbackElement.className =
+        "completed-game-avatar-fallback";
+
+
+    fallbackElement.textContent =
+        fallback ||
+        "?";
+
+
+    if (image) {
+
+        img.src =
+            image;
+
+
+        img.addEventListener(
+            "error",
+            () => {
+
+                img.hidden =
+                    true;
+
+                fallbackElement.hidden =
+                    false;
+            },
+            {
+                once:
+                    true
+            }
+        );
+
+
+        fallbackElement.hidden =
+            true;
+
+    } else {
+
+        img.hidden =
+            true;
+    }
+
+
+    imageWrap.append(
+        img,
+        fallbackElement
+    );
+
+
+    const label =
+        document.createElement(
+            "span"
+        );
+
+
+    label.className =
+        "completed-game-profile-name";
+
+
+    label.textContent =
+        name;
+
+
+    profile.append(
+        imageWrap,
+        label
+    );
+
+
+    return profile;
+}
+
+
+function formatCompletedGameDuration(
+    durationMs
+) {
+
+    const minutes =
+        Math.max(
+            1,
+            Math.round(
+                Math.max(
+                    0,
+                    Number(
+                        durationMs ||
+                        0
+                    )
+                ) /
+                60000
+            )
+        );
+
+
+    return (
+        `${minutes} ` +
+        (
+            minutes ===
+                1
+                ? "minuta"
+                : minutes >=
+                        2 &&
+                    minutes <=
+                        4
+                    ? "minuty"
+                    : "minut"
+        )
+    );
+}
+
+
+function formatTotalPlayTime(
+    durationMs
+) {
+
+    let totalMinutes =
+        Math.max(
+            0,
+            Math.round(
+                Number(
+                    durationMs ||
+                    0
+                ) /
+                60000
+            )
+        );
+
+
+    if (totalMinutes < 60) {
+
+        return `${totalMinutes} minut`;
+    }
+
+
+    const minutesPerDay =
+        24 * 60;
+
+
+    const minutesPerMonth =
+        30 * minutesPerDay;
+
+
+    const months =
+        Math.floor(
+            totalMinutes /
+            minutesPerMonth
+        );
+
+
+    totalMinutes %=
+        minutesPerMonth;
+
+
+    const days =
+        Math.floor(
+            totalMinutes /
+            minutesPerDay
+        );
+
+
+    totalMinutes %=
+        minutesPerDay;
+
+
+    const hours =
+        Math.floor(
+            totalMinutes /
+            60
+        );
+
+
+    const minutes =
+        totalMinutes %
+        60;
+
+
+    const parts =
+        [];
+
+
+    if (months > 0) {
+
+        parts.push(
+            `${months} ${months === 1 ? "měsíc" : months >= 2 && months <= 4 ? "měsíce" : "měsíců"}`
+        );
+    }
+
+
+    if (days > 0) {
+
+        parts.push(
+            `${days} ${days === 1 ? "den" : days >= 2 && days <= 4 ? "dny" : "dnů"}`
+        );
+    }
+
+
+    if (hours > 0) {
+
+        parts.push(
+            `${hours} ${hours === 1 ? "hodina" : hours >= 2 && hours <= 4 ? "hodiny" : "hodin"}`
+        );
+    }
+
+
+    if (
+        minutes > 0 ||
+        parts.length === 0
+    ) {
+
+        parts.push(
+            `${minutes} minut`
+        );
+    }
+
+
+    return parts.join(
+        " "
+    );
+}
+
+
+function formatCzechDate(
+    value
+) {
+
+    const date =
+        new Date(
+            value
+        );
+
+
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+
+        return "";
+    }
+
+
+    return new Intl.DateTimeFormat(
+        "cs-CZ",
+        {
+            day:
+                "2-digit",
+
+            month:
+                "2-digit",
+
+            year:
+                "numeric"
+        }
+    ).format(
+        date
     );
 }
 
@@ -720,9 +1545,24 @@ function setupSlotActions() {
                 }
 
 
-                clearCurrentGame(
-                    slotIndex
-                );
+                const slot =
+                    getSaveSlot(
+                        slotIndex
+                    );
+
+
+                if (
+                    hasActiveGame(
+                        slot
+                    )
+                ) {
+
+                    openSurrenderConfirmation(
+                        "new-game"
+                    );
+
+                    return;
+                }
 
 
                 startGameUI(
@@ -2207,8 +3047,134 @@ function bindReliableTap(
 
 
 /* =========================================================
+   POTVRZENÍ VZDÁNÍ / NOVÉ PARTIE
+========================================================= */
+
+function openSurrenderConfirmation(
+    mode = "surrender"
+) {
+
+    UI_STATE.surrenderMode =
+        mode;
+
+
+    const modal =
+        document.getElementById(
+            "modal-surrender-game"
+        );
+
+
+    const title =
+        document.getElementById(
+            "surrender-game-title"
+        );
+
+
+    const question =
+        modal?.querySelector(
+            "p:not(.modal-note)"
+        );
+
+
+    const note =
+        modal?.querySelector(
+            ".modal-note"
+        );
+
+
+    if (
+        mode ===
+        "new-game"
+    ) {
+
+        if (title) {
+
+            title.textContent =
+                "Hrát novou partii?";
+        }
+
+
+        if (question) {
+
+            question.textContent =
+                "Opravdu si přejete vzdát rozehranou partii?";
+        }
+
+
+        if (note) {
+
+            note.textContent =
+                "Rozehraná partie se započítá jako jedna prohra.";
+        }
+
+    } else {
+
+        if (title) {
+
+            title.textContent =
+                "Vzdát se?";
+        }
+
+
+        if (question) {
+
+            question.textContent =
+                "Opravdu si přejete vzdát rozehranou partii?";
+        }
+
+
+        if (note) {
+
+            note.textContent =
+                "Vzdání se započítá jako jedna prohra.";
+        }
+    }
+
+
+    openModal(
+        "modal-surrender-game"
+    );
+}
+
+
+/* =========================================================
    GAME CONTROLS
 ========================================================= */
+
+function showUnoButtonFeedback(
+    button
+) {
+
+    if (!button) {
+
+        return;
+    }
+
+
+    button.classList.remove(
+        "is-pressed"
+    );
+
+
+    void button.offsetWidth;
+
+
+    button.classList.add(
+        "is-pressed"
+    );
+
+
+    window.setTimeout(
+        () => {
+
+            button.classList.remove(
+                "is-pressed"
+            );
+        },
+        220
+    );
+}
+
 
 function setupGameControls() {
 
@@ -2243,6 +3209,20 @@ function setupGameControls() {
             }
 
 
+            /*
+                Pokud si hráč po označení karty rozmyslí tah a lízne,
+                výběr se musí okamžitě zrušit.
+            */
+
+            UI_STATE
+                .selectedCardIds
+                .clear();
+
+
+            UI_STATE.pendingPlayCardIds =
+                null;
+
+
             const success =
                 playerDraw();
 
@@ -2250,6 +3230,8 @@ function setupGameControls() {
             if (success) {
 
                 markFirstPlayerAction();
+
+                renderGame();
             }
         }
     );
@@ -2273,12 +3255,7 @@ function setupGameControls() {
             ) {
 
                 attemptSelectedCardPlay();
-
-                return;
             }
-
-
-            openHistory();
         }
     );
 
@@ -2293,7 +3270,50 @@ function setupGameControls() {
         unoButton,
         () => {
 
-            playerCallUno();
+            showUnoButtonFeedback(
+                unoButton
+            );
+
+
+            const success =
+                playerCallUno();
+
+
+            /*
+                Game engine hlášku také vyšle jako event. Tady ji
+                zobrazujeme ještě přímo jako pojistku pro mobilní
+                prohlížeče, aby byl každý stisk viditelný.
+            */
+
+            UI_STATE.unoFeedbackProtectedUntil =
+                Date.now() +
+                1400;
+
+
+            if (success) {
+
+                showPlayerSpeech(
+                    getPlayerUnoQuote(),
+                    Math.max(
+                        1400,
+                        GAME_CONFIG
+                            .speech
+                            .shortDurationMs
+                    )
+                );
+
+            } else {
+
+                showLukySpeech(
+                    getFalseUnoQuote(),
+                    Math.max(
+                        1400,
+                        GAME_CONFIG
+                            .speech
+                            .defaultDurationMs
+                    )
+                );
+            }
         }
     );
 
@@ -2402,8 +3422,8 @@ function setupGameControls() {
         surrenderGameButton,
         () => {
 
-            openModal(
-                "modal-surrender-game"
+            openSurrenderConfirmation(
+                "surrender"
             );
         }
     );
@@ -2418,6 +3438,25 @@ function setupGameControls() {
     bindReliableTap(
         cancelSurrenderButton,
         () => {
+
+            const mode =
+                UI_STATE.surrenderMode;
+
+
+            UI_STATE.surrenderMode =
+                null;
+
+
+            if (
+                mode ===
+                "new-game"
+            ) {
+
+                closeModal();
+
+                return;
+            }
+
 
             openModal(
                 "modal-game-menu"
@@ -2436,25 +3475,147 @@ function setupGameControls() {
         confirmSurrenderButton,
         async () => {
 
+            const mode =
+                UI_STATE.surrenderMode ||
+                "surrender";
+
+
+            const slotIndex =
+                UI_STATE
+                    .selectedSlotIndex;
+
+
             if (
-                typeof surrenderGame !==
-                "function"
+                slotIndex ===
+                null
             ) {
-
-                showToast(
-                    "Vzdání partie",
-                    "Funkce vzdání zatím není dostupná."
-                );
-
 
                 return;
             }
 
 
+            UI_STATE.surrenderMode =
+                null;
+
+
             closeModal();
 
 
-            await surrenderGame();
+            if (
+                mode ===
+                "new-game"
+            ) {
+
+                if (
+                    typeof surrenderAndStartNewGame !==
+                    "function"
+                ) {
+
+                    showToast(
+                        "Nová partie",
+                        "Novou partii se nepodařilo zahájit."
+                    );
+
+                    return;
+                }
+
+
+                let started =
+                    false;
+
+
+                try {
+
+                    started =
+                        await surrenderAndStartNewGame(
+                            slotIndex
+                        );
+
+                } catch (error) {
+
+                    console.error(
+                        error
+                    );
+                }
+
+
+                /*
+                    Pojistka:
+                    i kdyby se přechod ze staré rozehrané partie
+                    neočekávaně nepovedl, UI nesmí zůstat viset na
+                    "Připravuje se partie".
+                */
+
+                const currentState =
+                    getGameState();
+
+
+                if (
+                    !started ||
+                    !currentState ||
+                    currentState.status !==
+                        "playing" ||
+                    getActiveSlotIndex() !==
+                        slotIndex
+                ) {
+
+                    startGameUI(
+                        slotIndex,
+                        false
+                    );
+
+                    return;
+                }
+
+
+                UI_STATE
+                    .selectedCardIds
+                    .clear();
+
+
+                UI_STATE.pendingPlayCardIds =
+                    null;
+
+
+                UI_STATE.firstPlayerActionDone =
+                    false;
+
+
+                resetSpeechUI();
+
+                resetEmoteUI();
+
+                closeHistory();
+
+
+                showScreen(
+                    "screen-game"
+                );
+
+
+                renderGame();
+
+                startMusicForGame();
+
+                return;
+            }
+
+
+            if (
+                typeof surrenderGame ===
+                "function"
+            ) {
+
+                await surrenderGame();
+
+                return;
+            }
+
+
+            showToast(
+                "Vzdání partie",
+                "Funkce vzdání zatím není dostupná."
+            );
         }
     );
 
@@ -4415,6 +5576,66 @@ function renderYellowEvent(
    STATUS
 ========================================================= */
 
+function getRequiredDrawCounterAmountForStatus(
+    state
+) {
+
+    const explicitAmount =
+        Number(
+            state?.topPenaltyAmount
+        );
+
+
+    if (
+        Number.isFinite(
+            explicitAmount
+        ) &&
+        explicitAmount >
+            0
+    ) {
+
+        return explicitAmount;
+    }
+
+
+    /*
+        Kompatibilita se starší rozehranou partií, která ještě
+        nemusela mít uloženou číselnou hodnotu posledního stacku.
+    */
+
+    if (
+        state?.topPenaltyType ===
+        CARD_TYPES.DRAW_TWO
+    ) {
+
+        return 2;
+    }
+
+
+    if (
+        state?.topPenaltyType ===
+        CARD_TYPES.WILD_DRAW_FOUR
+    ) {
+
+        return 4;
+    }
+
+
+    /*
+        Poslední bezpečný fallback pro velmi starý save.
+        Běžné nové partie se sem nedostanou.
+    */
+
+    return Math.max(
+        2,
+        Number(
+            state?.drawPenalty
+        ) ||
+        2
+    );
+}
+
+
 function renderGameStatus(
     state
 ) {
@@ -4443,10 +5664,16 @@ function renderGameStatus(
         0
     ) {
 
+        const requiredCounterAmount =
+            getRequiredDrawCounterAmountForStatus(
+                state
+            );
+
+
         text =
             state.turn ===
                 "player"
-                ? `Přehraj +${state.drawPenalty} nebo si lízni karty.`
+                ? `Přehraj +${requiredCounterAmount} nebo vyšší, nebo si lízni ${formatUICardAmount(state.drawPenalty)}.`
                 : "Luky řeší penalizaci.";
 
     } else if (
@@ -5574,9 +6801,29 @@ function setupGameEvents() {
         "dotsuno:luky-speech",
         (event) => {
 
-            showLukySpeech(
+            const text =
                 event.detail
-                    ?.text,
+                    ?.text;
+
+
+            const protectedUnoFeedback =
+                Date.now() <
+                    UI_STATE
+                        .unoFeedbackProtectedUntil;
+
+
+            if (
+                protectedUnoFeedback &&
+                text !==
+                    getFalseUnoQuote()
+            ) {
+
+                return;
+            }
+
+
+            showLukySpeech(
+                text,
 
                 event.detail
                     ?.duration
@@ -5588,6 +6835,27 @@ function setupGameEvents() {
     window.addEventListener(
         "dotsuno:player-speech",
         (event) => {
+
+            const text =
+                event.detail
+                    ?.text;
+
+
+            const protectedUnoFeedback =
+                Date.now() <
+                    UI_STATE
+                        .unoFeedbackProtectedUntil;
+
+
+            if (
+                protectedUnoFeedback &&
+                text !==
+                    getPlayerUnoQuote()
+            ) {
+
+                return;
+            }
+
 
             const lukyText =
                 document.getElementById(
@@ -5605,8 +6873,7 @@ function setupGameEvents() {
 
 
             showPlayerSpeech(
-                event.detail
-                    ?.text,
+                text,
 
                 event.detail
                     ?.duration
@@ -6236,6 +7503,10 @@ function hidePlayerSpeech() {
 
 function resetSpeechUI() {
 
+    UI_STATE.unoFeedbackProtectedUntil =
+        0;
+
+
     UI_STATE.openingSpeechActive =
         false;
 
@@ -6440,6 +7711,72 @@ function resetEmoteUI() {
    GAME OVER
 ========================================================= */
 
+function renderGameOverDuration(
+    durationMs
+) {
+
+    const score =
+        document.getElementById(
+            "game-over-score"
+        );
+
+
+    if (!score) {
+
+        return;
+    }
+
+
+    let durationElement =
+        document.getElementById(
+            "game-over-duration"
+        );
+
+
+    if (!durationElement) {
+
+        durationElement =
+            document.createElement(
+                "div"
+            );
+
+
+        durationElement.id =
+            "game-over-duration";
+
+
+        durationElement.className =
+            "game-over-duration";
+
+
+        score.insertAdjacentElement(
+            "afterend",
+            durationElement
+        );
+    }
+
+
+    const roundedMinutes =
+        Math.max(
+            1,
+            Math.round(
+                Math.max(
+                    0,
+                    Number(
+                        durationMs ||
+                        0
+                    )
+                ) /
+                60000
+            )
+        );
+
+
+    durationElement.textContent =
+        `Partie trvala: ${roundedMinutes} ${roundedMinutes === 1 ? "minutu" : roundedMinutes >= 2 && roundedMinutes <= 4 ? "minuty" : "minut"}`;
+}
+
+
 function showGameOver(
     detail
 ) {
@@ -6595,6 +7932,11 @@ function showGameOver(
         getSlotRecordText(
             slot
         )
+    );
+
+
+    renderGameOverDuration(
+        detail?.durationMs
     );
 
 

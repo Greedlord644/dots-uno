@@ -111,7 +111,7 @@ const GAME_QUOTES = {
             */
 
             skipFirstCounter:
-                "Ty stojíš!",
+                "Stojíš!",
 
 
             /*
@@ -294,7 +294,7 @@ const GAME_QUOTES = {
             */
 
             skipFirstCounter:
-                "Ty stojíš!",
+                "Stojíš!",
 
             skipFurtherCounter:
                 "Ne, ty stojíš!",
@@ -934,7 +934,7 @@ function getSkipCounterQuote(
 
     if (
         counterNumber <=
-        1
+        0
     ) {
 
         return GAME_QUOTES
@@ -961,7 +961,7 @@ function getPlayerSkipCounterQuote(
 
     if (
         counterNumber <=
-        1
+        0
     ) {
 
         return GAME_QUOTES
