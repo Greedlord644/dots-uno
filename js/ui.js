@@ -118,6 +118,9 @@ const UI_STATE = {
         0,
 
     yellowEventHideTimer:
+        null,
+
+    surrenderMode:
         null
 };
 
@@ -1081,9 +1084,24 @@ function setupSlotActions() {
                 }
 
 
-                clearCurrentGame(
-                    slotIndex
-                );
+                const slot =
+                    getSaveSlot(
+                        slotIndex
+                    );
+
+
+                if (
+                    hasActiveGame(
+                        slot
+                    )
+                ) {
+
+                    openSurrenderConfirmation(
+                        "new-game"
+                    );
+
+                    return;
+                }
 
 
                 startGameUI(
@@ -2568,6 +2586,97 @@ function bindReliableTap(
 
 
 /* =========================================================
+   POTVRZENÍ VZDÁNÍ / NOVÉ PARTIE
+========================================================= */
+
+function openSurrenderConfirmation(
+    mode = "surrender"
+) {
+
+    UI_STATE.surrenderMode =
+        mode;
+
+
+    const modal =
+        document.getElementById(
+            "modal-surrender-game"
+        );
+
+
+    const title =
+        document.getElementById(
+            "surrender-game-title"
+        );
+
+
+    const question =
+        modal?.querySelector(
+            "p:not(.modal-note)"
+        );
+
+
+    const note =
+        modal?.querySelector(
+            ".modal-note"
+        );
+
+
+    if (
+        mode ===
+        "new-game"
+    ) {
+
+        if (title) {
+
+            title.textContent =
+                "Hrát novou partii?";
+        }
+
+
+        if (question) {
+
+            question.textContent =
+                "Opravdu si přejete vzdát rozehranou partii?";
+        }
+
+
+        if (note) {
+
+            note.textContent =
+                "Rozehraná partie se započítá jako jedna prohra.";
+        }
+
+    } else {
+
+        if (title) {
+
+            title.textContent =
+                "Vzdát se?";
+        }
+
+
+        if (question) {
+
+            question.textContent =
+                "Opravdu si přejete vzdát rozehranou partii?";
+        }
+
+
+        if (note) {
+
+            note.textContent =
+                "Vzdání se započítá jako jedna prohra.";
+        }
+    }
+
+
+    openModal(
+        "modal-surrender-game"
+    );
+}
+
+
+/* =========================================================
    GAME CONTROLS
 ========================================================= */
 
@@ -2758,8 +2867,8 @@ function setupGameControls() {
         surrenderGameButton,
         () => {
 
-            openModal(
-                "modal-surrender-game"
+            openSurrenderConfirmation(
+                "surrender"
             );
         }
     );
@@ -2774,6 +2883,25 @@ function setupGameControls() {
     bindReliableTap(
         cancelSurrenderButton,
         () => {
+
+            const mode =
+                UI_STATE.surrenderMode;
+
+
+            UI_STATE.surrenderMode =
+                null;
+
+
+            if (
+                mode ===
+                "new-game"
+            ) {
+
+                closeModal();
+
+                return;
+            }
+
 
             openModal(
                 "modal-game-menu"
@@ -2792,6 +2920,11 @@ function setupGameControls() {
         confirmSurrenderButton,
         async () => {
 
+            const mode =
+                UI_STATE.surrenderMode ||
+                "surrender";
+
+
             const slotIndex =
                 UI_STATE
                     .selectedSlotIndex;
@@ -2806,13 +2939,31 @@ function setupGameControls() {
             }
 
 
+            UI_STATE.surrenderMode =
+                null;
+
+
             closeModal();
 
 
             if (
-                typeof surrenderAndStartNewGame ===
-                "function"
+                mode ===
+                "new-game"
             ) {
+
+                if (
+                    typeof surrenderAndStartNewGame !==
+                    "function"
+                ) {
+
+                    showToast(
+                        "Nová partie",
+                        "Novou partii se nepodařilo zahájit."
+                    );
+
+                    return;
+                }
+
 
                 await surrenderAndStartNewGame();
 
@@ -2826,7 +2977,14 @@ function setupGameControls() {
                     null;
 
 
+                showScreen(
+                    "screen-game"
+                );
+
+
                 renderGame();
+
+                startMusicForGame();
 
                 return;
             }
