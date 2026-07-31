@@ -7,6 +7,32 @@
 ========================================================= */
 
 
+/* =========================================================
+   PROSTŘEDÍ / STORAGE NAMESPACE
+
+   Produkční URL ponechává původní klíče dotsUno.* beze změny.
+   Testovací URL obsahující /test/ používá dotsUno.test.*.
+   Díky tomu testovací build nikdy nečte ani nepřepisuje
+   existující produkční save, achievementy nebo nastavení.
+========================================================= */
+
+const DOTS_UNO_PATHNAME =
+    globalThis.location?.pathname ||
+    "";
+
+
+const DOTS_UNO_IS_TEST_BUILD =
+    /\/test(?:\/|$)/i.test(
+        DOTS_UNO_PATHNAME
+    );
+
+
+const DOTS_UNO_STORAGE_ROOT =
+    DOTS_UNO_IS_TEST_BUILD
+        ? "dotsUno.test"
+        : "dotsUno";
+
+
 const GAME_CONFIG = {
 
     /* =====================================================
@@ -24,6 +50,14 @@ const GAME_CONFIG = {
 
     storageVersion:
         3,
+
+    environment:
+        DOTS_UNO_IS_TEST_BUILD
+            ? "test"
+            : "production",
+
+    isTestBuild:
+        DOTS_UNO_IS_TEST_BUILD,
 
 
     /* =====================================================
@@ -953,19 +987,19 @@ const GAME_CONFIG = {
     storage: {
 
         rootKey:
-            "dotsUno",
+            DOTS_UNO_STORAGE_ROOT,
 
         slotsKey:
-            "dotsUno.slots",
+            `${DOTS_UNO_STORAGE_ROOT}.slots`,
 
         achievementsKey:
-            "dotsUno.achievements",
+            `${DOTS_UNO_STORAGE_ROOT}.achievements`,
 
         globalStatsKey:
-            "dotsUno.globalStats",
+            `${DOTS_UNO_STORAGE_ROOT}.globalStats`,
 
         settingsKey:
-            "dotsUno.settings"
+            `${DOTS_UNO_STORAGE_ROOT}.settings`
     },
 
 
