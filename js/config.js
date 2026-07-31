@@ -1373,61 +1373,6 @@ function randomChance(
 
 
 /* =========================================================
-   AI – DÉLKA PŘEMÝŠLENÍ
-========================================================= */
-
-function getRandomAiThinkingTime(
-    handCount = null
-) {
-
-    const config =
-        GAME_CONFIG.aiThinking;
-
-
-    /*
-        Hodně karet = trochu rychlejší Luky.
-    */
-
-    if (
-        Number.isFinite(
-            handCount
-        ) &&
-        handCount >=
-            config.largeHandThreshold
-    ) {
-
-        return randomInteger(
-            config.largeHandMinMs,
-            config.largeHandMaxMs
-        );
-    }
-
-
-    /*
-        Občas přemýšlí déle.
-    */
-
-    if (
-        randomChance(
-            config.slowChance
-        )
-    ) {
-
-        return randomInteger(
-            config.slowMinMs,
-            config.slowMaxMs
-        );
-    }
-
-
-    return randomInteger(
-        config.normalMinMs,
-        config.normalMaxMs
-    );
-}
-
-
-/* =========================================================
    UNO LUKYHO
 ========================================================= */
 
