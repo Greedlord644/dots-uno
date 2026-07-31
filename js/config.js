@@ -468,8 +468,7 @@ const GAME_CONFIG = {
             850,
 
         /*
-            Danyho „Žádný strach...“ má být svižnější
-            než dvoudílné Lukyho hlášky.
+            Interval v rámci Danyho hlášky „Žádný strach...“.
         */
 
         danyPlanSequencePauseMs:
