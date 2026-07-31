@@ -187,7 +187,7 @@ function applyEnvironmentLabels() {
 
         menuTitle.textContent =
             isTestBuild
-                ? "UNO - TEST"
+                ? "TEST"
                 : "UNO";
     }
 
