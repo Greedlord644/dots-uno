@@ -820,20 +820,15 @@ function isDrawFourSelection(cards) {
    MŮŽE VÝBĚR PŘEHODIT AKTUÁLNÍ PENALIZACI?
 
    Důležité:
-   Výše nasčítané penalizace nerozhoduje o tom,
-   kolik musí hráč přehodit.
+   Celková nasčítaná penalizace a hodnota, kterou je potřeba
+   aktuálně přehodit, jsou dvě různé věci.
 
-   Rozhoduje karta / typ, který je právě nahoře.
-
-   Např.:
-   aktuální penalizace +10,
-   navrchu +4,
-   stačí jedna další +4.
+   Přehazuje se přesně hodnota POSLEDNÍHO zahraného stacku.
 ========================================================= */
 
 function canCounterDrawStack(
     selectedCards,
-    topPenaltyType
+    requiredCounterAmount
 ) {
     if (
         !Array.isArray(selectedCards) ||
@@ -852,90 +847,41 @@ function canCounterDrawStack(
     }
 
 
-    /*
-        NAVRCHU +2
-    */
+    const selectedPenalty =
+        getDrawPenaltyForCards(
+            selectedCards
+        );
+
 
     if (
-        topPenaltyType ===
-        CARD_TYPES.DRAW_TWO
+        !Number.isFinite(
+            requiredCounterAmount
+        ) ||
+        requiredCounterAmount <= 0
     ) {
-        /*
-            Jakýkoliv počet +2.
-        */
-
-        if (
-            isDrawTwoSelection(
-                selectedCards
-            )
-        ) {
-            return true;
-        }
-
-
-        /*
-            Jakýkoliv počet +4.
-        */
-
-        if (
-            isDrawFourSelection(
-                selectedCards
-            )
-        ) {
-            return true;
-        }
-
-
         return false;
     }
 
 
     /*
-        NAVRCHU +4
+        Přehazuje se vždy přesně hodnota POSLEDNÍHO stacku.
+
+        Příklady:
+        +2                 -> musí přijít +2
+        +4                 -> musí přijít +4
+        2× +2 přes Kuř!    -> poslední stack je +4
+        3× +2 přes Kuř!    -> poslední stack je +6
+        2× +4 přes Kuř!    -> poslední stack je +8
+
+        Celková nasčítaná penalizace se řeší zvlášť v game.js
+        a může být libovolně vysoká.
     */
 
-    if (
-        topPenaltyType ===
-        CARD_TYPES.WILD_DRAW_FOUR
-    ) {
-        /*
-            Jedna nebo více +4.
-        */
-
-        if (
-            isDrawFourSelection(
-                selectedCards
-            )
-        ) {
-            return true;
-        }
-
-
-        /*
-            +2 lze pouze jako Kuř!,
-            minimálně dvě najednou.
-        */
-
-        if (
-            isDrawTwoSelection(
-                selectedCards
-            ) &&
-            selectedCards.length >=
-                GAME_CONFIG
-                    .drawStacking
-                    .minimumDrawTwosAgainstDrawFour
-        ) {
-            return true;
-        }
-
-
-        return false;
-    }
-
-
-    return false;
+    return (
+        selectedPenalty ===
+        requiredCounterAmount
+    );
 }
-
 
 /* =========================================================
    STŮJ ŘETĚZEC
