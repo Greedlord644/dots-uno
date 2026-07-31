@@ -2965,7 +2965,52 @@ function setupGameControls() {
                 }
 
 
-                await surrenderAndStartNewGame();
+                let started =
+                    false;
+
+
+                try {
+
+                    started =
+                        await surrenderAndStartNewGame(
+                            slotIndex
+                        );
+
+                } catch (error) {
+
+                    console.error(
+                        error
+                    );
+                }
+
+
+                /*
+                    Pojistka:
+                    i kdyby se přechod ze staré rozehrané partie
+                    neočekávaně nepovedl, UI nesmí zůstat viset na
+                    "Připravuje se partie".
+                */
+
+                const currentState =
+                    getGameState();
+
+
+                if (
+                    !started ||
+                    !currentState ||
+                    currentState.status !==
+                        "playing" ||
+                    getActiveSlotIndex() !==
+                        slotIndex
+                ) {
+
+                    startGameUI(
+                        slotIndex,
+                        false
+                    );
+
+                    return;
+                }
 
 
                 UI_STATE
@@ -2975,6 +3020,17 @@ function setupGameControls() {
 
                 UI_STATE.pendingPlayCardIds =
                     null;
+
+
+                UI_STATE.firstPlayerActionDone =
+                    false;
+
+
+                resetSpeechUI();
+
+                resetEmoteUI();
+
+                closeHistory();
 
 
                 showScreen(
