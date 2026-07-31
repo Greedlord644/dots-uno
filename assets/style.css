@@ -6340,7 +6340,7 @@ width:100%;
 height:100%;
 }
 
-.completed-game-avatar{object-fit:cover;}
+.completed-game-avatar{object-fit:cover;object-position:top center;}
 .completed-game-avatar-fallback{
 display:grid;place-items:center;
 font-size:2rem;font-weight:900;color:var(--gold-soft);
