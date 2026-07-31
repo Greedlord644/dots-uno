@@ -468,6 +468,285 @@ function renderMainMenuStats() {
         "global-luky-wins",
         stats.totalLosses
     );
+
+
+    renderMainMenuTimeStats();
+}
+
+
+function renderMainMenuTimeStats() {
+
+    if (
+        typeof getCombinedSlotStats !==
+        "function"
+    ) {
+
+        return;
+    }
+
+
+    const stats =
+        getCombinedSlotStats();
+
+
+    const winsElement =
+        document.getElementById(
+            "global-luky-wins"
+        );
+
+
+    const statsHost =
+        winsElement?.parentElement
+            ?.parentElement ||
+        winsElement?.parentElement;
+
+
+    if (!statsHost) {
+
+        return;
+    }
+
+
+    let container =
+        document.getElementById(
+            "global-time-stats"
+        );
+
+
+    if (!container) {
+
+        container =
+            document.createElement(
+                "div"
+            );
+
+
+        container.id =
+            "global-time-stats";
+
+
+        container.className =
+            "global-time-stats";
+
+
+        statsHost.insertAdjacentElement(
+            "afterend",
+            container
+        );
+    }
+
+
+    const gamesPlayed =
+        Math.max(
+            0,
+            Number(
+                stats.gamesPlayed ||
+                0
+            )
+        );
+
+
+    const totalDurationMs =
+        Math.max(
+            0,
+            Number(
+                stats.totalDurationMs ||
+                0
+            )
+        );
+
+
+    const firstPlayedAt =
+        stats.firstPlayedAt
+            ? formatCzechDate(
+                stats.firstPlayedAt
+            )
+            : null;
+
+
+    container.innerHTML =
+        "";
+
+
+    const summary =
+        document.createElement(
+            "div"
+        );
+
+
+    summary.textContent =
+        `Celkově ${gamesPlayed} her a stráveno ${formatTotalPlayTime(totalDurationMs)}`;
+
+
+    container.appendChild(
+        summary
+    );
+
+
+    if (firstPlayedAt) {
+
+        const since =
+            document.createElement(
+                "div"
+            );
+
+
+        since.textContent =
+            `Hraje UNO od ${firstPlayedAt}`;
+
+
+        container.appendChild(
+            since
+        );
+    }
+}
+
+
+function formatTotalPlayTime(
+    durationMs
+) {
+
+    let totalMinutes =
+        Math.max(
+            0,
+            Math.round(
+                Number(
+                    durationMs ||
+                    0
+                ) /
+                60000
+            )
+        );
+
+
+    if (totalMinutes < 60) {
+
+        return `${totalMinutes} minut`;
+    }
+
+
+    const minutesPerDay =
+        24 * 60;
+
+
+    const minutesPerMonth =
+        30 * minutesPerDay;
+
+
+    const months =
+        Math.floor(
+            totalMinutes /
+            minutesPerMonth
+        );
+
+
+    totalMinutes %=
+        minutesPerMonth;
+
+
+    const days =
+        Math.floor(
+            totalMinutes /
+            minutesPerDay
+        );
+
+
+    totalMinutes %=
+        minutesPerDay;
+
+
+    const hours =
+        Math.floor(
+            totalMinutes /
+            60
+        );
+
+
+    const minutes =
+        totalMinutes %
+        60;
+
+
+    const parts =
+        [];
+
+
+    if (months > 0) {
+
+        parts.push(
+            `${months} ${months === 1 ? "měsíc" : months >= 2 && months <= 4 ? "měsíce" : "měsíců"}`
+        );
+    }
+
+
+    if (days > 0) {
+
+        parts.push(
+            `${days} ${days === 1 ? "den" : days >= 2 && days <= 4 ? "dny" : "dnů"}`
+        );
+    }
+
+
+    if (hours > 0) {
+
+        parts.push(
+            `${hours} ${hours === 1 ? "hodina" : hours >= 2 && hours <= 4 ? "hodiny" : "hodin"}`
+        );
+    }
+
+
+    if (
+        minutes > 0 ||
+        parts.length === 0
+    ) {
+
+        parts.push(
+            `${minutes} minut`
+        );
+    }
+
+
+    return parts.join(
+        " "
+    );
+}
+
+
+function formatCzechDate(
+    value
+) {
+
+    const date =
+        new Date(
+            value
+        );
+
+
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+
+        return "";
+    }
+
+
+    return new Intl.DateTimeFormat(
+        "cs-CZ",
+        {
+            day:
+                "2-digit",
+
+            month:
+                "2-digit",
+
+            year:
+                "numeric"
+        }
+    ).format(
+        date
+    );
 }
 
 
@@ -2355,12 +2634,7 @@ function setupGameControls() {
             ) {
 
                 attemptSelectedCardPlay();
-
-                return;
             }
-
-
-            openHistory();
         }
     );
 
@@ -2518,16 +2792,15 @@ function setupGameControls() {
         confirmSurrenderButton,
         async () => {
 
+            const slotIndex =
+                UI_STATE
+                    .selectedSlotIndex;
+
+
             if (
-                typeof surrenderGame !==
-                "function"
+                slotIndex ===
+                null
             ) {
-
-                showToast(
-                    "Vzdání partie",
-                    "Funkce vzdání zatím není dostupná."
-                );
-
 
                 return;
             }
@@ -2536,7 +2809,44 @@ function setupGameControls() {
             closeModal();
 
 
-            await surrenderGame();
+            if (
+                typeof surrenderAndStartNewGame ===
+                "function"
+            ) {
+
+                await surrenderAndStartNewGame();
+
+
+                UI_STATE
+                    .selectedCardIds
+                    .clear();
+
+
+                UI_STATE.pendingPlayCardIds =
+                    null;
+
+
+                renderGame();
+
+                return;
+            }
+
+
+            if (
+                typeof surrenderGame ===
+                "function"
+            ) {
+
+                await surrenderGame();
+
+                return;
+            }
+
+
+            showToast(
+                "Vzdání partie",
+                "Funkce vzdání zatím není dostupná."
+            );
         }
     );
 
@@ -6522,6 +6832,72 @@ function resetEmoteUI() {
    GAME OVER
 ========================================================= */
 
+function renderGameOverDuration(
+    durationMs
+) {
+
+    const score =
+        document.getElementById(
+            "game-over-score"
+        );
+
+
+    if (!score) {
+
+        return;
+    }
+
+
+    let durationElement =
+        document.getElementById(
+            "game-over-duration"
+        );
+
+
+    if (!durationElement) {
+
+        durationElement =
+            document.createElement(
+                "div"
+            );
+
+
+        durationElement.id =
+            "game-over-duration";
+
+
+        durationElement.className =
+            "game-over-duration";
+
+
+        score.insertAdjacentElement(
+            "afterend",
+            durationElement
+        );
+    }
+
+
+    const roundedMinutes =
+        Math.max(
+            1,
+            Math.round(
+                Math.max(
+                    0,
+                    Number(
+                        durationMs ||
+                        0
+                    )
+                ) /
+                60000
+            )
+        );
+
+
+    durationElement.textContent =
+        `Partie trvala: ${roundedMinutes} ${roundedMinutes === 1 ? "minutu" : roundedMinutes >= 2 && roundedMinutes <= 4 ? "minuty" : "minut"}`;
+}
+
+
 function showGameOver(
     detail
 ) {
@@ -6677,6 +7053,11 @@ function showGameOver(
         getSlotRecordText(
             slot
         )
+    );
+
+
+    renderGameOverDuration(
+        detail?.durationMs
     );
 
 
