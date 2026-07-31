@@ -134,6 +134,8 @@ document.addEventListener(
 
 function initializeUI() {
 
+    applyEnvironmentLabels();
+
     setupNavigation();
 
     setupCharacterSelection();
@@ -162,6 +164,86 @@ function initializeUI() {
 
     showScreen(
         "screen-menu"
+    );
+}
+
+
+function applyEnvironmentLabels() {
+
+    const isTestBuild =
+        Boolean(
+            GAME_CONFIG
+                ?.isTestBuild
+        );
+
+
+    const menuTitle =
+        document.querySelector(
+            ".game-logo h1"
+        );
+
+
+    if (menuTitle) {
+
+        menuTitle.textContent =
+            isTestBuild
+                ? "UNO - TEST"
+                : "UNO";
+    }
+
+
+    const slotInfo =
+        document.querySelector(
+            ".game-slot-info"
+        );
+
+
+    if (!slotInfo) {
+
+        return;
+    }
+
+
+    const existingBadge =
+        document.getElementById(
+            "test-build-badge"
+        );
+
+
+    if (!isTestBuild) {
+
+        existingBadge?.remove();
+
+        return;
+    }
+
+
+    if (existingBadge) {
+
+        return;
+    }
+
+
+    const badge =
+        document.createElement(
+            "span"
+        );
+
+
+    badge.id =
+        "test-build-badge";
+
+
+    badge.className =
+        "test-build-badge";
+
+
+    badge.textContent =
+        "TEST";
+
+
+    slotInfo.appendChild(
+        badge
     );
 }
 
