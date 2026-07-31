@@ -15,6 +15,184 @@
 ========================================================= */
 
 
+const LUKY_THINKING_MEMORY = {
+
+    gameStartedAt:
+        null,
+
+    lastHandIds:
+        new Set(),
+
+    lastHandCount:
+        0,
+
+    deliberateThinkCount:
+        0,
+
+    fastMode:
+        false
+};
+
+
+function syncLukyThinkingMemory(
+    gameState
+) {
+
+    const hand =
+        Array.isArray(
+            gameState?.lukyHand
+        )
+            ? gameState.lukyHand
+            : [];
+
+
+    const currentIds =
+        new Set(
+            hand.map(
+                (card) =>
+                    card.id
+            )
+        );
+
+
+    const startedAt =
+        gameState?.startedAt ||
+        null;
+
+
+    if (
+        LUKY_THINKING_MEMORY.gameStartedAt !==
+        startedAt
+    ) {
+
+        LUKY_THINKING_MEMORY.gameStartedAt =
+            startedAt;
+
+        LUKY_THINKING_MEMORY.deliberateThinkCount =
+            0;
+
+        LUKY_THINKING_MEMORY.fastMode =
+            false;
+
+        LUKY_THINKING_MEMORY.lastHandIds =
+            currentIds;
+
+        LUKY_THINKING_MEMORY.lastHandCount =
+            hand.length;
+
+        return;
+    }
+
+
+    const previousIds =
+        LUKY_THINKING_MEMORY
+            .lastHandIds;
+
+
+    const previousCount =
+        LUKY_THINKING_MEMORY
+            .lastHandCount;
+
+
+    let overlapCount =
+        0;
+
+
+    currentIds.forEach(
+        (id) => {
+
+            if (
+                previousIds.has(
+                    id
+                )
+            ) {
+
+                overlapCount +=
+                    1;
+            }
+        }
+    );
+
+
+    const comparableCount =
+        Math.max(
+            1,
+            Math.min(
+                previousCount,
+                hand.length
+            )
+        );
+
+
+    const overlapRatio =
+        overlapCount /
+        comparableCount;
+
+
+    const drewSeveralCards =
+        hand.length -
+        previousCount >=
+        2;
+
+
+    const handWasReplaced =
+        previousCount >=
+            3 &&
+        hand.length >=
+            3 &&
+        overlapRatio <
+            0.4;
+
+
+    if (
+        drewSeveralCards ||
+        handWasReplaced
+    ) {
+
+        LUKY_THINKING_MEMORY.deliberateThinkCount =
+            0;
+
+        LUKY_THINKING_MEMORY.fastMode =
+            false;
+    }
+
+
+    LUKY_THINKING_MEMORY.lastHandIds =
+        currentIds;
+
+
+    LUKY_THINKING_MEMORY.lastHandCount =
+        hand.length;
+}
+
+
+function registerLukyThinkingProfile(
+    profile
+) {
+
+    if (
+        profile?.mode ===
+            "normal" ||
+        profile?.mode ===
+            "complex"
+    ) {
+
+        LUKY_THINKING_MEMORY.deliberateThinkCount +=
+            1;
+
+
+        if (
+            LUKY_THINKING_MEMORY.deliberateThinkCount >=
+            2
+        ) {
+
+            LUKY_THINKING_MEMORY.fastMode =
+                true;
+        }
+    }
+}
+
+
 /* =========================================================
    HLAVNÍ ROZHODNUTÍ AI
 ========================================================= */
@@ -218,6 +396,11 @@ async function waitForLukyThinking(
         GAME_CONFIG.aiThinking;
 
 
+    syncLukyThinkingMemory(
+        gameState
+    );
+
+
     const profile =
         getLukyThinkingProfile(
             gameState
@@ -229,6 +412,11 @@ async function waitForLukyThinking(
             profile,
             gameState
         );
+
+
+    registerLukyThinkingProfile(
+        profile
+    );
 
 
     /*
@@ -608,6 +796,31 @@ function getLukyThinkingDelay(
 
         maxMs +=
             bonus;
+    }
+
+
+    if (
+        LUKY_THINKING_MEMORY.fastMode &&
+        (
+            profile?.mode ===
+                "normal" ||
+            profile?.mode ===
+                "complex"
+        )
+    ) {
+
+        minMs =
+            Math.round(
+                minMs *
+                0.58
+            );
+
+
+        maxMs =
+            Math.round(
+                maxMs *
+                0.62
+            );
     }
 
 
@@ -1475,77 +1688,64 @@ function getDrawStackCounterOptions(
         );
 
 
-    /*
-        Kuř! vyžaduje identické karty, takže kombinujeme jen
-        karty stejného typu / stejné identity. Hledáme přesně
-        hodnotu posledního stacku, ne celkovou penalizaci.
-    */
+    drawTwos.forEach(
+        (group) => {
 
-    if (
-        required %
-            2 ===
-        0
-    ) {
-
-        const neededTwos =
-            required /
-            2;
-
-
-        drawTwos.forEach(
-            (group) => {
+            for (
+                let count = 1;
+                count <=
+                    group.length;
+                count += 1
+            ) {
 
                 if (
-                    group.length >=
-                    neededTwos
+                    count *
+                    2 >=
+                    required
                 ) {
 
                     options.push(
                         group.slice(
                             0,
-                            neededTwos
+                            count
                         )
                     );
                 }
             }
-        );
-    }
+        }
+    );
 
 
-    if (
-        required %
-            4 ===
-        0
-    ) {
+    drawFours.forEach(
+        (group) => {
 
-        const neededFours =
-            required /
-            4;
-
-
-        drawFours.forEach(
-            (group) => {
+            for (
+                let count = 1;
+                count <=
+                    group.length;
+                count += 1
+            ) {
 
                 if (
-                    group.length >=
-                    neededFours
+                    count *
+                    4 >=
+                    required
                 ) {
 
                     options.push(
                         group.slice(
                             0,
-                            neededFours
+                            count
                         )
                     );
                 }
             }
-        );
-    }
+        }
+    );
 
 
     return options;
 }
-
 
 function chooseDrawStackCounter(
     hand,
@@ -1569,9 +1769,9 @@ function chooseDrawStackCounter(
 
 
     /*
-        Když je více přesných možností (např. +4 lze dát
-        jednou +4 nebo dvěma identickými +2), preferuje Luky
-        menší počet odhozených karet jen lehce. Není dokonalý.
+        Když je více platných možností, preferuje Luky menší počet
+        odhozených karet jen lehce. Může tedy občas použít i silnější
+        stack, než je nezbytně nutné. Není dokonalý.
     */
 
     const sorted =
