@@ -769,6 +769,71 @@ function renderCompletedGameHistory() {
 }
 
 
+function getCompletedGamePlayerImage(
+    game
+) {
+
+    if (!game) {
+
+        return null;
+    }
+
+
+    /*
+        Historie musí používat stejný obrázek skinu jako samotná hra.
+
+        Starší záznamy mohly mít v playerImage uložený obrázek
+        z výsledkové obrazovky, který je kompozičně jiný a v malém
+        avataru proto ukazoval tělo místo obličeje.
+    */
+
+    const skins =
+        typeof getConfiguredCharacterSkins ===
+            "function"
+            ? getConfiguredCharacterSkins(
+                game.characterId
+            )
+            : (
+                typeof getCharacterSkins ===
+                    "function"
+                    ? getCharacterSkins(
+                        game.characterId
+                    )
+                    : []
+            );
+
+
+    const matchingSkin =
+        Array.isArray(
+            skins
+        )
+            ? skins.find(
+                (skin) =>
+                    skin?.id ===
+                    game.skinId
+            )
+            : null;
+
+
+    if (
+        matchingSkin?.image
+    ) {
+
+        return matchingSkin.image;
+    }
+
+
+    /*
+        Fallback pro staré záznamy bez skinId nebo pro odstraněný skin.
+    */
+
+    return (
+        game.playerImage ||
+        null
+    );
+}
+
+
 function createCompletedGameHistoryCard(
     game
 ) {
@@ -789,7 +854,9 @@ function createCompletedGameHistoryCard(
                 "completed-game-player",
 
             image:
-                game.playerImage,
+                getCompletedGamePlayerImage(
+                    game
+                ),
 
             fallback:
                 getCharacterConfig(
