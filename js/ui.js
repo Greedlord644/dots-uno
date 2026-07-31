@@ -5576,6 +5576,66 @@ function renderYellowEvent(
    STATUS
 ========================================================= */
 
+function getRequiredDrawCounterAmountForStatus(
+    state
+) {
+
+    const explicitAmount =
+        Number(
+            state?.topPenaltyAmount
+        );
+
+
+    if (
+        Number.isFinite(
+            explicitAmount
+        ) &&
+        explicitAmount >
+            0
+    ) {
+
+        return explicitAmount;
+    }
+
+
+    /*
+        Kompatibilita se starší rozehranou partií, která ještě
+        nemusela mít uloženou číselnou hodnotu posledního stacku.
+    */
+
+    if (
+        state?.topPenaltyType ===
+        CARD_TYPES.DRAW_TWO
+    ) {
+
+        return 2;
+    }
+
+
+    if (
+        state?.topPenaltyType ===
+        CARD_TYPES.WILD_DRAW_FOUR
+    ) {
+
+        return 4;
+    }
+
+
+    /*
+        Poslední bezpečný fallback pro velmi starý save.
+        Běžné nové partie se sem nedostanou.
+    */
+
+    return Math.max(
+        2,
+        Number(
+            state?.drawPenalty
+        ) ||
+        2
+    );
+}
+
+
 function renderGameStatus(
     state
 ) {
@@ -5604,10 +5664,16 @@ function renderGameStatus(
         0
     ) {
 
+        const requiredCounterAmount =
+            getRequiredDrawCounterAmountForStatus(
+                state
+            );
+
+
         text =
             state.turn ===
                 "player"
-                ? `Přehraj +${state.drawPenalty} nebo si lízni karty.`
+                ? `Přehraj +${requiredCounterAmount} nebo vyšší, nebo si lízni ${formatUICardAmount(state.drawPenalty)}.`
                 : "Luky řeší penalizaci.";
 
     } else if (
