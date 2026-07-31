@@ -1202,8 +1202,22 @@ function getSkinUnlockInfo(
 
 function registerFinishedGameForAchievements({
     winner,
-    characterId
+    characterId,
+    durationMs = 0,
+    startedAt = null
 }) {
+
+    /*
+        Časové statistiky jsou oddělené od achievement dat.
+        Staré dokončené hry se zpětně nedopočítávají; od této
+        verze se každá nově dokončená partie zapíše právě jednou.
+    */
+
+    registerFinishedGameTiming({
+        durationMs,
+        startedAt
+    });
+
 
     const data =
         loadAchievementData();
