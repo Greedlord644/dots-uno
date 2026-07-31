@@ -81,6 +81,14 @@ const UI_STATE = {
     playerSpeechTimer:
         null,
 
+    /*
+        Po stisku UNO musí být reakce na mobilu viditelná.
+        Krátké ochranné okno zabrání okamžitému přepsání hlášky.
+    */
+
+    unoFeedbackProtectedUntil:
+        0,
+
     speechSequenceToken:
         0,
 
@@ -346,6 +354,23 @@ function setupNavigation() {
 
 
     document
+        .getElementById(
+            "open-game-history-button"
+        )
+        ?.addEventListener(
+            "click",
+            () => {
+
+                renderCompletedGameHistory();
+
+                showScreen(
+                    "screen-game-history"
+                );
+            }
+        );
+
+
+    document
         .querySelectorAll(
             "[data-go-screen]"
         )
@@ -384,6 +409,15 @@ function setupNavigation() {
                         ) {
 
                             renderSaveSlots();
+                        }
+
+
+                        if (
+                            target ===
+                            "screen-game-history"
+                        ) {
+
+                            renderCompletedGameHistory();
                         }
 
 
@@ -578,7 +612,7 @@ function renderMainMenuTimeStats() {
 
 
     summary.textContent =
-        `Celkově ${gamesPlayed} her a stráveno ${formatTotalPlayTime(totalDurationMs)}`;
+        `Celkově ${formatGameCount(gamesPlayed)} a stráveno ${formatTotalPlayTime(totalDurationMs)}`;
 
 
     container.appendChild(
@@ -602,6 +636,433 @@ function renderMainMenuTimeStats() {
             since
         );
     }
+}
+
+
+function formatGameCount(
+    count
+) {
+
+    const safeCount =
+        Math.max(
+            0,
+            Math.floor(
+                Number(
+                    count ||
+                    0
+                )
+            )
+        );
+
+
+    const lastTwo =
+        safeCount %
+        100;
+
+
+    const last =
+        safeCount %
+        10;
+
+
+    let noun =
+        "her";
+
+
+    if (
+        lastTwo < 11 ||
+        lastTwo > 14
+    ) {
+
+        if (
+            last ===
+            1
+        ) {
+
+            noun =
+                "hra";
+
+        } else if (
+            last >=
+                2 &&
+            last <=
+                4
+        ) {
+
+            noun =
+                "hry";
+        }
+    }
+
+
+    return `${safeCount} ${noun}`;
+}
+
+
+/* =========================================================
+   HISTORIE DOKONČENÝCH PARTIÍ
+========================================================= */
+
+function renderCompletedGameHistory() {
+
+    const container =
+        document.getElementById(
+            "completed-game-history-list"
+        );
+
+
+    if (!container) {
+
+        return;
+    }
+
+
+    const history =
+        typeof getCompletedGameHistory ===
+            "function"
+            ? getCompletedGameHistory()
+            : [];
+
+
+    container.innerHTML =
+        "";
+
+
+    if (
+        history.length ===
+        0
+    ) {
+
+        const empty =
+            document.createElement(
+                "div"
+            );
+
+
+        empty.className =
+            "completed-game-history-empty";
+
+
+        empty.textContent =
+            "Zatím zde nejsou žádné dokončené partie.";
+
+
+        container.appendChild(
+            empty
+        );
+
+
+        return;
+    }
+
+
+    history.forEach(
+        (game) => {
+
+            container.appendChild(
+                createCompletedGameHistoryCard(
+                    game
+                )
+            );
+        }
+    );
+}
+
+
+function createCompletedGameHistoryCard(
+    game
+) {
+
+    const card =
+        document.createElement(
+            "article"
+        );
+
+
+    card.className =
+        "completed-game-card";
+
+
+    const player =
+        createCompletedGameProfile({
+            className:
+                "completed-game-player",
+
+            image:
+                game.playerImage,
+
+            fallback:
+                getCharacterConfig(
+                    game.characterId
+                )?.fallback ||
+                "?",
+
+            name:
+                getCharacterName(
+                    game.characterId
+                ) ||
+                "Hráč"
+        });
+
+
+    const middle =
+        document.createElement(
+            "div"
+        );
+
+
+    middle.className =
+        "completed-game-result";
+
+
+    const result =
+        document.createElement(
+            "strong"
+        );
+
+
+    const playerWon =
+        game.winner ===
+        "player";
+
+
+    result.className =
+        playerWon
+            ? "completed-game-outcome is-win"
+            : "completed-game-outcome is-loss";
+
+
+    result.textContent =
+        playerWon
+            ? "Výhra"
+            : "Prohra";
+
+
+    const date =
+        document.createElement(
+            "span"
+        );
+
+
+    date.className =
+        "completed-game-date";
+
+
+    date.textContent =
+        formatCzechDate(
+            game.finishedAt
+        );
+
+
+    const duration =
+        document.createElement(
+            "span"
+        );
+
+
+    duration.className =
+        "completed-game-duration";
+
+
+    duration.textContent =
+        `Délka: ${formatCompletedGameDuration(game.durationMs)}`;
+
+
+    middle.append(
+        result,
+        date,
+        duration
+    );
+
+
+    const luky =
+        createCompletedGameProfile({
+            className:
+                "completed-game-luky",
+
+            image:
+                game.lukyImage ||
+                GAME_CONFIG
+                    .opponent
+                    .defaultImage,
+
+            fallback:
+                GAME_CONFIG
+                    .opponent
+                    .fallback,
+
+            name:
+                GAME_CONFIG
+                    .opponent
+                    .name ||
+                "Luky"
+        });
+
+
+    card.append(
+        player,
+        middle,
+        luky
+    );
+
+
+    return card;
+}
+
+
+function createCompletedGameProfile({
+    className,
+    image,
+    fallback,
+    name
+}) {
+
+    const profile =
+        document.createElement(
+            "div"
+        );
+
+
+    profile.className =
+        `completed-game-profile ${className}`;
+
+
+    const imageWrap =
+        document.createElement(
+            "div"
+        );
+
+
+    imageWrap.className =
+        "completed-game-avatar-wrap";
+
+
+    const img =
+        document.createElement(
+            "img"
+        );
+
+
+    img.className =
+        "completed-game-avatar";
+
+
+    img.alt =
+        name;
+
+
+    const fallbackElement =
+        document.createElement(
+            "span"
+        );
+
+
+    fallbackElement.className =
+        "completed-game-avatar-fallback";
+
+
+    fallbackElement.textContent =
+        fallback ||
+        "?";
+
+
+    if (image) {
+
+        img.src =
+            image;
+
+
+        img.addEventListener(
+            "error",
+            () => {
+
+                img.hidden =
+                    true;
+
+                fallbackElement.hidden =
+                    false;
+            },
+            {
+                once:
+                    true
+            }
+        );
+
+
+        fallbackElement.hidden =
+            true;
+
+    } else {
+
+        img.hidden =
+            true;
+    }
+
+
+    imageWrap.append(
+        img,
+        fallbackElement
+    );
+
+
+    const label =
+        document.createElement(
+            "span"
+        );
+
+
+    label.className =
+        "completed-game-profile-name";
+
+
+    label.textContent =
+        name;
+
+
+    profile.append(
+        imageWrap,
+        label
+    );
+
+
+    return profile;
+}
+
+
+function formatCompletedGameDuration(
+    durationMs
+) {
+
+    const minutes =
+        Math.max(
+            1,
+            Math.round(
+                Math.max(
+                    0,
+                    Number(
+                        durationMs ||
+                        0
+                    )
+                ) /
+                60000
+            )
+        );
+
+
+    return (
+        `${minutes} ` +
+        (
+            minutes ===
+                1
+                ? "minuta"
+                : minutes >=
+                        2 &&
+                    minutes <=
+                        4
+                    ? "minuty"
+                    : "minut"
+        )
+    );
 }
 
 
@@ -2680,6 +3141,41 @@ function openSurrenderConfirmation(
    GAME CONTROLS
 ========================================================= */
 
+function showUnoButtonFeedback(
+    button
+) {
+
+    if (!button) {
+
+        return;
+    }
+
+
+    button.classList.remove(
+        "is-pressed"
+    );
+
+
+    void button.offsetWidth;
+
+
+    button.classList.add(
+        "is-pressed"
+    );
+
+
+    window.setTimeout(
+        () => {
+
+            button.classList.remove(
+                "is-pressed"
+            );
+        },
+        220
+    );
+}
+
+
 function setupGameControls() {
 
     const drawPile =
@@ -2713,6 +3209,20 @@ function setupGameControls() {
             }
 
 
+            /*
+                Pokud si hráč po označení karty rozmyslí tah a lízne,
+                výběr se musí okamžitě zrušit.
+            */
+
+            UI_STATE
+                .selectedCardIds
+                .clear();
+
+
+            UI_STATE.pendingPlayCardIds =
+                null;
+
+
             const success =
                 playerDraw();
 
@@ -2720,6 +3230,8 @@ function setupGameControls() {
             if (success) {
 
                 markFirstPlayerAction();
+
+                renderGame();
             }
         }
     );
@@ -2758,7 +3270,50 @@ function setupGameControls() {
         unoButton,
         () => {
 
-            playerCallUno();
+            showUnoButtonFeedback(
+                unoButton
+            );
+
+
+            const success =
+                playerCallUno();
+
+
+            /*
+                Game engine hlášku také vyšle jako event. Tady ji
+                zobrazujeme ještě přímo jako pojistku pro mobilní
+                prohlížeče, aby byl každý stisk viditelný.
+            */
+
+            UI_STATE.unoFeedbackProtectedUntil =
+                Date.now() +
+                1400;
+
+
+            if (success) {
+
+                showPlayerSpeech(
+                    getPlayerUnoQuote(),
+                    Math.max(
+                        1400,
+                        GAME_CONFIG
+                            .speech
+                            .shortDurationMs
+                    )
+                );
+
+            } else {
+
+                showLukySpeech(
+                    getFalseUnoQuote(),
+                    Math.max(
+                        1400,
+                        GAME_CONFIG
+                            .speech
+                            .defaultDurationMs
+                    )
+                );
+            }
         }
     );
 
@@ -6180,9 +6735,29 @@ function setupGameEvents() {
         "dotsuno:luky-speech",
         (event) => {
 
-            showLukySpeech(
+            const text =
                 event.detail
-                    ?.text,
+                    ?.text;
+
+
+            const protectedUnoFeedback =
+                Date.now() <
+                    UI_STATE
+                        .unoFeedbackProtectedUntil;
+
+
+            if (
+                protectedUnoFeedback &&
+                text !==
+                    getFalseUnoQuote()
+            ) {
+
+                return;
+            }
+
+
+            showLukySpeech(
+                text,
 
                 event.detail
                     ?.duration
@@ -6194,6 +6769,27 @@ function setupGameEvents() {
     window.addEventListener(
         "dotsuno:player-speech",
         (event) => {
+
+            const text =
+                event.detail
+                    ?.text;
+
+
+            const protectedUnoFeedback =
+                Date.now() <
+                    UI_STATE
+                        .unoFeedbackProtectedUntil;
+
+
+            if (
+                protectedUnoFeedback &&
+                text !==
+                    getPlayerUnoQuote()
+            ) {
+
+                return;
+            }
+
 
             const lukyText =
                 document.getElementById(
@@ -6211,8 +6807,7 @@ function setupGameEvents() {
 
 
             showPlayerSpeech(
-                event.detail
-                    ?.text,
+                text,
 
                 event.detail
                     ?.duration
@@ -6841,6 +7436,10 @@ function hidePlayerSpeech() {
 
 
 function resetSpeechUI() {
+
+    UI_STATE.unoFeedbackProtectedUntil =
+        0;
+
 
     UI_STATE.openingSpeechActive =
         false;
