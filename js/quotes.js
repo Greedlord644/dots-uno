@@ -111,7 +111,7 @@ const GAME_QUOTES = {
             */
 
             skipFirstCounter:
-                "Ty stojíš!",
+                "Stojíš!",
 
 
             /*
@@ -294,7 +294,7 @@ const GAME_QUOTES = {
             */
 
             skipFirstCounter:
-                "Ty stojíš!",
+                "Stojíš!",
 
             skipFurtherCounter:
                 "Ne, ty stojíš!",
