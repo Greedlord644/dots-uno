@@ -3148,11 +3148,33 @@ async function executeLukyDecision(
     }
 
 
+    let lukyGavePlayerNewHand =
+        false;
+
+
     if (
         isZeroCard(
             cards[0]
         )
     ) {
+
+        /*
+            Během prodlevy před výměnou rukou nesmí běžet hráčovo
+            UNO okno. Hráč ještě nové karty nevidí.
+        */
+
+        state.playerUnoDeferred =
+            true;
+
+
+        state.pendingPlayerUno =
+            false;
+
+
+        cancelPlayerUnoTimer(
+            true
+        );
+
 
         saveGame();
 
@@ -3165,6 +3187,18 @@ async function executeLukyDecision(
 
 
         swapHands();
+
+
+        lukyGavePlayerNewHand =
+            true;
+
+
+        state.playerUnoSaid =
+            false;
+
+
+        state.pendingPlayerUno =
+            false;
 
 
         maybeReactToBadSwap(
@@ -3209,6 +3243,24 @@ async function executeLukyDecision(
             )
         ) {
 
+            /*
+                Stejně jako u nuly začne případné nové UNO okno
+                až po skutečné výměně a zobrazení nové ruky.
+            */
+
+            state.playerUnoDeferred =
+                true;
+
+
+            state.pendingPlayerUno =
+                false;
+
+
+            cancelPlayerUnoTimer(
+                true
+            );
+
+
             saveGame();
 
             emitStateChanged();
@@ -3220,6 +3272,18 @@ async function executeLukyDecision(
 
 
             swapHands();
+
+
+            lukyGavePlayerNewHand =
+                true;
+
+
+            state.playerUnoSaid =
+                false;
+
+
+            state.pendingPlayerUno =
+                false;
 
 
             maybeReactToBadSwap(
@@ -3279,10 +3343,35 @@ async function executeLukyDecision(
     maybeTriggerLukyCardLeadEmote();
 
 
+    if (
+        lukyGavePlayerNewHand
+    ) {
+
+        state.playerUnoDeferred =
+            false;
+    }
+
+
     saveGame();
 
 
     emitStateChanged();
+
+
+    /*
+        Pokud hráč po Lukyho nule nebo sedmičce dostal přesně jednu
+        kartu, celé třísekundové UNO okno začíná až teď — po výměně,
+        po vykreslení nové ruky a ve chvíli, kdy ji hráč skutečně vidí.
+    */
+
+    if (
+        lukyGavePlayerNewHand &&
+        state.playerHand.length ===
+            1
+    ) {
+
+        handlePlayerUnoAfterPlay();
+    }
 }
 
 
