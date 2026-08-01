@@ -8616,7 +8616,67 @@ function startMusicForGame() {
         !UI_STATE.activeMusicTrack
     ) {
 
-        prepareNextMusicTrack();
+        const track =
+            getRandomMusicTrack();
+
+
+        if (!track) {
+            return;
+        }
+
+
+        UI_STATE.activeMusicTrack =
+            track;
+
+
+        try {
+
+            UI_STATE
+                .youtubePlayer
+                .loadVideoById({
+                    videoId:
+                        GAME_CONFIG
+                            .music
+                            .youtube
+                            .videoId,
+
+                    startSeconds:
+                        track.startSeconds ||
+                        0
+                });
+
+
+            UI_STATE
+                .youtubePlayer
+                .setVolume(
+                    GAME_CONFIG
+                        .music
+                        .volume
+                );
+
+
+            applyMusicEnabledState(
+                isMusicEnabled()
+            );
+
+
+            UI_STATE.musicPlaying =
+                true;
+
+        } catch (error) {
+
+            console.warn(
+                "Hudbu se nepodařilo spustit.",
+                error
+            );
+
+
+            UI_STATE.activeMusicTrack =
+                null;
+        }
+
+
+        return;
     }
 
 
