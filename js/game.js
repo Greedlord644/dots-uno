@@ -5573,10 +5573,175 @@ function maybeTriggerHeavyDrawQuote(
     }
 
 
-    const text =
+    const quote =
         getHeavyDrawReaction(
             slot.characterId
         );
+
+
+    if (!quote) {
+
+        return;
+    }
+
+
+    const normalizedQuote =
+        typeof quote ===
+            "string"
+            ? {
+                type:
+                    "single",
+
+                text:
+                    quote
+            }
+            : quote;
+
+
+    const duration =
+        GAME_CONFIG
+            .speech
+            .defaultDurationMs;
+
+
+    if (
+        GAME_RUNTIME
+            .characterReactionTimer
+    ) {
+
+        clearTimeout(
+            GAME_RUNTIME
+                .characterReactionTimer
+        );
+
+
+        GAME_RUNTIME
+            .characterReactionTimer =
+            null;
+    }
+
+
+    if (
+        normalizedQuote.type ===
+            "sequence" &&
+        Array.isArray(
+            normalizedQuote.lines
+        )
+    ) {
+
+        const lines =
+            normalizedQuote.lines
+                .filter(
+                    Boolean
+                );
+
+
+        if (
+            lines.length ===
+            0
+        ) {
+
+            return;
+        }
+
+
+        const pauseMs =
+            Math.max(
+                0,
+                Number(
+                    normalizedQuote.pauseMs
+                ) ||
+                3000
+            );
+
+
+        GAME_RUNTIME
+            .lukyEmoteSuppressedUntil =
+            Math.max(
+                GAME_RUNTIME
+                    .lukyEmoteSuppressedUntil,
+                Date.now() +
+                    pauseMs +
+                    duration +
+                    250
+            );
+
+
+        emitGameEvent(
+            "luky-speech",
+            {
+                text:
+                    lines[0],
+
+                duration,
+
+                priority:
+                    "character"
+            }
+        );
+
+
+        if (
+            lines.length >
+            1
+        ) {
+
+            const sourceState =
+                GAME_RUNTIME.state;
+
+
+            const sourceSlotIndex =
+                GAME_RUNTIME.slotIndex;
+
+
+            GAME_RUNTIME
+                .characterReactionTimer =
+                setTimeout(
+                    () => {
+
+                        GAME_RUNTIME
+                            .characterReactionTimer =
+                            null;
+
+
+                        if (
+                            !sourceState ||
+                            GAME_RUNTIME.state !==
+                                sourceState ||
+                            sourceState.status !==
+                                "playing" ||
+                            GAME_RUNTIME.slotIndex !==
+                                sourceSlotIndex
+                        ) {
+
+                            return;
+                        }
+
+
+                        emitGameEvent(
+                            "luky-speech",
+                            {
+                                text:
+                                    lines[1],
+
+                                duration,
+
+                                priority:
+                                    "character"
+                            }
+                        );
+                    },
+                    pauseMs
+                );
+        }
+
+
+        return;
+    }
+
+
+    const text =
+        normalizedQuote.text;
 
 
     if (!text) {
@@ -5599,9 +5764,7 @@ function maybeTriggerHeavyDrawQuote(
                 GAME_RUNTIME
                     .lukyEmoteSuppressedUntil,
                 Date.now() +
-                    GAME_CONFIG
-                        .speech
-                        .defaultDurationMs +
+                    duration +
                     250
             );
     }
@@ -5612,16 +5775,14 @@ function maybeTriggerHeavyDrawQuote(
         {
             text,
 
-            duration:
-                GAME_CONFIG
-                    .speech
-                    .defaultDurationMs,
+            duration,
 
             priority:
                 "character"
         }
     );
 }
+
 
 /* =========================================================
    BEZPEČNÉ VOLÁNÍ VOLITELNÝCH HLÁŠEK
