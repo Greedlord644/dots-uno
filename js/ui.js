@@ -3437,7 +3437,11 @@ function setupGameControls() {
 
     bindReliableTap(
         cancelSurrenderButton,
-        () => {
+        (event) => {
+
+            event?.preventDefault();
+            event?.stopImmediatePropagation();
+
 
             const mode =
                 UI_STATE.surrenderMode;
@@ -3453,6 +3457,28 @@ function setupGameControls() {
             ) {
 
                 closeModal();
+
+
+                const slotIndex =
+                    UI_STATE.selectedSlotIndex;
+
+
+                if (
+                    slotIndex !==
+                    null
+                ) {
+
+                    openSlotActions(
+                        slotIndex
+                    );
+
+                } else {
+
+                    showScreen(
+                        "screen-slots"
+                    );
+                }
+
 
                 return;
             }
