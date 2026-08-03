@@ -258,7 +258,23 @@ const GAME_QUOTES = {
 
                 heavyDrawReaction: [
 
-                    "PAVLEEE!!"
+                    "PAVLEEE!!",
+
+
+                    {
+                        type:
+                            "sequence",
+
+                        lines: [
+
+                            "Nemůžeš na mě být aspoň jednou milej?",
+
+                            "Jseš fakt pičus, vole."
+                        ],
+
+                        pauseMs:
+                            3000
+                    }
                 ]
             }
         }
@@ -835,12 +851,18 @@ function getHeavyDrawReaction(
     }
 
 
-    return reactions[
-        Math.floor(
-            Math.random() *
-            reactions.length
-        )
-    ];
+    const selected =
+        reactions[
+            Math.floor(
+                Math.random() *
+                reactions.length
+            )
+        ];
+
+
+    return normalizeQuote(
+        selected
+    );
 }
 
 
@@ -1048,6 +1070,15 @@ function normalizeQuote(
                             "string" &&
                         line.length >
                             0
+                ),
+
+            pauseMs:
+                Math.max(
+                    0,
+                    Number(
+                        quote.pauseMs
+                    ) ||
+                    0
                 )
         };
     }
