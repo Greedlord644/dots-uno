@@ -314,6 +314,22 @@ function startNewGame(
         playerForcedDrawStreak:
             0,
 
+        /*
+            Tlak na Lukyho pro situační reakce:
+            - skutečně dobrané trestné karty od posledního normálního tahu,
+            - počet tahů po sobě, kdy pouze stál nebo lízal,
+            - pořadí specifických reakcí postavy.
+        */
+
+        lukyPenaltyCardsAccumulated:
+            0,
+
+        lukyLostTurnsInRow:
+            0,
+
+        heavyDrawReactionCount:
+            0,
+
         turnCount:
             0,
 
@@ -472,6 +488,21 @@ function continueSavedGame(
         playerForcedDrawStreak:
             normalizeNonNegativeInteger(
                 saved.playerForcedDrawStreak
+            ),
+
+        lukyPenaltyCardsAccumulated:
+            normalizeNonNegativeInteger(
+                saved.lukyPenaltyCardsAccumulated
+            ),
+
+        lukyLostTurnsInRow:
+            normalizeNonNegativeInteger(
+                saved.lukyLostTurnsInRow
+            ),
+
+        heavyDrawReactionCount:
+            normalizeNonNegativeInteger(
+                saved.heavyDrawReactionCount
             ),
 
         /*
@@ -1386,9 +1417,10 @@ async function playerPlayCards(
         );
 
 
-        maybeTriggerHeavyDrawQuote(
-            effect.amount
-        );
+        /*
+            Reakce se vyhodnotí až ve chvíli, kdy penalizace
+            skutečně dopadne na Lukyho.
+        */
 
 
         await handlePlayerUnoAfterPlay();
@@ -2776,10 +2808,10 @@ async function executeLukyDecision(
         );
 
 
-        maybeReactToBadDraw(
-            "luky",
-            amount
-        );
+        recordLukyLostTurn({
+            penaltyCards:
+                amount
+        });
 
 
         clearDrawPenalty();
@@ -2812,11 +2844,6 @@ async function executeLukyDecision(
         "skip"
     ) {
 
-        const lukyLostSkipExchange =
-            state.skipChainCount >=
-            2;
-
-
         addHistory({
             actor:
                 "luky",
@@ -2832,12 +2859,12 @@ async function executeLukyDecision(
         clearSkipChain();
 
 
-        if (
-            lukyLostSkipExchange
-        ) {
+        /*
+            Přijaté Stůj je ztracený tah bez ohledu na délku řetězce.
+            Reakce zazní až po dosažení společného prahu.
+        */
 
-            emitLukyBadSituationQuote();
-        }
+        recordLukyLostTurn();
 
 
         GAME_RUNTIME
@@ -2909,6 +2936,9 @@ async function executeLukyDecision(
         GAME_RUNTIME
             .lukyJustAcceptedSkip =
             false;
+
+
+        recordLukyLostTurn();
 
 
         state.turn =
@@ -3041,6 +3071,14 @@ async function executeLukyDecision(
                 state.currentColor
         }
     );
+
+
+    /*
+        Jakmile Luky skutečně zahraje kartu, předchozí série
+        ztracených tahů i nasčítaných penalizací končí.
+    */
+
+    resetLukyHeavyPressure();
 
 
     if (
@@ -5548,17 +5586,98 @@ function scheduleQuoteCharacterReaction(
    REAKCE NA SILNOU PENALIZACI OD HRÁČE
 ========================================================= */
 
-function maybeTriggerHeavyDrawQuote(
-    amount
-) {
+function resetLukyHeavyPressure() {
 
-    if (
-        amount <
-        4
-    ) {
+    const state =
+        GAME_RUNTIME.state;
+
+
+    if (!state) {
 
         return;
     }
+
+
+    state.lukyPenaltyCardsAccumulated =
+        0;
+
+
+    state.lukyLostTurnsInRow =
+        0;
+}
+
+
+function recordLukyLostTurn({
+    penaltyCards = 0
+} = {}) {
+
+    const state =
+        GAME_RUNTIME.state;
+
+
+    if (
+        !state ||
+        state.status !==
+            "playing"
+    ) {
+
+        return false;
+    }
+
+
+    const normalizedPenalty =
+        normalizeNonNegativeInteger(
+            penaltyCards
+        );
+
+
+    state.lukyPenaltyCardsAccumulated =
+        normalizeNonNegativeInteger(
+            state.lukyPenaltyCardsAccumulated
+        ) +
+        normalizedPenalty;
+
+
+    state.lukyLostTurnsInRow =
+        normalizeNonNegativeInteger(
+            state.lukyLostTurnsInRow
+        ) +
+        1;
+
+
+    const shouldReact =
+        state.lukyPenaltyCardsAccumulated >=
+            4 ||
+        state.lukyLostTurnsInRow >=
+            3;
+
+
+    if (!shouldReact) {
+
+        return false;
+    }
+
+
+    const reacted =
+        maybeTriggerHeavyDrawQuote();
+
+
+    /*
+        Jedna dokončená série smí vyvolat jen jednu reakci.
+        Po dosažení prahu začínáme počítat znovu.
+    */
+
+    resetLukyHeavyPressure();
+
+
+    return reacted;
+}
+
+
+function maybeTriggerHeavyDrawQuote() {
+
+    const state =
+        GAME_RUNTIME.state;
 
 
     const slot =
@@ -5567,22 +5686,61 @@ function maybeTriggerHeavyDrawQuote(
         );
 
 
-    if (!slot) {
+    if (
+        !state ||
+        !slot
+    ) {
 
-        return;
+        return false;
     }
+
+
+    const reactionCount =
+        normalizeNonNegativeInteger(
+            state.heavyDrawReactionCount
+        );
+
+
+    /*
+        Pavel začíná vždy novou dvoudílnou hláškou.
+        Potom se jeho dvě specifické reakce pravidelně střídají.
+        V poli quotes.js je PAVLEEE index 0 a sekvence index 1.
+    */
+
+    const preferredIndex =
+        slot.characterId ===
+            "96"
+            ? (
+                reactionCount %
+                    2 ===
+                0
+                    ? 1
+                    : 0
+            )
+            : null;
 
 
     const quote =
         getHeavyDrawReaction(
-            slot.characterId
+            slot.characterId,
+            preferredIndex
         );
 
 
+    /*
+        Postava bez vlastní reakce používá obecné „Píčeeee!“.
+        Nikdy se nespustí obě reakce současně.
+    */
+
     if (!quote) {
 
-        return;
+        return emitLukyBadSituationQuote();
     }
+
+
+    state.heavyDrawReactionCount =
+        reactionCount +
+        1;
 
 
     const normalizedQuote =
@@ -5641,7 +5799,7 @@ function maybeTriggerHeavyDrawQuote(
             0
         ) {
 
-            return;
+            return false;
         }
 
 
@@ -5736,7 +5894,7 @@ function maybeTriggerHeavyDrawQuote(
         }
 
 
-        return;
+        return true;
     }
 
 
@@ -5746,7 +5904,7 @@ function maybeTriggerHeavyDrawQuote(
 
     if (!text) {
 
-        return;
+        return false;
     }
 
 
@@ -5781,6 +5939,9 @@ function maybeTriggerHeavyDrawQuote(
                 "character"
         }
     );
+
+
+    return true;
 }
 
 
