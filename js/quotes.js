@@ -825,7 +825,8 @@ function registerOpeningQuoteUsage(
 ========================================================= */
 
 function getHeavyDrawReaction(
-    characterId
+    characterId,
+    preferredIndex = null
 ) {
 
     const characterQuotes =
@@ -851,13 +852,30 @@ function getHeavyDrawReaction(
     }
 
 
+    const normalizedPreferredIndex =
+        Number.isInteger(
+            preferredIndex
+        )
+            ? preferredIndex
+            : null;
+
+
     const selected =
-        reactions[
-            Math.floor(
-                Math.random() *
-                reactions.length
-            )
-        ];
+        normalizedPreferredIndex !==
+            null &&
+        normalizedPreferredIndex >=
+            0 &&
+        normalizedPreferredIndex <
+            reactions.length
+            ? reactions[
+                normalizedPreferredIndex
+            ]
+            : reactions[
+                Math.floor(
+                    Math.random() *
+                    reactions.length
+                )
+            ];
 
 
     return normalizeQuote(
